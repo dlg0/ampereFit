@@ -72,14 +72,28 @@ end      ; If Plot Irid
 ;
 pro clw_amp_v2
 ; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
+
+
+	if strCmp ( !version.os, 'linux' ) then begin
+		plotDev = 'X'
+		path	= '~/code/ampereFit/idl/'
+		pnmPath	= path + 'pnmSavs/pnmSav'
+	endif else begin
+		plotDev	= 'win'
+		path	= 'd:\cwac\hi_res\'
+		pnmPath	= path + 'pnmsavs\pnmSav'
+	endelse
+
+
  CapSize=50.
  winnum=1
- fileName = 'd:\cwac\hi_res\20080105_a_RevA.dat'
- sHr = 19
- eHr = 21
- read_ampere_dlg, fileName, sHr, eHr, data, yr, t_arr
+ fileName = path + '20080105_a_RevA.dat'
+ sHr = 09
+ eHr = 10 
+ read_ampere_dlg, fileName, sHr, eHr, data, yr, t_arr, $
+		 yrSec = yrSec
 
- set_plot,'win'
+ set_plot, plotDev
  device,decomposed=0
  window,winnum,xsize=600,ysize=550,title='dgIrid Data'
  winnum++
@@ -92,8 +106,13 @@ pro clw_amp_v2
  mMax    = 5
 stop
  schaBasisFunctions, kMax, mMax, capSize, data.theta, data.phi, $
-         YkmBFns=YkmBFns, dYkmDthBFns=dYkmDthBFns, dYkmDphBFns=dYkmDphBFns,$
-         OUTNKVALUES=outNkValues, OUTKVALUES=outKValues, OUTMVALUES=outMValues;, /oddSet
+         YkmBFns=YkmBFns, $
+		 dYkmDthBFns=dYkmDthBFns, $
+		 dYkmDphBFns=dYkmDphBFns, $
+         OUTNKVALUES=outNkValues, $
+		 OUTKVALUES=outKValues, $
+		 OUTMVALUES=outMValues, $
+		 pnmPath = pnmPath;, /oddSet
 ;
 ;       Fit |dB| to dB.grad Ykm in the Iridium system
  dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
@@ -133,20 +152,30 @@ stop
  loadct, 12
  oPlot, fit_dBMag, color = 8*16-1
 
- r_arr=dblarr(n_elements(data.theta))
- r_arr(*)=r/1.0d3
- geoPack_sphCar, r_arr, data.theta, data.phi, xGEI, yGEI, zGEI, /to_rect   ; from GEI_SPH to GEI_xyz
- geoPack_conv_coord, xGEI, yGEI, zGEI, xGEO, yGEO, zGEO, /from_gei, /to_geo, epoch = t_arr  ; from GEI to GEO
- geoPack_sphCar, xGEO, yGEO, zGEO, Ra_g, theta_g, phi_g, /to_sphere  ; from GEO_xyz to GEO_sph
+ ;	no need to redo this, we already did most of it in the read routine so
+ ;	i just passed out the appropriate variables
+
+ ;r_arr=dblarr(n_elements(data.theta))
+ ;r_arr(*)=r/1.0d3
+ ;geoPack_sphCar, r_arr, data.theta, data.phi, xGEI, yGEI, zGEI, /to_rect   ; from GEI_SPH to GEI_xyz
+ ;geoPack_conv_coord, xGEI, yGEI, zGEI, xGEO, yGEO, zGEO, /from_gei, /to_geo, epoch = t_arr  ; from GEI to GEO
+ ;geoPack_sphCar, xGEO, yGEO, zGEO, Ra_g, theta_g, phi_g, /to_sphere  ; from GEO_xyz to GEO_sph
  yrr=2000
  aacgm_load_coef,yrr
- r_aacgm=Ra_g-Re/1.0d3
- aacgm_conv_coord,theta_g*!radeg,phi_g*!radeg,r_aacgm,mlat,mlon_a,err,/to_aacgm
+ ;r_aacgm=Ra_g-Re/1.0d3
+ ;aacgm_conv_coord,theta_g*!radeg,phi_g*!radeg,r_aacgm,mlat,mlon_a,err,/to_aacgm
+
+ 	aacgm_conv_coord, data.geog_coLat_rad * !radeg, data.geog_lon_rad * !radeg, $
+		 data.geog_R_km, mlat, mlon_a, err, /to_aacgm
+	mlt	= aacgm_mlt ( mlon_a*0 + yrr, mlon_a*0 + yrSec, mlon_a )
+
  id=where(mlon_a lt 0.)
  mlon_a(id)=mlon_a(id)+360.
 
+	iiNeg	= where ( mLat lt 0, iiNegCnt )
+	if iiNegCnt gt 0 then mLat[iiNeg] = mLat[iiNeg] + 90
 stop
- loadct, 13, file = 'd:\cwac\davidg\idl\save\davect.tbl'
+ loadct, 13, file = path + 'davect.tbl'
  window, winnum,title='GEI FAC'
  winnum++
  map_set, 90, 0, 0, /ortho, /iso, $
@@ -161,17 +190,33 @@ stop
            c_colors = colors, /fill
 ; tmpVar=drawgrid()
 stop
+
  window, winnum,title='AACGM FAC'
  winnum++
- map_set, 90, 0, 0, /ortho, /iso, $
-     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], /noborder, /advance
- jLevels = ( fIndGen ( 21 ) - 10 ) * 0.1;2.0
- colors  = bytScl ( jLevels, top = 253 ) + 1
- contour, jPar, mlon_a, 90.0-mlat, c_labels=fltarr(n_elements(jLevels))+1,$
-           /irreg, /over, levels = jLevels, $
-           c_colors = colors, /fill
+
+ map_set, 90, 0, 0, $
+	/ortho, $
+   	/iso, $
+    limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
+   	/noborder,$
+   	/advance
+
+	triangulate, mlon_a, 90.0 - mlat, tri, $
+		   sphere = sphere, $
+		   /degrees
+
+ contour, jPar, mlon_a, 90.0 - mlat, $
+	c_labels = fltarr(n_elements(jLevels))+1, $
+    triangulation = tri, $
+   	/over, $
+   	levels = jLevels, $
+    c_colors = colors, $
+   	/fill
+
 ; tmpVar=drawgrid()
+
  !p.background=oldbck
+
  stop
 end
 

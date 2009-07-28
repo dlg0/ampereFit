@@ -1,12 +1,11 @@
 pro schaBasisFunctions, kMax, mMax, capSize, inCoLats, inLons, $
 	EVENSET=evenSet, ODDSET=oddSet,$
 	YkmBFns=YkmBFns, dYkmDthBFns=dYkmDthBFns, dYkmDphBFns=dYkmDphBFns,$
-	OUTNKVALUES=outNkValues, OUTKVALUES=outKValues, OUTMVALUES=outMValues
+	OUTNKVALUES=outNkValues, OUTKVALUES=outKValues, OUTMVALUES=outMValues, $
+	PNMPATH = pnmPath
 
 	;	Restore the pnm for specific capSize
 
-;	pnmPath	= '/home/dg6/code/idl/jpar.ver2/pnmSavs/pnmSav'
-	pnmPath	= 'd:\cwac\hi_res\davidg\jpar_ver2\pnmsavs\pnmsav'
 	restore, pnmPath+strcompress(string(fix(capSize),format='(i2.2)'),/rem)+'.sav'
 	coLat	= coLat[1:*]*!dtor	;	There is a -Nan @ theta=0 for the derivative so discard
 														;	this point for use in the interpolation

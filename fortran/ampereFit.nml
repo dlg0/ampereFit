@@ -1,0 +1,7 @@
+&iridFit
+maxK = 6
+maxM = 4
+minCoLat = 20.0
+maxCoLat = 60.0
+deltab_fileName = 'iridTestData.nc'
+/

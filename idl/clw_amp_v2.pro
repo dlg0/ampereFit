@@ -28,7 +28,7 @@ Pro plt_dat,IrCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym
  For i=0,nlatlab-2 do OPlot,x(i,*),y(i,*),linestyle=1,color=0
  For ii=0,nirid-1 do $
  Begin
-  SLon=IrMLT(ii)+180.                ; Shifted coords Lon,Lat
+  SLon=IrMLT(ii);+180.                ; Shifted coords Lon,Lat
   SLat=IrCLat(ii)
   ang=(SLon-90.)*!pi/180.
   Xs=SLat*cos(ang)              ; Shifted coords, X,Y
@@ -85,34 +85,34 @@ pro clw_amp_v2
 	endelse
 
 
- CapSize=50.
+ capSize=50.
  winnum=1
  fileName = path + '20080105_a_RevA.dat'
  sHr = 09
  eHr = 10 
- read_ampere_dlg, fileName, sHr, eHr, data, yr, t_arr, $
+ read_ampere_dlg, fileName, sHr, eHr, data, yr, t_arr, capSize, $
 		 yrSec = yrSec
 
  set_plot, plotDev
  device,decomposed=0
- window,winnum,xsize=600,ysize=550,title='dgIrid Data'
+ window,winnum,xsize=400,ysize=400,title='dgIrid Data'
  winnum++
  LoadCT,0
  device, decomposed = 0
  !p.background=255
- plt_dat, data.theta * !radeg, data.phi * !radeg, $
-	n_elements ( data.theta ), -data.dbTheta, data.dbPhi, [1,1], [1,1]
+ plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
+	n_elements ( data.gei_coLat_rad ), -data.dbTheta, data.dbPhi, [1,1], [1,1]
  kMax    = 16
  mMax    = 5
-stop
- schaBasisFunctions, kMax, mMax, capSize, data.theta, data.phi, $
+
+ schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
          YkmBFns=YkmBFns, $
 		 dYkmDthBFns=dYkmDthBFns, $
 		 dYkmDphBFns=dYkmDphBFns, $
          OUTNKVALUES=outNkValues, $
 		 OUTKVALUES=outKValues, $
 		 OUTMVALUES=outMValues, $
-		 pnmPath = pnmPath;, /oddSet
+		 pnmPath = pnmPath, /evenSet
 ;
 ;       Fit |dB| to dB.grad Ykm in the Iridium system
  dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
@@ -140,10 +140,10 @@ stop
          (coeffs*(-outNkValues*(outNkValues+1.0))))$
                          /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
 
- window, winnum
+ window, winnum, xSize = 400, ySize = 400
  winnum++
- plt_dat, data.theta * !radeg, data.phi * !radeg, $
-          n_elements ( data.theta ), -fit_dBTheta, fit_dBPhi, [1,1], [1,1]
+ plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
+          n_elements ( data.gei_coLat_rad ), -fit_dBTheta, fit_dBPhi, [1,1], [1,1]
 
  window, winnum, xSize = 1600, ySize = 300
  winnum++
@@ -160,60 +160,90 @@ stop
  ;geoPack_sphCar, r_arr, data.theta, data.phi, xGEI, yGEI, zGEI, /to_rect   ; from GEI_SPH to GEI_xyz
  ;geoPack_conv_coord, xGEI, yGEI, zGEI, xGEO, yGEO, zGEO, /from_gei, /to_geo, epoch = t_arr  ; from GEI to GEO
  ;geoPack_sphCar, xGEO, yGEO, zGEO, Ra_g, theta_g, phi_g, /to_sphere  ; from GEO_xyz to GEO_sph
- yrr=2000
- aacgm_load_coef,yrr
- ;r_aacgm=Ra_g-Re/1.0d3
- ;aacgm_conv_coord,theta_g*!radeg,phi_g*!radeg,r_aacgm,mlat,mlon_a,err,/to_aacgm
+; yrr=2000
+; aacgm_load_coef,yrr
+; ;r_aacgm=Ra_g-Re/1.0d3
+; ;aacgm_conv_coord,theta_g*!radeg,phi_g*!radeg,r_aacgm,mlat,mlon_a,err,/to_aacgm
+;
+; 	aacgm_conv_coord, data.geog_coLat_rad * !radeg, data.geog_lon_rad * !radeg, $
+;		 data.geog_R_km, mlat, mlon_a, err, /to_aacgm
+;	mlt	= aacgm_mlt ( mlon_a*0 + yrr, mlon_a*0 + yrSec, mlon_a )
+;
+; id=where(mlon_a lt 0.)
+; mlon_a(id)=mlon_a(id)+360.
+;
+;	iiNeg	= where ( mLat lt 0, iiNegCnt )
+;	if iiNegCnt gt 0 then mLat[iiNeg] = mLat[iiNeg] + 90
 
- 	aacgm_conv_coord, data.geog_coLat_rad * !radeg, data.geog_lon_rad * !radeg, $
-		 data.geog_R_km, mlat, mlon_a, err, /to_aacgm
-	mlt	= aacgm_mlt ( mlon_a*0 + yrr, mlon_a*0 + yrSec, mlon_a )
-
- id=where(mlon_a lt 0.)
- mlon_a(id)=mlon_a(id)+360.
-
-	iiNeg	= where ( mLat lt 0, iiNegCnt )
-	if iiNegCnt gt 0 then mLat[iiNeg] = mLat[iiNeg] + 90
-stop
  loadct, 13, file = path + 'davect.tbl'
- window, winnum,title='GEI FAC'
+ window, winnum, xSize = 800, ySize = 400
  winnum++
+ !p.multi = [0,2,1]
  map_set, 90, 0, 0, /ortho, /iso, $
-     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], /noborder, /advance
- jLevels = ( fIndGen ( 21 ) - 10 ) * 0.1;2.0
+     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
+	 /noborder, /advance, title = 'jPar GEI'
+ jLevels = ( fIndGen ( 21 ) - 10 ) * 0.5;2.0
  colors  = bytScl ( jLevels, top = 253 ) + 1
  oldbck=!p.background
  !p.background=0
  jpar=reform(jpar)
- contour, jPar, data.phi*!radeg+180., 90.0-data.theta*!radeg, c_labels=fltarr(n_elements(jLevels))+1,$
-           /irreg, /over, levels = jLevels, $
-           c_colors = colors, /fill
-; tmpVar=drawgrid()
-stop
+ contour, jPar, data.gei_lon_rad*!radeg, 90.0-data.gei_coLat_rad*!radeg, $
+		 	c_labels=fltarr(n_elements(jLevels))+1,$
+        	/irreg, /over, levels = jLevels, $
+           	c_colors = colors, /fill
+	map_grid, label = 1 
 
- window, winnum,title='AACGM FAC'
+   	map_set, 90, 0, 0, /ortho, /iso, $
+     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
+	 /noborder, /advance, title = 'jPar AACGM-MLT'
+ 
+   	contour, jPar, data.mlt*15.0, 90.0-data.aacgm_coLat_rad*!radeg, $
+		 	c_labels=fltarr(n_elements(jLevels))+1,$
+        	/irreg, /over, levels = jLevels, $
+           	c_colors = colors, /fill
+	map_grid, label = 1 
+
+!p.multi = [0,2,2]
+ window, winnum, xSize = 900, ySize = 900
  winnum++
-
+  
  map_set, 90, 0, 0, $
 	/ortho, $
    	/iso, $
     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
    	/noborder,$
-   	/advance
+   	/advance, /grid, title = 'AACGM', label = 1
 
-	triangulate, mlon_a, 90.0 - mlat, tri, $
-		   sphere = sphere, $
-		   /degrees
+	plots, data.aacgm_lon_rad*!radeg, 90.0-data.aacgm_coLat_rad*!radeg, psym = 4
+  
+ map_set, 90, 0, 0, $
+	/ortho, $
+   	/iso, $
+    limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
+   	/noborder,$
+   	/advance, /grid, title = 'AACGM-MLT', label = 1
 
- contour, jPar, mlon_a, 90.0 - mlat, $
-	c_labels = fltarr(n_elements(jLevels))+1, $
-    triangulation = tri, $
-   	/over, $
-   	levels = jLevels, $
-    c_colors = colors, $
-   	/fill
+	plots, data.mlt*15.0, 90.0-data.aacgm_coLat_rad*!radeg, psym = 4
+	
+   	map_set, 90, 0, 0, $
+	/ortho, $
+   	/iso, $
+    limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
+   	/noborder,$
+   	/advance, /grid, title = 'GEI', label = 1
 
-; tmpVar=drawgrid()
+	plots, data.gei_lon_rad*!radeg, 90.0-data.gei_coLat_rad*!radeg, psym = 4
+	
+	map_set, 90, 0, 0, $
+	/ortho, $
+   	/iso, $
+    limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
+   	/noborder,$
+   	/advance, /grid, title = 'GE0G', label = 1
+
+	plots, data.geog_lon_rad*!radeg, 90.0-data.geog_coLat_rad*!radeg, psym = 4
+	
+!p.multi = 0
 
  !p.background=oldbck
 

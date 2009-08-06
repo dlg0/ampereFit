@@ -1,4 +1,10 @@
-pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
+pro read_ampere_dlg, $
+	   	fileName, $
+		sHr, eHr, $
+		dataOut, $
+		year, $
+		t_arr, $
+		capSize, $
 		yrSec = yrSec
 
 	header	= 2
@@ -36,13 +42,15 @@ pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
 ; ***********************
     month=3
     day=20
-; ************************ puts noon at top
+; ************************ puts noon at top - what?
 
 ;	Select out a time slice
 
 	iiTime	= where ( data.sday gt min(data.sday)+60.0*(sHr-8)*60.0 $
 					and data.sday lt min(data.sday)+60.0*(eHr-8)*60.0 $
-					and data.pz gt 0 )
+					and data.pz gt 0, iiCnt )
+
+	data	= data[iiTime]
 
 ;	Convert to GEI coords
 
@@ -52,22 +60,31 @@ pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
 
 	cdf_epoch, epoch0, year, month, day, /compute_epoch
 	epoch	= data.sday * 1d3 + epoch0
-	t_arr	= epoch[iiTime]
+	t_arr	= epoch
 	avgHour	= fix ( (sHr + eHr) / 2.0 )
 	avgMin	= ( (sHr + eHr) / 2.0 mod 1 ) * 60
 
-	yrSec	= cnvTime ( year, month, day, $
+	yrSecAvg	= cnvTime ( year, month, day, $
 			avgHour, avgMin, 0.0 )
+
+	julTime	= julDay ( month, day, year, 0.0, 0.0, data.sday )
+	calDat, julTime, month_, day_, year_, hour_, minute_, second_
+
+	yrSec	= fltArr ( n_elements(year_) )
+	for i=0,n_elements(year_)-1 do begin
+		yrSec[i]	= cnvTime ( year_[i], month_[i], day_[i], $
+			hour_[i], minute_[i], second_[i] )
+	endfor
 
 	geoPack_reCalc, year, month, day, /date
 
-	geoPack_conv_coord, (data.px)[iiTime], (data.py)[iiTime], (data.pz)[iiTime], $  ; units of km
+	geoPack_conv_coord, (data.px), (data.py), (data.pz), $  ; units of km
 			xGEI, yGEI, zGEI, $
 			/from_geo, /to_gei, $
-			epoch = epoch[iiTime]
+			epoch = epoch
 
-	geoPack_sphCar, xGEI, yGEI, zGEI, R, theta, phi, /to_sphere         ; km -> km, radians
-	geoPack_sphCar, (data.px)[iiTime], (data.py)[iiTime], (data.pz)[iiTime], $
+	geoPack_sphCar, xGEI, yGEI, zGEI, gei_R_km, gei_coLat_rad, gei_lon_rad, /to_sphere         ; km -> km, radians
+	geoPack_sphCar, (data.px), (data.py), (data.pz), $
 		   geog_R_km, geog_coLat_rad, geog_lon_rad, /to_sphere         
 
 ;	Create rotation matrix from xyz to xyzGEI
@@ -76,20 +93,20 @@ pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
 	dy	= 1.
 	dz	= 1.
 
-	geoPack_conv_coord, (data.px+dx)[iiTime], (data.py)[iiTime], (data.pz)[iiTime], $
+	geoPack_conv_coord, (data.px+dx), (data.py), (data.pz), $
 			xGEI_x, yGEI_x, zGEI_x, $
 			/from_geo, /to_gei, $
-			epoch = epoch[iiTime]
-	geoPack_conv_coord, (data.px)[iiTime], (data.py+dy)[iiTime], (data.pz)[iiTime], $
+			epoch = epoch
+	geoPack_conv_coord, (data.px), (data.py+dy), (data.pz), $
 			xGEI_y, yGEI_y, zGEI_y, $
 			/from_geo, /to_gei, $
-			epoch = epoch[iiTime]
-	geoPack_conv_coord, (data.px)[iiTime], (data.py)[iiTime], (data.pz+dz)[iiTime], $
+			epoch = epoch
+	geoPack_conv_coord, (data.px), (data.py), (data.pz+dz), $
 			xGEI_z, yGEI_z, zGEI_z, $
 			/from_geo, /to_gei, $
-			epoch = epoch[iiTime]
+			epoch = epoch
 
-	rotMat	= fltArr ( 3, 3, n_elements ( iiTime ) )
+	rotMat	= fltArr ( 3, 3, iiCnt )
 	rotMat[0,0,*]	= xGEI-xGEI_x
 	rotMat[1,0,*]	= xGEI-xGEI_y
 	rotMat[2,0,*]	= xGEI-xGEI_z
@@ -104,9 +121,9 @@ pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
 
 ;	Rotate db vectors to GEI
 	dbGEI	= rotMat ## [ $
-			[ (data.dbx)[iiTime] ],$
-			[ (data.dby)[iiTime] ],$
-			[ (data.dbz)[iiTime] ] ]
+			[ (data.dbx) ],$
+			[ (data.dby) ],$
+			[ (data.dbz) ] ]
 
 ;	Rotate from xyzGEI to sphericalGEI
 	geoPack_bCarSp, xGEI, yGEI, zGEI, $
@@ -138,14 +155,32 @@ pro read_ampere_dlg, fileName, sHr, eHr, dataOut, year, t_arr, $
 ;			dbxGEI, dbyGEI, dbzGEI, $
 ;			bR, bTheta, bPhi
 ; --------------------------------------------------
-	dataOut	= { R : R, $
-				theta : theta, $
-				phi : phi, $
-				dbR : bR, $
-			   	dbTheta : bTheta, $
-				dbPhi : bPhi, $
-				geog_R_km : geog_R_km, $
-			   	geog_coLat_rad : geog_coLat_rad, $
-				geog_lon_rad : geog_lon_rad }
-		
+
+ 
+	aacgm_load_coef, year<2000 ; once we have newer coeffs update this
+ 	aacgm_conv_coord, 90.0 - geog_coLat_rad * !radeg, geog_lon_rad * !radeg, $
+		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
+ 	aacgm_coLat_deg	= 90.0-aacgm_lat_deg
+	mlt	= aacgm_mlt ( fltArr(iiCnt) + year, fltArr(iiCnt) + yrSec, aacgm_lon_deg )
+
+	iiNeg	= where ( aacgm_lon_deg lt 0, iiNegCnt )
+	aacgm_lon_deg[iiNeg]	= aacgm_lon_deg[iiNeg] + 360
+
+	;	select out those observations within the desired capSize
+
+	iiCap	= where ( gei_coLat_rad lt capSize * !dtor, iiCapCnt )
+
+	dataOut	= { gei_R_km : gei_R_km[iiCap], $
+				gei_coLat_rad : gei_coLat_rad[iiCap], $
+				gei_lon_rad : gei_lon_rad[iiCap], $
+				dbR : bR[iiCap], $
+			   	dbTheta : bTheta[iiCap], $
+				dbPhi : bPhi[iiCap], $
+				geog_R_km : geog_R_km[iiCap], $
+			   	geog_coLat_rad : geog_coLat_rad[iiCap], $
+				geog_lon_rad : geog_lon_rad[iiCap], $
+			    aacgm_coLat_rad : aacgm_coLat_deg[iiCap] * !dtor, $
+				aacgm_lon_rad : aacgm_lon_deg[iiCap] * !dtor, $
+				mlt : mlt[iiCap] }
+stop
 end

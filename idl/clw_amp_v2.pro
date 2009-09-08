@@ -88,10 +88,27 @@ pro clw_amp_v2
  capSize=50.
  winnum=1
  fileName = path + '20080105_a_RevA.dat'
- sHr = 09
- eHr = 10 
- read_ampere_dlg, fileName, sHr, eHr, data, yr, t_arr, capSize, $
-		 yrSec = yrSec
+ sHr = 08
+ eHr = 11 
+
+ read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
+		 yrSec = yrSec, $
+		 year = year, $
+		 month = month, $
+		 day = day, $
+ 		 avgYrSec = avgYrSec
+
+ nLatGrid	= 40
+ nLonGrid	= 24
+ aacgm_grid, geiGrid_coLat_rad = geiGrid_coLat_rad, $
+		 geiGrid_lon_rad = geiGrid_lon_rad , $
+		 aacgm_coLat_deg = aacgm_coLat_deg, $
+		 aacgm_lon_deg = aacgm_lon_deg, $
+		 nLat = nLatGrid, nLon = nLonGrid, $
+		 yrSec = avgYrSec, year = year, $
+		 mltShift = mltShift, $
+		 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
+		 aacgmGrid_lon_deg = aacgmGrid_lon_deg
 
  set_plot, plotDev
  device,decomposed=0
@@ -102,7 +119,7 @@ pro clw_amp_v2
  !p.background=255
  plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
 	n_elements ( data.gei_coLat_rad ), -data.dbTheta, data.dbPhi, [1,1], [1,1]
- kMax    = 16
+ kMax    = 26 
  mMax    = 5
 
  schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -113,8 +130,9 @@ pro clw_amp_v2
 		 OUTKVALUES=outKValues, $
 		 OUTMVALUES=outMValues, $
 		 pnmPath = pnmPath, /evenSet
-;
-;       Fit |dB| to dB.grad Ykm in the Iridium system
+
+;       Fit |dB| to dB.grad Ykm in the GEI system
+
  dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
  kTh     = transpose(rebin(data.dBTheta/dBMag,$
         n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
@@ -139,6 +157,20 @@ pro clw_amp_v2
  jpar  = (YkmBFns ## $
          (coeffs*(-outNkValues*(outNkValues+1.0))))$
                          /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
+
+;	generate basis fns at regular grid
+
+	schaBasisFunctions, kMax, mMax, capSize, geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
+         YkmBFns=YkmBFns_grid, $
+		 dYkmDthBFns=dYkmDthBFns_grid, $
+		 dYkmDphBFns=dYkmDphBFns_grid, $
+		 pnmPath = pnmPath, /evenSet
+
+  	jParAACGM	= (YkmBFns_grid ## $
+         (coeffs*(-outNkValues*(outNkValues+1.0))))$
+                         /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
+	jParAACGM	= reform ( jParAACGM, nLatGrid, nLonGrid )
+
 
  window, winnum, xSize = 400, ySize = 400
  winnum++
@@ -176,9 +208,9 @@ pro clw_amp_v2
 ;	if iiNegCnt gt 0 then mLat[iiNeg] = mLat[iiNeg] + 90
 
  loadct, 13, file = path + 'davect.tbl'
- window, winnum, xSize = 800, ySize = 400
+ window, winnum, xSize = 800, ySize = 800
  winnum++
- !p.multi = [0,2,1]
+ !p.multi = [0,2,2]
  map_set, 90, 0, 0, /ortho, /iso, $
      limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar GEI'
@@ -196,18 +228,54 @@ pro clw_amp_v2
    	map_set, 90, 0, 0, /ortho, /iso, $
      limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar AACGM-MLT'
- 
-   	contour, jPar, data.mlt*15.0, 90.0-data.aacgm_coLat_rad*!radeg, $
+	jParTmp	= jParAACGM[*]
+	lonTmp = ((aacgmGrid_lon_deg[*]/15.0+mltShift) mod 24 )*15.0
+	latTmp = 90.0-aacgmGrid_coLat_deg[*]
+   	contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
 		 	c_labels=fltarr(n_elements(jLevels))+1,$
-        	/irreg, /over, levels = jLevels, $
-           	c_colors = colors, /fill
-	map_grid, label = 1 
+        	/over, levels = jLevels, $
+           	c_colors = colors, /fill, /irreg
+	map_grid, label = 1, $ 
+			lonNames	= ['0/24','6','12','18',''], $
+			lons = [0,90,180,270,360], $
+			latLab = 45
+
+	map_set, 90, 0, 0, /ortho, /iso, $
+     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
+	 /noborder, /advance, title = 'jPar AACGM-LON'
+	jParTmp	= jParAACGM[*]
+	lonTmp = aacgmGrid_lon_deg[*]
+	latTmp = 90.0-aacgmGrid_coLat_deg[*]
+	contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
+		 	c_labels=fltarr(n_elements(jLevels))+1,$
+        	/over, levels = jLevels, $
+           	c_colors = colors, /fill, /irreg
+	map_grid, label = 1
+
+	map_set, 90, 0, 0, /ortho, /iso, $
+     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ], $
+	 /noborder, /advance, title = 'jPar AACGM-LON [GEI]'
+	jParTmp	= jParAACGM[*]
+	lonTmp = geiGrid_lon_rad[*]*!radeg
+	latTmp = 90.0-geiGrid_coLat_rad[*]*!radeg
+	contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
+		 	c_labels=fltarr(n_elements(jLevels))+1,$
+        	/over, levels = jLevels, $
+           	c_colors = colors, /fill, /irreg
+	map_grid, label = 1
+
 
 !p.multi = [0,2,2]
  window, winnum, xSize = 900, ySize = 900
  winnum++
   
- map_set, 90, 0, 0, $
+ 	map_set, 90, 0, 0, $
 	/ortho, $
    	/iso, $
     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$
@@ -215,8 +283,9 @@ pro clw_amp_v2
    	/advance, /grid, title = 'AACGM', label = 1
 
 	plots, data.aacgm_lon_rad*!radeg, 90.0-data.aacgm_coLat_rad*!radeg, psym = 4
-  
- map_set, 90, 0, 0, $
+  	;plots, geiGrid_lon_rad*!radeg, 90.0-geiGrid_coLat_rad*!radeg, psym = 4
+
+ 	map_set, 90, 0, 0, $
 	/ortho, $
    	/iso, $
     limit = [ 90.0 - ( capSize + 2 ), 0, 90, 360 ],$

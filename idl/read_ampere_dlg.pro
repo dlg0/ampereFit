@@ -2,10 +2,13 @@ pro read_ampere_dlg, $
 	   	fileName, $
 		sHr, eHr, $
 		dataOut, $
-		year, $
 		t_arr, $
 		capSize, $
-		yrSec = yrSec
+		yrSec = yrSec, $
+		year = year, $
+		month = month, $
+		day = day, $
+		avgYrSec = yrSecAvg
 
 	header	= 2
 	ndat	= file_lines ( fileName ) - header
@@ -38,11 +41,12 @@ pro read_ampere_dlg, $
 	skip_lun, rUnit, 1, /lines
 	readf, rUnit, data
 	free_lun, rUnit
-;
-; ***********************
-    month=3
-    day=20
-; ************************ puts noon at top - what?
+
+;;
+;; ***********************
+;    month=3
+;    day=20
+;; ************************ puts noon at top - what?
 
 ;	Select out a time slice
 
@@ -86,6 +90,7 @@ pro read_ampere_dlg, $
 	geoPack_sphCar, xGEI, yGEI, zGEI, gei_R_km, gei_coLat_rad, gei_lon_rad, /to_sphere         ; km -> km, radians
 	geoPack_sphCar, (data.px), (data.py), (data.pz), $
 		   geog_R_km, geog_coLat_rad, geog_lon_rad, /to_sphere         
+
 
 ;	Create rotation matrix from xyz to xyzGEI
 
@@ -156,7 +161,7 @@ pro read_ampere_dlg, $
 ;			bR, bTheta, bPhi
 ; --------------------------------------------------
 
- 
+
 	aacgm_load_coef, year<2000 ; once we have newer coeffs update this
  	aacgm_conv_coord, 90.0 - geog_coLat_rad * !radeg, geog_lon_rad * !radeg, $
 		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
@@ -182,5 +187,4 @@ pro read_ampere_dlg, $
 			    aacgm_coLat_rad : aacgm_coLat_deg[iiCap] * !dtor, $
 				aacgm_lon_rad : aacgm_lon_deg[iiCap] * !dtor, $
 				mlt : mlt[iiCap] }
-stop
 end

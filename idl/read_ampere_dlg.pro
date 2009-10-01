@@ -8,7 +8,8 @@ pro read_ampere_dlg, $
 		year = year, $
 		month = month, $
 		day = day, $
-		avgYrSec = yrSecAvg
+		avgYrSec = yrSecAvg, $
+		avgEpoch = avgEpoch
 
 	header	= 2
 	ndat	= file_lines ( fileName ) - header
@@ -64,6 +65,7 @@ pro read_ampere_dlg, $
 
 	cdf_epoch, epoch0, year, month, day, /compute_epoch
 	epoch	= data.sday * 1d3 + epoch0
+	avgEpoch	= mean ( epoch )
 	t_arr	= epoch
 	avgHour	= fix ( (sHr + eHr) / 2.0 )
 	avgMin	= ( (sHr + eHr) / 2.0 mod 1 ) * 60
@@ -92,7 +94,7 @@ pro read_ampere_dlg, $
 		   geog_R_km, geog_coLat_rad, geog_lon_rad, /to_sphere         
 
 
-;	Create rotation matrix from xyz to xyzGEI
+;	Create rotation matrix from xyzGEO to xyzGEI
 
 	dx	= 1.
 	dy	= 1.
@@ -124,13 +126,15 @@ pro read_ampere_dlg, $
 	rotMat[1,2,*]	= zGEI-zGEI_y
 	rotMat[2,2,*]	= zGEI-zGEI_z
 
+	rotMat	= -rotMat
+
 ;	Rotate db vectors to GEI
 	dbGEI	= rotMat ## [ $
 			[ (data.dbx) ],$
 			[ (data.dby) ],$
 			[ (data.dbz) ] ]
 
-;	Rotate from xyzGEI to sphericalGEI
+;	Convert from xyzGEI to sphericalGEI
 	geoPack_bCarSp, xGEI, yGEI, zGEI, $
 			dbGEI[*,0], dbGEI[*,1], dbGEI[*,2], $
 			bR, bTheta, bPhi

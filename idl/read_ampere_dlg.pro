@@ -139,6 +139,9 @@ pro read_ampere_dlg, $
 			dbGEI[*,0], dbGEI[*,1], dbGEI[*,2], $
 			bR, bTheta, bPhi
 
+;	so this has now been tested and it is all consistent within a minus sign
+;	with the method Colin has below
+
 ;	Colin, i don't think what you have below is correct. The geoPack_conv_coord
 ;	routine takes coordinates, not vector components. If you look at the 2,2 
 ;	component of the rotation matrix above you will see it is -1 (or 1 depending 

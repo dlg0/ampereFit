@@ -11,7 +11,8 @@ pro aacgm_grid, $
 		nLon = nLon, $
 		year = year, $
 		yrSec = yrSec, $
-		mltShift = mltShift
+		mltShift = mltShift, $
+		epoch = epoch
 
 	max_coLat	= 40.0
 	
@@ -40,7 +41,8 @@ pro aacgm_grid, $
 			xGrid_GEO, yGrid_GEO, zGrid_GEO, /to_rect
 	geoPack_conv_coord, xGrid_GEO, yGrid_GEO, zGrid_GEO, $
 		   	xGrid_GEI, yGrid_GEI, zGrid_GEI, $
-			/from_geo, /to_gei
+			/from_geo, /to_gei, $
+			epoch = fltArr ( n_elements ( xGrid_GEO[*] ) ) + epoch
 	geoPack_sphCar, xGrid_GEI, yGrid_GEI, zGrid_GEI, $
 			geiGrid_R_km, geiGrid_coLat_rad, geiGrid_lon_rad, /to_sphere
  

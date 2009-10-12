@@ -100,7 +100,7 @@ function ampere_realLegendre, theta_, K, m, $
 	if not keyword_set ( minTheta ) then minTheta = 0.0
 	if not keyword_set ( maxTheta ) then maxTheta = max ( theta_ )
 
-	nTh	= K * 10;
+	nTh	= K * 4;
 	dTh	= ( maxTheta - minTheta ) / ( nTh - 1 ) * !dtor;
 	theta	= fIndGen ( nTh ) * dTh + minTheta * !dtor;
 

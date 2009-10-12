@@ -13,14 +13,14 @@ pro schaBasisFunctions, kMax, mMax, capSize, inCoLats, inLons, $
 	;	Select appropriate functions
 
 	if keyword_set(evenSet) then begin	;	Function == 0 @ capSize
-		iiKeep = where((fix(kValues)-fix(abs(mValues))) MOD 2 EQ 0 and kValues le kMax*2 and abs(mValues) le mMax)
+		iiKeep = where((fix(kValues)-fix(abs(mValues))) MOD 2 EQ 0 and kValues le kMax and abs(mValues) le mMax)
 		outNkValues	= nkValues[iiKeep]
 		outMValues	= mValues[iiKeep]
 		outKValues	= kValues[iiKeep]
 		Pnm	= Pnm[iiKeep,1:*]
 		dPnm	= dPnm[iiKeep,1:*]
 	endif else if keyword_set(oddSet) then begin	;	Derivative == 0 @ capSize
-		iiKeep = where((fix(kValues)-fix(abs(mValues))) MOD 2 EQ 1 and kValues le kMax*2 and abs(mValues) le mMax)
+		iiKeep = where((fix(kValues)-fix(abs(mValues))) MOD 2 EQ 1 and kValues le kMax and abs(mValues) le mMax)
 		outNkValues	= nkValues[iiKeep]
 		outMValues	= mValues[iiKeep]
 		outKValues	= kValues[iiKeep]

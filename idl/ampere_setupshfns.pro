@@ -162,7 +162,7 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 	YBFnArr	= YBFnArr[0:bFnCnt-1,*];
 	brBFnArr	= brBFnArr[0:bFnCnt-1,*];
 	bThBFnArr	= bThBFnArr[0:bFnCnt-1,*];
-	bPhBFnArr	= bPhBFnArr[0:bFnCnt-1,*];
+	bPhBFnArr	= -bPhBFnArr[0:bFnCnt-1,*];
 	nArr	= nArr[0:bFnCnt-1];
 	mArr	= mArr[0:bFnCnt-1];
 	kArr	= kArr[0:bFnCnt-1];

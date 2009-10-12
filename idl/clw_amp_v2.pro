@@ -1,4 +1,5 @@
-pro clw_amp_v2
+pro clw_amp_v2, $
+		numerical = numerical
 
 ; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
 
@@ -18,7 +19,7 @@ pro clw_amp_v2
 	fileName = path + '20050515_a_RevB.dat'
 	
 	sHr = 11 
-	eHr = 15 
+	eHr = 13 
 	
 	read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	   	 yrSec = yrSec, $
@@ -44,7 +45,7 @@ pro clw_amp_v2
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
 	   	 epoch = avgEpoch
 	
-	kMax    = 26 
+	kMax    = 30 
 	mMax    = 5
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -56,36 +57,75 @@ pro clw_amp_v2
 	   	 OUTMVALUES=outMValues, $
 	   	 pnmPath = pnmPath, /evenSet
 
- 	setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
+ 	ampere_setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
 			kMax, mMax, $
 			minTheta = 0.0, $
 			maxTheta = capSize, $
-			bThBFnArr = dYkmDPhBFns2, $
-			bPhBFnArr = dYkmDthBFns2, $
+			bThBFnArr = dYkmDThBFns2, $
+			bPhBFnArr = dYkmDPhBFns2, $
 			YBFnArr = YkmBFns2, $
 			mArr = outMValues2, $
 			nArr = outNkValues2, $
 			kArr = outKValues2
-
-	!p.multi = [0,1,4]
+stop
+	!p.multi = [0,3,4]
 	!p.charSize = 2.0
 	device, decomposed = 0
+	window, 0, xSize = 1200, ySize = 800
 	!p.background = 255
 	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 2))[5],*], $
-			title = 'table lookup (m=2,k=5)', $
+			title = 'table lookup (m=2,k=5, Y)', $
 			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 2))[5],*], $
+			title = 'table lookup (m=2,k=5), dYdTh', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 2))[5],*], $
+			title = 'table lookup (m=2,k=5), dYdPh', $
+			psym=4,color=0
+	
 	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 2))[5],*], $
-			title = 'numerical (m=2,k=5)', $
+			title = 'numerical (m=2,k=5), Y', $
 			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 2))[5],*], $
+			title = 'numerical (m=2,k=5), dYdTh', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 2))[5],*], $
+			title = 'numerical (m=2,k=5), dYdPh', $
+			psym=4,color=0
+
 	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 4))[3],*], $
 			title = 'table lookup (m=4,k=3)', $
 			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 4))[3],*], $
+			title = 'table lookup (m=4,k=3)', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 4))[3],*], $
+			title = 'table lookup (m=4,k=3)', $
+			psym=4,color=0
+
 	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 4))[3],*], $
 			title = 'numerical (m=4,k=3)', $
 			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 4))[3],*], $
+			title = 'numerical (m=4,k=3)', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 4))[3],*], $
+			title = 'numerical (m=4,k=3)', $
+			psym=4,color=0
+	
 	!p.multi = 0.0
 	!p.charSize = 1.0
 	
+	if keyword_set ( numerical ) then begin
+
+		YkmBFns	= YkmBFns2
+		dYkmDthBFns	= dYkmDthBFns2
+		dYkmDphBFns	= dYkmDphBFns2
+		outNkValues	= outNkValues2
+
+	endif
+
+
 ;	Fit |dB| to dB.grad Ykm in the GEI system
 ;	-----------------------------------------	
 	
@@ -122,6 +162,25 @@ pro clw_amp_v2
 		 dYkmDthBFns=dYkmDthBFns_grid, $
 		 dYkmDphBFns=dYkmDphBFns_grid, $
 		 pnmPath = pnmPath, /evenSet
+
+	ampere_setupSHFns, 1.0, geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
+			kMax, mMax, $
+			minTheta = 0.0, $
+			maxTheta = capSize, $
+			bThBFnArr = dYkmDThBFns_grid2, $
+			bPhBFnArr = dYkmDPhBFns_grid2, $
+			YBFnArr = YkmBFns_grid2, $
+			mArr = outMValues_grid2, $
+			nArr = outNkValues_grid2, $
+			kArr = outKValues_grid2
+
+	if keyword_set ( numerical ) then begin
+
+		YkmBFns_grid	= YkmBFns_grid2
+		dYkmDthBFns_grid	= dYkmDthBFns_grid2
+		dYkmDphBFns_grid	= dYkmDphBFns_grid2
+
+	endif
 
   	jParAACGM	= (YkmBFns_grid ## $
          (coeffs*(-outNkValues*(outNkValues+1.0))))$

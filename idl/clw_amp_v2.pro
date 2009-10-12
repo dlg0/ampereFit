@@ -18,7 +18,7 @@ pro clw_amp_v2
 	fileName = path + '20050515_a_RevB.dat'
 	
 	sHr = 11 
-	eHr = 13 
+	eHr = 15 
 	
 	read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	   	 yrSec = yrSec, $
@@ -46,15 +46,45 @@ pro clw_amp_v2
 	
 	kMax    = 26 
 	mMax    = 5
-	
+
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
-	        YkmBFns=YkmBFns, $
+	     YkmBFns=YkmBFns, $
 	   	 dYkmDthBFns=dYkmDthBFns, $
 	   	 dYkmDphBFns=dYkmDphBFns, $
-	        OUTNKVALUES=outNkValues, $
+	     OUTNKVALUES=outNkValues, $
 	   	 OUTKVALUES=outKValues, $
 	   	 OUTMVALUES=outMValues, $
 	   	 pnmPath = pnmPath, /evenSet
+
+ 	setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
+			kMax, mMax, $
+			minTheta = 0.0, $
+			maxTheta = capSize, $
+			bThBFnArr = dYkmDPhBFns2, $
+			bPhBFnArr = dYkmDthBFns2, $
+			YBFnArr = YkmBFns2, $
+			mArr = outMValues2, $
+			nArr = outNkValues2, $
+			kArr = outKValues2
+
+	!p.multi = [0,1,4]
+	!p.charSize = 2.0
+	device, decomposed = 0
+	!p.background = 255
+	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 2))[5],*], $
+			title = 'table lookup (m=2,k=5)', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 2))[5],*], $
+			title = 'numerical (m=2,k=5)', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 4))[3],*], $
+			title = 'table lookup (m=4,k=3)', $
+			psym=4,color=0
+	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 4))[3],*], $
+			title = 'numerical (m=4,k=3)', $
+			psym=4,color=0
+	!p.multi = 0.0
+	!p.charSize = 1.0
 	
 ;	Fit |dB| to dB.grad Ykm in the GEI system
 ;	-----------------------------------------	

@@ -15,8 +15,8 @@ h3. output
 
 Right now the executable is clw_amp_v2 and the following output should be generated
 
-!http://github.com/dlg0/ampereFit/blob/master/figures/db.png!
-!http://github.com/dlg0/ampereFit/blob/master/figures/fac.png!
+!http://github.com/dlg0/ampereFit/raw/master/figures/db.png!
+!http://github.com/dlg0/ampereFit/raw/master/figures/fac.png!
 
 
 

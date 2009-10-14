@@ -1,11 +1,21 @@
 h2. requirements
 
-* AACGM dlm
-* Geopack dlm
+* "AACGM dlm":http://dysprosium.jhuapl.edu/idl_aacgm
+* "Geopack dlm":http://dysprosium.jhuapl.edu/idl_geopack/
 
 h2. notes
 
 Due to me only having a 32 bit version of one of the dlms above, check this, i have to run idl in 32 bit mode, i.e., 
 
 @idl -32@
+
+also, due to some limitation with the AACGM dlm, you have to run the code from within the idl folder of this repo. Have to Haje to fix that.
+
+h3. output
+
+Right now the executable is clw_amp_v2 and the following output should be generated
+
+!http://
+
+
 

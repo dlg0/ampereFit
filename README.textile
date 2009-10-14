@@ -7,5 +7,5 @@ h2. notes
 
 Due to me only having a 32 bit version of one of the dlms above, check this, i have to run idl in 32 bit mode, i.e., 
 
-&idl -32@
+@idl -32@
 

@@ -15,7 +15,7 @@ Pro plt_dat,IrCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym, $
  nlatlab=5
  CLatMin=50.
  mmg=7.0
- DMag=500.
+ DMag=400.
  XSh=0.0
  YSh=0.0
  x=DblArr(nlatlab,180)

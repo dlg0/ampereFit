@@ -3,7 +3,7 @@ pro clw_amp_v2, $
 
 ; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
 
-	if strCmp ( !version.os, 'linux' ) then begin
+	if strCmp ( !version.os, 'linux' ) or strCmp ( !version.os, 'darwin' ) then begin
 		plotDev = 'X'
 		path	= '~/code/ampereFit/idl/'
 		pnmPath	= path + 'pnmSavs/pnmSav'
@@ -18,17 +18,33 @@ pro clw_amp_v2, $
 	;fileName = path + '20080105_a_RevA.dat'
 	fileName = path + '20050515_a_RevB.dat'
 	
-	sHr = 11 
-	eHr = 13 
+	sHr = 23.1 
+	eHr = 23.45
 	
-	read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
-	   	 yrSec = yrSec, $
-	   	 year = year, $
-	   	 month = month, $
-	   	 day = day, $
-		 avgYrSec = avgYrSec, $
-	   	 avgEpoch = avgEpoch
+	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
+	;   	 yrSec = yrSec, $
+	;   	 year = year, $
+	;   	 month = month, $
+	;   	 day = day, $
+	;	 avgYrSec = avgYrSec, $
+	;   	 avgEpoch = avgEpoch
+
+    year    = 2005
+    month   = 1
+    day     = 1
 	
+    read_ampere_sav, $
+        savFileName = '~/code/ampereFit/data/Amp_invert.sav', $
+        capSize = capSize, $
+        dataOut = data, $
+        sHr = sHr, $
+        eHr = eHr, $
+        year = year, $
+        month = month, $
+        day = day, $
+        avgYrSec = avgYrSec, $
+        avgEpoch = avgEpoch
+
 	nLatGrid	= 20
 	nLonGrid	= 24 
 
@@ -44,8 +60,10 @@ pro clw_amp_v2, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
 	   	 epoch = avgEpoch
+    
+    mltShift    = mltShift[0]
 	
-	kMax    = 30 
+	kMax    = 40 
 	mMax    = 5
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -55,7 +73,7 @@ pro clw_amp_v2, $
 	     OUTNKVALUES=outNkValues, $
 	   	 OUTKVALUES=outKValues, $
 	   	 OUTMVALUES=outMValues, $
-	   	 pnmPath = pnmPath, /evenSet
+	   	 pnmPath = pnmPath;, /evenSet
 
  	ampere_setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
 			kMax, mMax, $
@@ -67,7 +85,7 @@ pro clw_amp_v2, $
 			mArr = outMValues2, $
 			nArr = outNkValues2, $
 			kArr = outKValues2
-stop
+
 	!p.multi = [0,3,4]
 	!p.charSize = 2.0
 	device, decomposed = 0
@@ -161,7 +179,7 @@ stop
          YkmBFns=YkmBFns_grid, $
 		 dYkmDthBFns=dYkmDthBFns_grid, $
 		 dYkmDphBFns=dYkmDphBFns_grid, $
-		 pnmPath = pnmPath, /evenSet
+		 pnmPath = pnmPath;, /evenSet
 
 	ampere_setupSHFns, 1.0, geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
 			kMax, mMax, $
@@ -199,7 +217,6 @@ stop
 		epoch = avgEpoch, $
 		/dot
 
-
 ;	plot stuff
 ;	----------
 
@@ -213,7 +230,7 @@ stop
 
 	!p.multi = [0,2,2]
 
-	window, winnum, xSize = 600, ySize = 600
+	window, winnum, xSize = 1200, ySize = 1200
 	winNum++
 
 	plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $

@@ -9,7 +9,9 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 	DLON = dLon, $
 	mArr = mArr, $
 	nArr = nArr, $
-	kArr = kArr
+	kArr = kArr, $
+    bc1 = bc1, $
+    bc2 = bc2
 
 	;r	= 1d0;
 	rE	= 1d0;
@@ -67,18 +69,32 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 			kVals = kValsBC2, highEndBC = 1 , $
 			minTheta = minTheta, maxTheta = maxTheta );
 
-		;legendreFns	= [ [ legendreFnsBC1 ], [ legendreFnsBC2 ] ];
-		;dLegendreFns	= [ [ dLegendreFnsBC1 ], [ dLegendreFnsBC2 ] ];
+        if keyword_set ( bc1 ) then begin	
 
-		legendreFns	= legendreFnsBC1;
-		dLegendreFns	= dLegendreFnsBC1;
+		    legendreFns	= legendreFnsBC1;
+		    dLegendreFns	= dLegendreFnsBC1;
 
-		;nVals	= [ nValsBC1, nValsBC2 ];
-		;kVals	= [	kValsBC1, kValsBC2 ];
-	
-		nVals	= nValsBC2;
-		kVals	= kValsBC2;
-	
+		    nVals	= nValsBC1;
+		    kVals	= kValsBC1;
+        
+        endif else if keyword_set ( bc2 ) then begin
+
+		    legendreFns	= legendreFnsBC2;
+		    dLegendreFns	= dLegendreFnsBC2;
+
+		    nVals	= nValsBC2;
+		    kVals	= kValsBC2;
+    
+        endif else begin
+
+		    legendreFns	= [ [ legendreFnsBC1 ], [ legendreFnsBC2 ] ];
+		    dLegendreFns	= [ [ dLegendreFnsBC1 ], [ dLegendreFnsBC2 ] ];
+
+		    nVals	= [ nValsBC1, nValsBC2 ];
+		    kVals	= [	kValsBC1, kValsBC2 ];
+    
+        endelse
+
 		print, '+++++++++++++++++++++++'
 		print, n_elements ( kVals )
 		print, maxK - abs ( m)

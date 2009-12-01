@@ -7,7 +7,8 @@ pro read_ampere_sav, $
     month = month, $
     day = day, $
     avgYrSec = yrSecAvg, $
-    avgEpoch = avgEpoch
+    avgEpoch = avgEpoch, $
+    south = south
     
 
     if not keyword_set ( savFileName ) then $
@@ -51,12 +52,13 @@ pro read_ampere_sav, $
             gei_R_km_TMP, gei_coLat_rad_TMP, gei_lon_rad_TMP, $
              /to_sphere         ; km -> km, radians
 
-    gei_coLat_rad_Tmp   = !pi - gei_coLat_rad_Tmp
+    if keyword_set ( south ) then $
+        gei_coLat_rad_Tmp   = !pi - gei_coLat_rad_Tmp
 
     iiTime  = where ( x_axis_frac_hour ge sHr $
                         and x_axis_frac_hour le eHr $
                         and gei_coLat_rad_TMP lt capSize * !dtor, iiTimeCnt )
-stop
+
     data    = replicate ( data_struct, iiTimeCnt )
 
     data.px = (pos_ECI_total[0,*])[iiTime]*1d-3
@@ -76,7 +78,8 @@ stop
             gei_R_km, gei_coLat_rad, gei_lon_rad, $
              /to_sphere         ; km -> km, radians
 
-    gei_coLat_rad   = !pi - gei_coLat_rad
+    if keyword_set ( south ) then $
+        gei_coLat_rad   = !pi - gei_coLat_rad
 
 ;   get spherical GEI vector
 
@@ -141,6 +144,9 @@ stop
 	geoPack_sphCar, xGEO, yGEO, zGEO, $
             geog_R_km, geog_coLat_rad, geog_lon_rad, $
              /to_sphere         ; km -> km, radians
+
+    if keyword_set ( south ) then $
+        geog_coLat_rad = !pi - geog_coLat_rad
 
 ;   get AACGM coords
 

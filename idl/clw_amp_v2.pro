@@ -1,5 +1,6 @@
 pro clw_amp_v2, $
-		numerical = numerical
+		numerical = numerical, $
+        plot_bFns = plot_bFns
 
 ; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
 
@@ -29,6 +30,7 @@ pro clw_amp_v2, $
 	;	 avgYrSec = avgYrSec, $
 	;   	 avgEpoch = avgEpoch
 
+    ;   need to replace this with info from the file!
     year    = 2005
     month   = 1
     day     = 1
@@ -43,7 +45,8 @@ pro clw_amp_v2, $
         month = month, $
         day = day, $
         avgYrSec = avgYrSec, $
-        avgEpoch = avgEpoch
+        avgEpoch = avgEpoch, $
+        south = 1
 
 	nLatGrid	= 20
 	nLonGrid	= 24 
@@ -86,53 +89,56 @@ pro clw_amp_v2, $
 			nArr = outNkValues2, $
 			kArr = outKValues2
 
-	!p.multi = [0,3,4]
-	!p.charSize = 2.0
-	device, decomposed = 0
-	window, 0, xSize = 1200, ySize = 800
-	!p.background = 255
-	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 2))[5],*], $
-			title = 'table lookup (m=2,k=5, Y)', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 2))[5],*], $
-			title = 'table lookup (m=2,k=5), dYdTh', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 2))[5],*], $
-			title = 'table lookup (m=2,k=5), dYdPh', $
-			psym=4,color=0
-	
-	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 2))[5],*], $
-			title = 'numerical (m=2,k=5), Y', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 2))[5],*], $
-			title = 'numerical (m=2,k=5), dYdTh', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 2))[5],*], $
-			title = 'numerical (m=2,k=5), dYdPh', $
-			psym=4,color=0
+    if keyword_set ( plot_bFns ) then begin
+	    !p.multi = [0,3,4]
+	    !p.charSize = 2.0
+	    device, decomposed = 0
+	    window, 0, xSize = 1200, ySize = 800
+	    !p.background = 255
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 2))[5],*], $
+	    		title = 'table lookup (m=2,k=5, Y)', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 2))[5],*], $
+	    		title = 'table lookup (m=2,k=5), dYdTh', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 2))[5],*], $
+	    		title = 'table lookup (m=2,k=5), dYdPh', $
+	    		psym=4,color=0
+	    
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    		title = 'numerical (m=2,k=5), Y', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    		title = 'numerical (m=2,k=5), dYdTh', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    		title = 'numerical (m=2,k=5), dYdPh', $
+	    		psym=4,color=0
 
-	plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 4))[3],*], $
-			title = 'table lookup (m=4,k=3)', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 4))[3],*], $
-			title = 'table lookup (m=4,k=3)', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 4))[3],*], $
-			title = 'table lookup (m=4,k=3)', $
-			psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 4))[3],*], $
+	    		title = 'table lookup (m=4,k=3)', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 4))[3],*], $
+	    		title = 'table lookup (m=4,k=3)', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 4))[3],*], $
+	    		title = 'table lookup (m=4,k=3)', $
+	    		psym=4,color=0
 
-	plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 4))[3],*], $
-			title = 'numerical (m=4,k=3)', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 4))[3],*], $
-			title = 'numerical (m=4,k=3)', $
-			psym=4,color=0
-	plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 4))[3],*], $
-			title = 'numerical (m=4,k=3)', $
-			psym=4,color=0
-	
-	!p.multi = 0.0
-	!p.charSize = 1.0
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 4))[3],*], $
+	    		title = 'numerical (m=4,k=3)', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 4))[3],*], $
+	    		title = 'numerical (m=4,k=3)', $
+	    		psym=4,color=0
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 4))[3],*], $
+	    		title = 'numerical (m=4,k=3)', $
+	    		psym=4,color=0
+	    
+	    !p.multi = 0.0
+	    !p.charSize = 1.0
+
+    endif
 	
 	if keyword_set ( numerical ) then begin
 
@@ -154,11 +160,21 @@ pro clw_amp_v2, $
 	        n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
 	
 	bFuncs  = kTh*dYkmDphBFns + kPh*dYkmDthBFns
+
+    soln    = la_least_squares ( bFuncs, dBMag , status = stat )
+    print, 'status: ', stat
+    stop
+
+    print, 'doing the transpose and ## for svd ...'
 	alpha   = transpose(bFuncs) ## bFuncs
 	beta_   = transpose( transpose(bFuncs) ## dBMag)
-	la_svd, alpha, w, u, v, status=svdStatus
+
+    print,'running la_svd ...'
+    print, 'alpha is ', n_elements ( alpha[*] ) * 16 / 1e6, 'MB' 
+	la_svd, alpha, w, u, v, status = svdStatus
 	kk      = where(w lt max ( w ) * 1d-5, kkcnt)
 	if kkcnt gt 0 then w[kk]=0.0
+    print, 'running svSol ...'
 	coeffs  = svsol(u, w, v, beta_)
 	
 	fit_dBTheta     = dYkmDPhBFns ## coeffs

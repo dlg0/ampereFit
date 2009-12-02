@@ -19,8 +19,8 @@ pro clw_amp_v2, $
 	;fileName = path + '20080105_a_RevA.dat'
 	fileName = path + '20050515_a_RevB.dat'
 	
-	sHr = 23.1 
-	eHr = 23.45
+	sHr = 22.45 
+	eHr = 22.6
 	
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $
@@ -31,12 +31,11 @@ pro clw_amp_v2, $
 	;   	 avgEpoch = avgEpoch
 
     ;   need to replace this with info from the file!
-    year    = 2005
-    month   = 1
-    day     = 1
+    
+    savFileName = '~/code/ampereFit/data/20091022Amp_invert.sav'
 	
     read_ampere_sav, $
-        savFileName = '~/code/ampereFit/data/Amp_invert.sav', $
+        savFileName = savFileName, $
         capSize = capSize, $
         dataOut = data, $
         sHr = sHr, $
@@ -66,7 +65,7 @@ pro clw_amp_v2, $
     
     mltShift    = mltShift[0]
 	
-	kMax    = 40 
+	kMax    = 30 
 	mMax    = 5
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -76,7 +75,8 @@ pro clw_amp_v2, $
 	     OUTNKVALUES=outNkValues, $
 	   	 OUTKVALUES=outKValues, $
 	   	 OUTMVALUES=outMValues, $
-	   	 pnmPath = pnmPath;, /evenSet
+	   	 pnmPath = pnmPath;, $
+         ;/evenSet
 
  	ampere_setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
 			kMax, mMax, $
@@ -87,7 +87,8 @@ pro clw_amp_v2, $
 			YBFnArr = YkmBFns2, $
 			mArr = outMValues2, $
 			nArr = outNkValues2, $
-			kArr = outKValues2
+			kArr = outKValues2;, $
+            ;/bc2
 
     if keyword_set ( plot_bFns ) then begin
 	    !p.multi = [0,3,4]
@@ -95,44 +96,49 @@ pro clw_amp_v2, $
 	    device, decomposed = 0
 	    window, 0, xSize = 1200, ySize = 800
 	    !p.background = 255
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 2))[5],*], $
+
+        m1  = 0
+        k1  = 6
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m1 and outkValues eq k1),*], $
 	    		title = 'table lookup (m=2,k=5, Y)', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 2))[5],*], $
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues eq m1 and outkValues eq k1),*], $
 	    		title = 'table lookup (m=2,k=5), dYdTh', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 2))[5],*], $
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m1 and outkValues eq k1),*], $
 	    		title = 'table lookup (m=2,k=5), dYdPh', $
 	    		psym=4,color=0
 	    
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
 	    		title = 'numerical (m=2,k=5), Y', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[where(outmvalues2 eq m1 and outkValues2 eq k1 ),*], $
 	    		title = 'numerical (m=2,k=5), dYdTh', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 2))[5],*], $
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[where(outmvalues2 eq m1 and outkValues2 eq k1 ),*], $
 	    		title = 'numerical (m=2,k=5), dYdPh', $
 	    		psym=4,color=0
 
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns[(where(outmvalues eq 4))[3],*], $
-	    		title = 'table lookup (m=4,k=3)', $
+        m2  = 0 
+        k2  = 8 
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	    		title = 'table lookup (m=0,k=7)', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[(where(outmvalues eq 4))[3],*], $
-	    		title = 'table lookup (m=4,k=3)', $
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	    		title = 'table lookup (m=0,k=7)', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[(where(outmvalues eq 4))[3],*], $
-	    		title = 'table lookup (m=4,k=3)', $
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	    		title = 'table lookup (m=0,k=7)', $
 	    		psym=4,color=0
 
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[(where(outmvalues2 eq 4))[3],*], $
-	    		title = 'numerical (m=4,k=3)', $
+	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[where(outmvalues2 eq m2 and outkValues2 eq k2),*], $
+	    		title = 'numerical (m=0,k=7)', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[(where(outmvalues2 eq 4))[3],*], $
-	    		title = 'numerical (m=4,k=3)', $
+	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns2[where(outmvalues2 eq m2 and outkValues2 eq k2),*], $
+	    		title = 'numerical (m=0,k=7)', $
 	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[(where(outmvalues2 eq 4))[3],*], $
-	    		title = 'numerical (m=4,k=3)', $
+	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[where(outmvalues2 eq m2 and outkValues2 eq k2),*], $
+	    		title = 'numerical (m=0,k=7)', $
 	    		psym=4,color=0
 	    
 	    !p.multi = 0.0
@@ -142,10 +148,11 @@ pro clw_amp_v2, $
 	
 	if keyword_set ( numerical ) then begin
 
-		YkmBFns	= YkmBFns2
-		dYkmDthBFns	= dYkmDthBFns2
-		dYkmDphBFns	= dYkmDphBFns2
-		outNkValues	= outNkValues2
+        ;iiSort  = sort ( outNkValues2 )
+		YkmBFns	= temporary ( YkmBFns2);[iiSort,*] )
+		dYkmDthBFns	= temporary ( dYkmDthBFns2);[iiSort,*] )
+		dYkmDphBFns	= temporary ( dYkmDphBFns2);[iiSort,*] )
+		outNkValues	= temporary ( outNkValues2);[iiSort] )
 
 	endif
 
@@ -154,38 +161,51 @@ pro clw_amp_v2, $
 ;	-----------------------------------------	
 	
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
-	kTh     = transpose(rebin(data.dBTheta/dBMag,$
-	       n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
-	kPh     = transpose(rebin(data.dBPhi/dBMag,$
-	        n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
-	
-	bFuncs  = kTh*dYkmDphBFns + kPh*dYkmDthBFns
+	;kTh     = transpose(rebin(data.dBTheta/dBMag,$
+	;       n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
+	;kPh     = transpose(rebin(data.dBPhi/dBMag,$
+	;        n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
+	;
+	;bFuncs  = kTh * dYkmDPhBFns + kPh * dYkmDThBFns
 
-    soln    = la_least_squares ( bFuncs, dBMag , status = stat )
-    print, 'status: ', stat
-    stop
+    bFuncs  = temporary ( $
+                [ [ dYkmDThBfns, -dYkmDPhBfns ], $
+                  [ dYkmDPhBfns,  dYkmDthBfns ] ] )
 
-    print, 'doing the transpose and ## for svd ...'
-	alpha   = transpose(bFuncs) ## bFuncs
-	beta_   = transpose( transpose(bFuncs) ## dBMag)
+    print, 'bFuncs is', n_elements ( bFuncs[*] ) * 16 / ( 1024.0^2 ), 'MB' 
+    coeffs_    = la_least_squares ( bFuncs, [data.dbTheta, data.dbPhi], $
+                    status = stat, $
+                    method = 3, $
+                    /double, $
+                    rank = rank )
+    if stat ne 0 then begin
+        print, 'ERROR: la_least_squares threw an error code: ', stat
+    endif
 
-    print,'running la_svd ...'
-    print, 'alpha is ', n_elements ( alpha[*] ) * 16 / 1e6, 'MB' 
-	la_svd, alpha, w, u, v, status = svdStatus
-	kk      = where(w lt max ( w ) * 1d-5, kkcnt)
-	if kkcnt gt 0 then w[kk]=0.0
-    print, 'running svSol ...'
-	coeffs  = svsol(u, w, v, beta_)
+    ;print, 'doing the transpose and ## for svd ...'
+	;alpha   = transpose(bFuncs) ## bFuncs
+	;beta_   = transpose( transpose(bFuncs) ## dBMag)
+
+    ;print,'running la_svd ...'
+	;la_svd, alpha, w, u, v, status = svdStatus
+	;kk      = where(w lt max ( w ) * 1d-5, kkcnt)
+	;if kkcnt gt 0 then w[kk]=0.0
+    ;print, 'running svSol ...'
+	;coeffs  = svsol(u, w, v, beta_)
+
+    fit = bFuncs ## coeffs_
 	
-	fit_dBTheta     = dYkmDPhBFns ## coeffs
-	fit_dBPhi       = dYkmDThBFns ## coeffs
-	fit_dBMag       = bFuncs ## coeffs
-	
-	Re=6.371d6
+	;fit_dBTheta     = dYkmDPhBFns ## coeffs_
+	;fit_dBPhi       = dYkmDThBFns ## coeffs_
+	fit_dBTheta     = fit[0:n_elements(dBMag)-1] 
+	fit_dBPhi       = fit[n_elements(dBMag):*] 
+	;fit_dBMag       = bFuncs ## coeffs_
+
+	Re    = 6.371d6
 	R     = Re + 780.0d3
 	u0    = 4.0*!dpi*1.0d-7
-	jpar  = (YkmBFns ## $
-	        (coeffs*(-outNkValues*(outNkValues+1.0))))$
+	jPar  = (YkmBFns ## $
+	        (coeffs_[0:n_elements(YkmBFns[*,0])-1]*(-outNkValues*(outNkValues+1.0))))$
 	                        /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
 
 ;	generate basis fns at regular grid
@@ -195,7 +215,8 @@ pro clw_amp_v2, $
          YkmBFns=YkmBFns_grid, $
 		 dYkmDthBFns=dYkmDthBFns_grid, $
 		 dYkmDphBFns=dYkmDphBFns_grid, $
-		 pnmPath = pnmPath;, /evenSet
+		 pnmPath = pnmPath;,$
+         ;/oddSet
 
 	ampere_setupSHFns, 1.0, geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
 			kMax, mMax, $
@@ -206,23 +227,32 @@ pro clw_amp_v2, $
 			YBFnArr = YkmBFns_grid2, $
 			mArr = outMValues_grid2, $
 			nArr = outNkValues_grid2, $
-			kArr = outKValues_grid2
+			kArr = outKValues_grid2;, $
+            ;/bc2
 
 	if keyword_set ( numerical ) then begin
 
-		YkmBFns_grid	= YkmBFns_grid2
-		dYkmDthBFns_grid	= dYkmDthBFns_grid2
-		dYkmDphBFns_grid	= dYkmDphBFns_grid2
+		YkmBFns_grid	= temporary ( YkmBFns_grid2 )
+		dYkmDthBFns_grid	= temporary ( dYkmDthBFns_grid2 )
+		dYkmDphBFns_grid	= temporary ( dYkmDphBFns_grid2 )
 
 	endif
 
+    bFuncs_grid  = temporary ( $
+                    [ [ dYkmDThBfns_grid, -dYkmDPhBfns_grid ], $
+                      [ dYkmDPhBfns_grid,  dYkmDthBfns_grid ] ] )
+
+
   	jParAACGM	= (YkmBFns_grid ## $
-         (coeffs*(-outNkValues*(outNkValues+1.0))))$
+         (coeffs_[n_elements(YkmBFns[*,0]):*]*(-outNkValues*(outNkValues+1.0))))$
                          /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
 	jParAACGM	= reform ( jParAACGM, nLatGrid, nLonGrid )
 
-   	dBTheta_GEI_grid     = dYkmDPhBFns_grid ## coeffs
- 	dBPhi_GEI_grid       = dYkmDThBFns_grid ## coeffs
+    fit_grid    = bFuncs_grid ## coeffs_
+   	;dBTheta_GEI_grid     = dYkmDPhBFns_grid ## coeffs_
+ 	;dBPhi_GEI_grid       = dYkmDThBFns_grid ## coeffs_
+   	dBTheta_GEI_grid     = fit[0:n_elements(dBMag)-1] 
+ 	dBPhi_GEI_grid       = fit[n_elements(dBMag):*]
  
 	rotate_gei_to_aacgm, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
 		aacgmGrid_R_km[*], aacgmGrid_coLat_deg[*]*!dtor, aacgmGrid_lon_deg[*]*!dtor, $
@@ -246,12 +276,13 @@ pro clw_amp_v2, $
 
 	!p.multi = [0,2,2]
 
-	window, winnum, xSize = 1200, ySize = 1200
+	window, winnum, xSize = 800, ySize = 800
 	winNum++
 
 	plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
 		n_elements ( data.gei_coLat_rad ), -data.dbTheta, data.dbPhi, [1,1], [1,2], $
-		title = 'GEI - Raw Data'
+		title = 'GEI - Raw Data', $
+        satNu = data.iSat
 	plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
 	         n_elements ( data.gei_coLat_rad ), -fit_dBTheta, fit_dBPhi, [1,1], [1,2], $
 			 title = 'GEI - Fitted Data @ raw locs'
@@ -272,15 +303,16 @@ pro clw_amp_v2, $
 	!p.multi = [0,2,2]
 	!p.font = 0
 
-
 	map_set, 90, 0, 0, /ortho, /iso, $
 	    limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
 	    /noborder, /advance, title = 'jPar GEI'
-	jLevels = ( fIndGen ( 21 ) - 10 ) * 0.5;2.0
+	jLevels = ( fIndGen ( 21 ) - 10 ) * 0.2;2.0
 	colors  = bytScl ( jLevels, top = 253 ) + 1
 	oldbck=!p.background
 	!p.background=0
 	jpar=reform(jpar)
+    triangulate, data.gei_lon_rad*!radeg, 90-data.gei_colat_rad*!radeg, $
+        tri, sphere = sphere
 	contour, jPar, data.gei_lon_rad*!radeg, 90.0-data.gei_coLat_rad*!radeg, $
 	   	 	c_labels=fltarr(n_elements(jLevels))+1,$
 	       	/irreg, /over, levels = jLevels, $

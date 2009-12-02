@@ -8,7 +8,34 @@
 
 
 Pro plt_dat,IrCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym, $
-		title = title
+		title = title, $
+        satNu = satNu
+
+if keyword_set ( satNu ) then begin
+
+    allowedColors   = [ 0,1,3,7,8]
+    presentColorIndex    = 0
+    satColors   = satNu * 0
+    satMatch    = [[presentColorIndex],[satNu[0]]] 
+    for i = 0, n_elements ( satNu ) - 1 do begin
+
+        iiMatch = where ( satMatch[*,1] eq satNu[i], iiMatchCnt )
+        if iiMatchCnt eq 0 then begin
+    
+            ++presentColorIndex 
+            satMatch = [[satMatch[*,0], presentColorIndex mod 5], $
+                        [satMatch[*,1], satNu[i] ] ]
+            satColors[i]    = allowedColors[presentColorIndex mod 5]
+
+        endif else begin
+
+            satColors[i]    = allowedColors[satMatch[iiMatch,0]]
+
+        endelse            
+
+    endfor
+
+endif
 
 ncol    = 256
 col     = 0
@@ -16,7 +43,7 @@ IrCol   = col
 nlatlab = 5
 CLatMin = 50.
 mmg     = 7.0
-DMag    = 400.
+DMag    = 200.
 XSh     = 0.0
 YSh     = 0.0
 x       = dblArr(nlatlab,180)
@@ -47,12 +74,15 @@ for i=0,nlatlab-2 do $
         color=0
 
 loadct, 1
+if keyword_set ( satNu ) then loadct, 12 
 
 for ii=0,nirid-1 do begin
 
     SLon=IrMLT(ii);+180.                ; Shifted coords Lon,Lat
     SLat=IrCLat(ii)
-    ang=(SLon-90.)*!pi/180.
+    ;ang=(SLon-90.)*!pi/180.
+    ang=(SLon-90.0)*!pi/180.
+
     Xs=SLat*cos(ang)              ; Shifted coords, X,Y
     Ys=SLat*sin(ang)
 
@@ -79,32 +109,38 @@ for ii=0,nirid-1 do begin
 
         mgn=sqrt((x0-x1)^2+(y0-y1)^2)
 
-        irCol   = 255 - ( bytScl ( mgn, top = 253, min = 0, max = 10 ) + 1 )
+        if keyword_set ( satNu ) then begin
+            loadct, satColors[ii], /silent
+            irCol   = 255 - ( bytScl ( mgn, top = 200, min = 0, max = 10 ) + 1 )
+        endif else begin
+            irCol   = 255 - ( bytScl ( mgn, top = 200, min = 0, max = 10 ) + 1 )
+        endelse
+
         plots,[x0,x1],[y0,y1],$
             color=IrCol,$
             thick=1
 
-        ;; Now do arrow heads
+        ; Now do arrow heads
 
-        ;if (mgn gt 0.) then begin
+        if (mgn gt 0.) then begin
 
-        ;    xu=(x0-x1)/mgn
-        ;    yu=(y0-y1)/mgn
-        ;    x2=0.4*xu-0.4*yu
-        ;    y2=0.4*xu+0.4*yu
+            xu=(x0-x1)/mgn
+            yu=(y0-y1)/mgn
+            x2=0.4*xu-0.4*yu
+            y2=0.4*xu+0.4*yu
 
-        ;    plots,[x1,x1+x2],[y1,y1+y2],$
-        ;        color=IrCol,$
-        ;        thick=1
+            plots,[x1,x1+x2],[y1,y1+y2],$
+                color=IrCol,$
+                thick=1
 
-        ;    x2=0.4*xu+0.4*yu
-        ;    y2=-0.4*xu+0.4*yu
+            x2=0.4*xu+0.4*yu
+            y2=-0.4*xu+0.4*yu
 
-        ;    plots,[x1,x1+x2],[y1,y1+y2],$
-        ;        color=IrCol,$
-        ;        thick=1
+            plots,[x1,x1+x2],[y1,y1+y2],$
+                color=IrCol,$
+                thick=1
 
-        ;endif
+        endif
 
     endif   ; If within Lat Range
 

@@ -12,8 +12,14 @@ pro read_ampere_sav, $
     
 
     if not keyword_set ( savFileName ) then $
-        savFileName = '~/code/ampereFit/data/Amp_invert.sav'
+        savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
     if not keyword_set ( capSize ) then capSize = 40 * !dtor
+
+	dateStr=''
+	reads, strmid(file_baseName ( savFileName ),0,8), $
+			year, month, day, $
+			format='(i4,i2,i2)'
+
 
     restore, savFileName
 
@@ -35,6 +41,7 @@ pro read_ampere_sav, $
     ;   B_eci is the same dimension as pos_eci but has delta B in nT
 
     data_struct = { ipln: 0, $
+                    isat: 0, $
                     utc: 0d0, $
                     px: 0d0, $
                     py: 0d0, $
@@ -66,6 +73,7 @@ pro read_ampere_sav, $
     data.pz = (pos_ECI_total[2,*])[iiTime]*1d-3
 
     data.ipln   = plane_number_total[iiTime]
+    data.isat   = pseudoSVNum_total[iiTime]
     data.utc    = x_axis_frac_hour[iiTime]
 
     data.dbx    = (B_ECI[0,*])[iiTime]
@@ -160,10 +168,6 @@ pro read_ampere_sav, $
 	if iiNegCnt gt 0 then $
         aacgm_lon_deg[iiNeg] = aacgm_lon_deg[iiNeg] + 360 
 
-;   select out data from capSize and create output data structure
-
-	;iiCap	= where ( gei_coLat_rad lt capSize * !dtor, iiCapCnt )
-
 	dataOut	= { gei_R_km : gei_R_km, $
 				gei_coLat_rad : gei_coLat_rad, $
 				gei_lon_rad : gei_lon_rad, $
@@ -175,7 +179,8 @@ pro read_ampere_sav, $
 				geog_lon_rad : geog_lon_rad, $
 			    aacgm_coLat_rad : aacgm_coLat_deg * !dtor, $
 				aacgm_lon_rad : aacgm_lon_deg * !dtor, $
-				mlt : mlt } 
-
-    stop
+				mlt : mlt, $
+                iPln : data.iPln, $
+                iSat : data.iSat } 
+    
 end

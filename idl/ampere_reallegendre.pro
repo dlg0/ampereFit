@@ -104,80 +104,89 @@ function ampere_realLegendre, theta_, K, m, $
 	dTh	= ( maxTheta - minTheta ) / ( nTh - 1 ) * !dtor;
 	theta	= fIndGen ( nTh ) * dTh + minTheta * !dtor;
 
-	coeffMatrix	= dblArr ( nTh, nTh );
+	coeffMatrix	= dblArr ( nTh-2, nTh-2 );
 
-	for j = 1, nTh - 2 do begin
+	for j = 0, nTh - 3 do begin
+
+        if j gt 0 and j lt nTh-3 then begin
 	
 			term1	= 1d0 / ( dTh^2 ) $
-				- cos ( theta[j] ) / sin ( theta[j] ) / ( 2d0 * dTh );
+				- cos ( theta[j+1] ) / sin ( theta[j+1] ) / ( 2d0 * dTh );
 			
 			term2	= 1d0 / ( dTh^2 ) $
-				+ cos ( theta[j] ) / sin ( theta[j] ) / ( 2d0 * dTh );
+				+ cos ( theta[j+1] ) / sin ( theta[j+1] ) / ( 2d0 * dTh );
 
 			term3	= - 2d0 / ( dTh^2 ) $
-				- m^2 / ( sin ( theta[j] )^2 );
+				- m^2 / ( sin ( theta[j+1] )^2 );
 
 			coeffMatrix[j,j]	= term3;
 			coeffMatrix[j-1,j]	= term1;
 			coeffMatrix[j+1,j]	= term2;
 
-		if j eq 1 then begin
+        endif
+
+		if j eq 0 then begin
 			
-			if highEndBC eq 1 then begin
+			if highEndBC eq 1 or m eq 0 then begin
 
-					term0	= -1d0 / dTh^2 $
-						- cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh ) $
-						- m^2 / sin ( theta[j] )^2;
+                    p0  = 1 / dTh^2 - cos ( theta[j+1] ) / sin ( theta[j+1] ) / ( 2 * dTh )
+					term0	= -2d0 / dTh^2 $
+						+ 4.0 / 3.0 * p0 $
+						- m^2 / sin ( theta[j+1] )^2;
 					term1	= 1d0 / dTh^2 $
-						+ cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh );
+						+ cos ( theta[j+1] ) / ( 2d0 * sin ( theta[j+1] ) * dTh ) $
+                        - 1.0 / 3.0 * p0;
 
 					coeffMatrix[j,j]	= term0;
 					coeffMatrix[j+1,j]	= term1;
-					coeffMatrix[j-1,j]	= 0.0;
 
-			endif
+			endif else begin
 
-			if highEndBC eq 2 AND m eq 0 then begin
-
-					term0	= -1d0 / dTh^2 $
-						- cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh ) $
-						- m^2 / sin ( theta[j] )^2;
+                    p0  = 0
+					term0	= -2d0 / dTh^2 $
+						+ 4.0 / 3.0 * p0 $
+						- m^2 / sin ( theta[j+1] )^2;
 					term1	= 1d0 / dTh^2 $
-						+ cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh );
+						+ cos ( theta[j+1] ) / ( 2d0 * sin ( theta[j+1] ) * dTh ) $
+                        - 1.0 / 3.0 * p0;
 
 					coeffMatrix[j,j]	= term0;
 					coeffMatrix[j+1,j]	= term1;
-					coeffMatrix[j-1,j]	= 0.0;
 
-			endif
+			endelse
 
 		endif
 
-		if j eq nTh - 2 then begin
+		if j eq nTh - 3 then begin
 
 			if lowEndBC then begin
 
-				term0	= -1d0 / dTh^2 $
-					+ cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh ) $
-					- m^2 / sin ( theta[j] )^2;
+                pn  = 1 / dTh^2 + cos ( theta[j+1] ) / sin ( theta[j+1] ) / ( 2 * dTh )
+                term0   = -2d0 / dTh^2 $
+                    + 4.0 / 3.0 * pn $
+                    - m^2 / sin ( theta[j+1] )^2
+
 				term1	= 1d0 / dTh^2 $
-					-	cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh );
+					-	cos ( theta[j+1] ) / ( 2d0 * sin ( theta[j+1] ) * dTh ) $
+                    - 1.0 / 3.0 * pn
 	
 				coeffMatrix[j,j]	= term0;
 				coeffMatrix[j-1,j]	= term1;
-				coeffMatrix[j+1,j]	= 0.0;
 
 			endif else begin
-			
-;				term0	= -2d0 / dTh^2 $
-;					- m^2 / sin ( theta[j] )^2;
-;				term1	= 1d0 / dTh^2 $
-;					-	cos ( theta[j] ) / ( 2d0 * sin ( theta[j] ) * dTh );
-;	
-;				coeffMatrix[j,j]	= term0;
-;				coeffMatrix[j-1,j]	= term1;
-;				coeffMatrix[j+1,j]	= 0.0;
-;
+
+                pn  = 0
+	            term0   = -2d0 / dTh^2 $
+                    + 4.0 / 3.0 * pn $
+                    - m^2 / sin ( theta[j+1] )^2
+
+				term1	= 1d0 / dTh^2 $
+					-	cos ( theta[j+1] ) / ( 2d0 * sin ( theta[j+1] ) * dTh ) $
+                    - 1.0 / 3.0 * pn
+	
+				coeffMatrix[j,j]	= term0;
+				coeffMatrix[j-1,j]	= term1;
+		
 			endelse
 
 		endif
@@ -191,6 +200,16 @@ function ampere_realLegendre, theta_, K, m, $
 	eigenValues	= eigenValues[iiOrder];
 	eigenVectors	= eigenVectors[*,iiOrder];
 
+    ;   add end points
+
+    eigenVectorsAll    = fltArr ( nTh, nTh )
+    eigenVectorsAll[1:nTh-2,1:nTh-2]    = eigenVectors
+    eigenVectors    = temporary ( eigenVectorsAll )
+
+    eigenValuesAll  = fltArr ( nTh )
+    eigenValuesAll[1:nTh-2] = eigenValues
+    eigenValues = temporary ( eigenValuesAll )
+
 	;	Here eigenValues (a) are actually a=-n(n+1) so we need
 	;	to find the roots of f(n)=n^2+n+a to get back the values
 	;	of n we need. Here I use Newton's method. DLG Update: this 
@@ -199,30 +218,7 @@ function ampere_realLegendre, theta_, K, m, $
 
 	eigenValues_	= dblArr ( n_elements ( eigenValues ) );
 
-	maxIterations	= 200;
-	maxError	= 0.001; Accuracy in n value?
-
-	for i = 0, n_elements ( eigenValues_ ) - 1 do begin
-
-		nGuess	= sqrt ( eigenValues[i] );
-		nIterations	= 0;
-		err	= 1.0;
-		
-		while abs ( err ) gt maxError AND nIterations lt maxIterations do begin
-			
-			fN	= nGuess^2 + nGuess + eigenValues[i];
-			dfNdN	= 2.0 * nGuess + 1.0;
-			nGuessOld	= nGuess;
-			nGuess	= nGuess - fN / dfNdN;
-			err	= nGuess - nGuessOld;
-			++nIterations;
-
-		endwhile
-
-		eigenValues_[i]	= nGuess;
-
-	endfor
-	
+    eigenValues_    =  ( -1 + sqrt ( 1 - 4 * eigenValues ) ) / 2
 	eigenValues_keep	= where ( eigenValues_ gt m>1 );
 	eigenValues_	= eigenValues_[eigenValues_keep];
 	eigenVectors	= eigenVectors[*,eigenValues_keep];
@@ -302,12 +298,13 @@ function ampere_realLegendre, theta_, K, m, $
 				plot, theta * !radeg, eigenVectors[*,i],$
 				color = (i+1) * 16 - 1, thick = 1, $
 				yRange = [-0.2,0.2], yStyle = 1, $
-				xRange = [ minTheta, maxTheta ], xStyle = 1;
+				xRange = [ minTheta, maxTheta ], xStyle = 1
 			if i ne 0 then $
 				oPlot, theta * !radeg, eigenVectors[*,i],$
-				color = (i+1) * 16 - 1, thick = 1;
+				color = (i+1) * 16 - 1, thick = 1
 			oPlot, theta_, legendreFns[*,i],$
-				color = (i+1) * 16 - 1, thick = 2.0;
+				color = (i+1) * 16 - 1, thick = 2.0, $
+                psym = 4
 		endfor
 		
 		for i = 0, plotFns-1 do begin
@@ -320,7 +317,8 @@ function ampere_realLegendre, theta_, K, m, $
 				oPlot, theta * !radeg, dEigenVectors[*,i],$
 				color = (i+1) * 16 - 1, thick = 1;
 			oPlot, theta_, dlegendreFns[*,i],$
-				color = (i+1) * 16 - 1, thick = 2.0;
+				color = (i+1) * 16 - 1, thick = 2.0, $
+                psym = 4
 		endfor
 	
 		!p.multi = 0;

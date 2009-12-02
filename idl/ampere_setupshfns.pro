@@ -58,7 +58,7 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 		print, 'M: ',m;
 	print, 'Calling realLegendre ...';	
 		legendreFnsBC1	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), $
-			lowEndBC = 1, plotFns = 0, nVals = nValsBC1, $
+			lowEndBC = 0, plotFns = 3, nVals = nValsBC1, $
 			dLegendreFns = dLegendreFnsBC1, $
 			kVals = kValsBC1, highEndBC = 0 , $
 			minTheta = minTheta, maxTheta = maxTheta );
@@ -66,8 +66,10 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 		legendreFnsBC2	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), $
 			lowEndBC = 1, plotFns = 0, nVals = nValsBC2, $
 			dLegendreFns = dLegendreFnsBC2, $
-			kVals = kValsBC2, highEndBC = 1 , $
+			kVals = kValsBC2, highEndBC = 0 , $
 			minTheta = minTheta, maxTheta = maxTheta );
+
+        ;kValsBC1    = kValsBC1 - 1
 
         if keyword_set ( bc1 ) then begin	
 
@@ -87,11 +89,12 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
     
         endif else begin
 
-		    legendreFns	= [ [ legendreFnsBC1 ], [ legendreFnsBC2 ] ];
-		    dLegendreFns	= [ [ dLegendreFnsBC1 ], [ dLegendreFnsBC2 ] ];
+            print, 'both sets'
+		    legendreFns	= [ [ legendreFnsBC2 ], [ legendreFnsBC1 ] ];
+		    dLegendreFns	= [ [ dLegendreFnsBC2 ], [ dLegendreFnsBC1 ] ];
 
-		    nVals	= [ nValsBC1, nValsBC2 ];
-		    kVals	= [	kValsBC1, kValsBC2 ];
+		    nVals	= [ nValsBC2, nValsBC1 ];
+		    kVals	= [	kValsBC2, kValsBC1 ];
     
         endelse
 
@@ -126,8 +129,8 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 
 				;print, 'Inner Prod: ', sqrt ( 1d0 / ( total ( legendreFns[*,i]^2 * $
 				;	dLat * dLon * sin ( coLat ) ) ) );
-				print, sqrt ( ( 2d0 * nVals[i] + 1d0 ) / ( 4d0 * !dpi ) * $
-					gamma ( nVals[i] - m + 1d0 ) / gamma ( nVals[i] + m + 1d0 ) );
+				;print, sqrt ( ( 2d0 * nVals[i] + 1d0 ) / ( 4d0 * !dpi ) * $
+				;	gamma ( nVals[i] - m + 1d0 ) / gamma ( nVals[i] + m + 1d0 ) );
 
 				mArr[bFnCnt]	= m;
 				nArr[bFnCnt]	= nVals[i];

@@ -16,7 +16,6 @@ pro clw_amp_v2, $
 
 	capSize	= 55.0
 	plotCapSize	= 50.0
-	;fileName = path + '20080105_a_RevA.dat'
 	fileName = path + '20050515_a_RevB.dat'
 	
 	sHr = 23.4 

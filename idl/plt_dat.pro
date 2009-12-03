@@ -10,7 +10,8 @@
 Pro plt_dat,IrCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym, $
 		title = title, $
         satNu = satNu, $
-        arrowHeads = arrowHeads
+        arrowHeads = arrowHeads, $
+        capSize = cLatMin
 
 if keyword_set ( satNu ) then begin
 
@@ -41,8 +42,8 @@ endif
 ncol    = 256
 col     = 0
 IrCol   = col
-nlatlab = 5
-CLatMin = 50.
+if not keyword_set ( cLatMin ) then cLatMin = 50.0
+nlatlab = cLatMin / 10
 mmg     = 7.0
 DMag    = 200.
 XSh     = 0.0

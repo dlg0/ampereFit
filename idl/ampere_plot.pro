@@ -2,7 +2,7 @@ pro ampere_plot
 
 ; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
 
- if strCmp (!version.os, 'linux' ) then begin    ; Linux machine for Dave
+ if strCmp (!version.os, 'linux' or !version.os, 'darwin' ) then begin    ; Linux machine for Dave
   plotDev = 'X'
   path = '~/code/ampereFit/idl/'
   pnmPath = path + 'pnmSavs/pnmSav'
@@ -12,9 +12,9 @@ pro ampere_plot
  endelse
 
 ; InF='20091022Amp_invert.sav'
- InF='20091023Amp_invert_test2.sav'
+ InF='~/code/ampereFit/data/20091023Amp_invert_test2.sav'
  plotCapSize = 40.0
- fileName = path + InF
+ fileName = InF
 
  sHr = 10.1
  eHr = 10.3

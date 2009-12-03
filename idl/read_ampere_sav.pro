@@ -9,7 +9,8 @@ pro read_ampere_sav, $
     avgYrSec = yrSecAvg, $
     avgEpoch = avgEpoch, $
     south = south, $
-    fillPole = fillPole
+    fillPole = fillPole, $
+    fillPoleLine = fillPoleLine
     
 
     if not keyword_set ( savFileName ) then $
@@ -83,6 +84,54 @@ pro read_ampere_sav, $
 
 ;   add some extra data near the pole ;-)
 
+    if keyword_set ( fillPoleLine ) then begin
+
+        ;   identify which two tracks surround the gap
+
+        iiTenLat = where ( gei_coLat_rad_TMP[iiTime]*!radeg gt 6 $
+                    and gei_coLat_rad_TMP[iiTime]*!radeg lt 8, iiTenCnt ) 
+
+        tenLons = (gei_lon_rad_TMP[iiTime])[iiTenLat] * !radeg        
+        iiSortTenLons   = sort ( tenLons )
+        tenLons = tenLons[iiSortTenLons]
+
+        derivLons   = fltArr ( n_elements ( tenLons ) )
+        for i=0,n_elements ( tenLons ) - 2 do begin 
+        
+            derivLons[i]   = tenLons[i+1] - tenLons[i]
+        
+        endfor
+
+        derivLons[n_elements(tenLons)-1]    = tenLons[0]+360 - tenLons[n_elements(tenLons)-1]
+
+        iiMaxGap    = where ( derivLons eq max ( derivLons ) )
+
+        track1  = (((plane_number_total[iiTime])[tenLons])[iiSortTenLons])[iiMaxGap]
+        track2  = (((plane_number_total[iiTime])[tenLons])[iiSortTenLons])[iiMaxGap+1]
+
+        if track1 eq track2 then begin
+
+            print, 'Awww crap!, the detection of which tracks straddle the intersection'
+            print, 'point hole has failed.'
+
+        endif
+
+        iiTrack1    = where ( plane_number_total[iiTime] eq track1 )
+	    map_set, 90, 0, 0, $
+	    	/ortho, $
+   	    	/iso, $
+        	limit = [ 90.0 - ( 50 + 2 ), 0, 90, 360 ],$
+   	    	/noborder,$
+   	    	/advance, title = 'GEI'
+	    map_grid, label = 1, latDel = 10.0
+
+	    ;plots, (gei_lon_rad_TMP[iiTime])[iiTrack1]*!radeg, $
+        ;        90.0-(gei_coLat_rad_TMP[iiTime])[iiTrack1]*!radeg, psym = 4
+
+
+        stop
+    endif
+
     if keyword_set ( fillPole ) then begin
 
         nPts    = 5 
@@ -135,10 +184,35 @@ pro read_ampere_sav, $
 
 ;   get spherical GEI vector
 
-    geoPack_bCarSp, data.px, data.py, data.pz, $
+    geoPack_bCarSp, data.px, data.py, -data.pz, $
 			data.dbx, data.dby, data.dbz, $
 			bR_GEI, bTheta_GEI, bPhi_GEI
 
+    for i = 0, n_elements ( data.px ) - 1 do begin
+
+        th  = gei_colat_rad[i]
+        ph  = gei_lon_rad[i]
+        r   = 1 
+        rotMat  = [ [ sin(th)*cos(ph), sin(th)*sin(ph), cos(th) ], $
+                    [ r*cos(th)*cos(ph), r*cos(th)*sin(ph), -r*sin(th) ], $
+                    [ -r*sin(ph), r*cos(ph), 0 ] ]
+
+        sphVec  = rotMat ## [   [(data.dbx)[i]], $
+                                [(data.dby)[i]], $
+                                [(data.dbz)[i]] ]
+
+        bR_GEI[i]   = sphVec[0]
+        bTheta_GEI[i]   = sphVec[1]
+        bPhi_GEI[i] = sphVec[2]
+    endfor
+
+
+	plt_dat, gei_coLat_rad * !radeg, gei_lon_rad * !radeg, $
+		n_elements ( gei_coLat_rad ), -bTheta_GEI, bPhi_GEI, [1,1], [1,2], $
+		title = 'GEI - Raw Data', $
+        satNu = data.iSat, $
+        capSize = 50 
+stop	
 ;   get the epoch and times for GEI to GEOG and AACGM conversion
 
 	cdf_epoch, epoch0, year, month, day, /compute_epoch

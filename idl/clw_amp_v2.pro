@@ -16,8 +16,8 @@ pro clw_amp_v2, $
 	plotCapSize	= 50.0
 	fileName = path + '20050515_a_RevB.dat'
 
-	sHr = 23.5
-	eHr = 23.7
+	sHr = 10.4
+	eHr = 10.6
 
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $
@@ -27,7 +27,7 @@ pro clw_amp_v2, $
 	;	 avgYrSec = avgYrSec, $
 	;   	 avgEpoch = avgEpoch
 
-    savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
+    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
 
     read_ampere_sav, $
         savFileName = savFileName, $
@@ -41,7 +41,7 @@ pro clw_amp_v2, $
         avgYrSec = avgYrSec, $
         avgEpoch = avgEpoch, $
         south = 1, $
-        fillPole = 0
+        fillPoleLine = 1
 
 	nLatGrid	= 200
 	nLonGrid	= 10
@@ -61,8 +61,8 @@ pro clw_amp_v2, $
 
     mltShift    = mltShift[0]
 
-	kMax    = 50
-	mMax    = 5
+	kMax    = 10
+	mMax    = 0
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
 	     YkmBFns=YkmBFns, $
@@ -257,16 +257,20 @@ pro clw_amp_v2, $
 	plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
 		n_elements ( data.gei_coLat_rad ), -data.dbTheta, data.dbPhi, [1,1], [1,2], $
 		title = 'GEI - Raw Data', $
-        satNu = data.iSat
+        satNu = data.iSat, $
+        capSize = plotCapSize
 	plt_dat, data.gei_coLat_rad * !radeg, data.gei_lon_rad * !radeg, $
 	         n_elements ( data.gei_coLat_rad ), -fit_dBTheta, fit_dBPhi, [1,1], [1,2], $
-			 title = 'GEI - Fitted Data @ raw locs'
+			 title = 'GEI - Fitted Data @ raw locs', $
+             capSize = plotCapSize
 	plt_dat, geiGrid_coLat_rad[*] * !radeg, geiGrid_lon_rad[*] * !radeg, $
 	         n_elements ( geiGrid_coLat_rad[*] ), -dBTheta_GEI_grid, dBPhi_GEI_grid, [1,1], [1,2], $
-			 title = 'GEI - on regular aacgm grid'
+			 title = 'GEI - on regular aacgm grid', $
+             capSize = plotCapSize
 	plt_dat, aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*], $
 	         n_elements ( geiGrid_coLat_rad[*] ), -aacgm_dbTh, aacgm_dbPh, [1,1], [1,2], $
-			 title = 'AACGM-LON'
+			 title = 'AACGM-LON', $
+             capSize = plotCapSize
 
 ;	plot the FAC maps
 ;	-----------------

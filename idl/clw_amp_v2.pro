@@ -12,7 +12,7 @@ pro clw_amp_v2, $
 		pnmPath	= path + 'pnmsavs\pnmSav'
 	endelse
 
-	capSize	= 55.0
+	capSize	= 56.0
 	plotCapSize	= 50.0
 	fileName = path + '20050515_a_RevB.dat'
 	

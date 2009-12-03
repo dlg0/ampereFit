@@ -12,13 +12,13 @@ pro clw_amp_v2, $
 		pnmPath	= path + 'pnmsavs\pnmSav'
 	endelse
 
-	capSize	= 56.0
+	capSize	= 55.0
 	plotCapSize	= 50.0
 	fileName = path + '20050515_a_RevB.dat'
-	
-	sHr = 23.4 
+
+	sHr = 23.4
 	eHr = 23.6
-	
+
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $
 	;   	 year = year, $
@@ -28,7 +28,7 @@ pro clw_amp_v2, $
 	;   	 avgEpoch = avgEpoch
 
     savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
-	
+
     read_ampere_sav, $
         savFileName = savFileName, $
         capSize = capSize, $
@@ -44,7 +44,7 @@ pro clw_amp_v2, $
         fillPole = 0
 
 	nLatGrid	= 200
-	nLonGrid	= 10 
+	nLonGrid	= 10
 
 	aacgm_grid, geiGrid_coLat_rad = geiGrid_coLat_rad, $
 	   	 geiGrid_lon_rad = geiGrid_lon_rad , $
@@ -58,10 +58,10 @@ pro clw_amp_v2, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
 	   	 epoch = avgEpoch
-    
+
     mltShift    = mltShift[0]
-	
-	kMax    = 50 
+
+	kMax    = 50
 	mMax    = 5
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -104,7 +104,7 @@ pro clw_amp_v2, $
 	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m1 and outkValues eq k1),*], $
 	    		title = 'table lookup (m=2,k=5), dYdPh', $
 	    		psym=4,color=0
-	    
+
 	    plot, data.gei_coLat_rad*!radeg, ykmbfns2[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
 	    		title = 'numerical (m=2,k=5), Y', $
 	    		psym=4,color=0
@@ -115,8 +115,8 @@ pro clw_amp_v2, $
 	    		title = 'numerical (m=2,k=5), dYdPh', $
 	    		psym=4,color=0
 
-        m2  = 0 
-        k2  = 8 
+        m2  = 0
+        k2  = 8
 	    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
 	    		title = 'table lookup (m=0,k=7)', $
 	    		psym=4,color=0
@@ -136,12 +136,12 @@ pro clw_amp_v2, $
 	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns2[where(outmvalues2 eq m2 and outkValues2 eq k2),*], $
 	    		title = 'numerical (m=0,k=7)', $
 	    		psym=4,color=0
-	    
+
 	    !p.multi = 0.0
 	    !p.charSize = 1.0
 
     endif
-	
+
 	if keyword_set ( numerical ) then begin
 
         ;iiSort  = sort ( outNkValues2 )
@@ -154,15 +154,15 @@ pro clw_amp_v2, $
 
 
 ;	Fit |dB| to dB.grad Ykm in the GEI system
-;	-----------------------------------------	
-	
+;	-----------------------------------------
+
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
 
     bFuncs  = temporary ( $
                 [ [ dYkmDThBfns, -dYkmDPhBfns ], $
                   [ dYkmDPhBfns,  dYkmDthBfns ] ] )
 
-    print, 'bFuncs is', n_elements ( bFuncs[*] ) * 16 / ( 1024.0^2 ), 'MB' 
+    print, 'bFuncs is', n_elements ( bFuncs[*] ) * 16 / ( 1024.0^2 ), 'MB'
 
     coeffs_    = la_least_squares ( bFuncs, [data.dbTheta, data.dbPhi], $
                     status = stat, $
@@ -174,9 +174,9 @@ pro clw_amp_v2, $
     endif
 
     fit = bFuncs ## coeffs_
-	
-	fit_dBTheta     = fit[0:n_elements(dBMag)-1] 
-	fit_dBPhi       = fit[n_elements(dBMag):*] 
+
+	fit_dBTheta     = fit[0:n_elements(dBMag)-1]
+	fit_dBPhi       = fit[n_elements(dBMag):*]
 
 	Re    = 6.371d6
 	R     = Re + 780.0d3
@@ -226,9 +226,9 @@ pro clw_amp_v2, $
 	jParAACGM	= reform ( jParAACGM, nLatGrid, nLonGrid )
 
     fit_grid    = bFuncs_grid ## coeffs_
-   	dBTheta_GEI_grid     = fit_grid[0:nLatGrid*nLonGrid-1] 
+   	dBTheta_GEI_grid     = fit_grid[0:nLatGrid*nLonGrid-1]
  	dBPhi_GEI_grid       = fit_grid[nLatGrid*nLonGrid:*]
- 
+
 	rotate_gei_to_aacgm, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
 		aacgmGrid_R_km[*], aacgmGrid_coLat_deg[*]*!dtor, aacgmGrid_lon_deg[*]*!dtor, $
 		dBTheta_GEI_grid, dBPhi_GEI_grid, $
@@ -292,7 +292,7 @@ pro clw_amp_v2, $
 	   	 	c_labels=fltarr(n_elements(jLevels))+1,$
 	       	/irreg, /over, levels = jLevels, $
 	          	c_colors = colors, /fill
-	map_grid, label = 1, latDel = 10.0 
+	map_grid, label = 1, latDel = 10.0
 
 
    	map_set, 90, 0, 0, /ortho, /iso, $
@@ -308,7 +308,7 @@ pro clw_amp_v2, $
 		 	c_labels=fltarr(n_elements(jLevels))+1,$
         	/over, levels = jLevels, $
            	c_colors = colors, /fill, /irreg
-	map_grid, label = 1, $ 
+	map_grid, label = 1, $
 			lonNames	= ['0/24','6','12','18',''], $
 			lons = [0,90,180,270,360], $
 			latLab = 45, $
@@ -347,7 +347,7 @@ pro clw_amp_v2, $
 	!p.multi = [0,2,2]
 	window, winnum, xSize = 600, ySize = 600
 	winnum++
-  
+
  	map_set, 90, 0, 0, $
 		/ortho, $
    		/iso, $
@@ -367,7 +367,7 @@ pro clw_amp_v2, $
 	map_grid, label = 1, latDel = 10.0
 
 	plots, data.mlt*15.0, 90.0-data.aacgm_coLat_rad*!radeg, psym = 4
-	
+
    	map_set, 90, 0, 0, $
 		/ortho, $
    		/iso, $
@@ -377,7 +377,7 @@ pro clw_amp_v2, $
 	map_grid, label = 1, latDel = 10.0
 
 	plots, data.gei_lon_rad*!radeg, 90.0-data.gei_coLat_rad*!radeg, psym = 4
-	
+
 	map_set, 90, 0, 0, $
 		/ortho, $
    		/iso, $
@@ -387,7 +387,7 @@ pro clw_amp_v2, $
 	map_grid, label = 1, latDel = 10.0
 
 	plots, data.geog_lon_rad*!radeg, 90.0-data.geog_coLat_rad*!radeg, psym = 4
-	
+
 	!p.multi = 0
  	!p.background = oldbck
 

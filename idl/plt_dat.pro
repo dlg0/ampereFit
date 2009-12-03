@@ -9,7 +9,8 @@
 
 Pro plt_dat,IrCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym, $
 		title = title, $
-        satNu = satNu
+        satNu = satNu, $
+        arrowHeads = arrowHeads
 
 if keyword_set ( satNu ) then begin
 
@@ -122,7 +123,7 @@ for ii=0,nirid-1 do begin
 
         ; Now do arrow heads
 
-        if (mgn gt 0.) then begin
+        if (mgn gt 0. and keyword_set ( arrowHeads ) ) then begin
 
             xu=(x0-x1)/mgn
             yu=(y0-y1)/mgn

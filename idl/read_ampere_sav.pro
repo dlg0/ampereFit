@@ -8,7 +8,8 @@ pro read_ampere_sav, $
     day = day, $
     avgYrSec = yrSecAvg, $
     avgEpoch = avgEpoch, $
-    south = south
+    south = south, $
+    fillPole = fillPole
     
 
     if not keyword_set ( savFileName ) then $
@@ -20,8 +21,8 @@ pro read_ampere_sav, $
 			year, month, day, $
 			format='(i4,i2,i2)'
 
-
     restore, savFileName
+
 
     ;   variables are 
     ;   
@@ -79,6 +80,49 @@ pro read_ampere_sav, $
     data.dbx    = (B_ECI[0,*])[iiTime]
     data.dby    = (B_ECI[1,*])[iiTime]
     data.dbz    = (B_ECI[2,*])[iiTime]
+
+;   add some extra data near the pole ;-)
+
+    if keyword_set ( fillPole ) then begin
+
+        nPts    = 5 
+        spreadFac   = 200 
+        newX    = rebin ( fIndGen ( nPts ) - nPts / 2, nPts, nPts ) * spreadFac
+        newY    = transpose ( newX ) 
+
+        iiKeep    = where ( newX ne 0 and newY ne 0, nExtra )
+        if nExtra gt 0 then begin
+            newX    = newX[iiKeep]
+            newY    = newY[iiKeep]
+        endif
+
+        if keyword_set ( south ) then minVal = min ( data.pz ) $
+            else minVal = max ( data.pz )
+        newZ    = newX * 0 + minVal 
+
+        minIdx  = where ( data.pz eq minVal )
+        new_dbX = (data.dbx)[minIdx]
+        new_dbY = (data.dby)[minIdx]
+        new_dbZ = (data.dbz)[minIdx]
+
+        data_    = replicate ( data_struct, iiTimeCnt + nExtra )
+
+        data_.px = [ data.px, newX[*] ]
+        data_.py = [ data.py, newY[*] ]
+        data_.pz = [ data.pz, newZ[*] ]
+
+        data_.dbx    = [ data.dbx, fltArr ( nExtra ) + new_dbX[0] ]
+        data_.dby    = [ data.dby, fltArr ( nExtra ) + new_dbY[0] ]
+        data_.dbz    = [ data.dbz, fltArr ( nExtra ) + new_dbZ[0] ]
+
+        data_.isat   = [ data.isat, fltArr ( nExtra ) + 99 ]
+        data_.utc    = [ data.utc, fltArr ( nExtra ) + data.utc[minIdx] ]
+
+        data = data_
+
+        iiTimeCnt += nExtra 
+        
+    endif
 
 ;   get spherical GEI coords
 
@@ -181,6 +225,7 @@ pro read_ampere_sav, $
 				aacgm_lon_rad : aacgm_lon_deg * !dtor, $
 				mlt : mlt, $
                 iPln : data.iPln, $
-                iSat : data.iSat } 
-    
+                iSat : data.iSat, $
+                utc : data.utc } 
+stop    
 end

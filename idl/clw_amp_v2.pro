@@ -14,13 +14,13 @@ pro clw_amp_v2, $
 		pnmPath	= path + 'pnmsavs\pnmSav'
 	endelse
 
-	capSize	= 50.0
-	plotCapSize	= 40.0
+	capSize	= 55.0
+	plotCapSize	= 50.0
 	;fileName = path + '20080105_a_RevA.dat'
 	fileName = path + '20050515_a_RevB.dat'
 	
-	sHr = 22.45 
-	eHr = 22.6
+	sHr = 23.4 
+	eHr = 23.6
 	
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $
@@ -32,7 +32,7 @@ pro clw_amp_v2, $
 
     ;   need to replace this with info from the file!
     
-    savFileName = '~/code/ampereFit/data/20091022Amp_invert.sav'
+    savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
 	
     read_ampere_sav, $
         savFileName = savFileName, $
@@ -45,10 +45,11 @@ pro clw_amp_v2, $
         day = day, $
         avgYrSec = avgYrSec, $
         avgEpoch = avgEpoch, $
-        south = 1
+        south = 1, $
+        fillPole = 0
 
-	nLatGrid	= 20
-	nLonGrid	= 24 
+	nLatGrid	= 200
+	nLonGrid	= 10 
 
 	aacgm_grid, geiGrid_coLat_rad = geiGrid_coLat_rad, $
 	   	 geiGrid_lon_rad = geiGrid_lon_rad , $
@@ -65,7 +66,7 @@ pro clw_amp_v2, $
     
     mltShift    = mltShift[0]
 	
-	kMax    = 30 
+	kMax    = 50 
 	mMax    = 5
 
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
@@ -161,18 +162,13 @@ pro clw_amp_v2, $
 ;	-----------------------------------------	
 	
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
-	;kTh     = transpose(rebin(data.dBTheta/dBMag,$
-	;       n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
-	;kPh     = transpose(rebin(data.dBPhi/dBMag,$
-	;        n_elements(data.dBTheta),n_elements(dYkmDthBFns[*,0])))
-	;
-	;bFuncs  = kTh * dYkmDPhBFns + kPh * dYkmDThBFns
 
     bFuncs  = temporary ( $
                 [ [ dYkmDThBfns, -dYkmDPhBfns ], $
                   [ dYkmDPhBfns,  dYkmDthBfns ] ] )
 
     print, 'bFuncs is', n_elements ( bFuncs[*] ) * 16 / ( 1024.0^2 ), 'MB' 
+
     coeffs_    = la_least_squares ( bFuncs, [data.dbTheta, data.dbPhi], $
                     status = stat, $
                     method = 3, $
@@ -182,30 +178,16 @@ pro clw_amp_v2, $
         print, 'ERROR: la_least_squares threw an error code: ', stat
     endif
 
-    ;print, 'doing the transpose and ## for svd ...'
-	;alpha   = transpose(bFuncs) ## bFuncs
-	;beta_   = transpose( transpose(bFuncs) ## dBMag)
-
-    ;print,'running la_svd ...'
-	;la_svd, alpha, w, u, v, status = svdStatus
-	;kk      = where(w lt max ( w ) * 1d-5, kkcnt)
-	;if kkcnt gt 0 then w[kk]=0.0
-    ;print, 'running svSol ...'
-	;coeffs  = svsol(u, w, v, beta_)
-
     fit = bFuncs ## coeffs_
 	
-	;fit_dBTheta     = dYkmDPhBFns ## coeffs_
-	;fit_dBPhi       = dYkmDThBFns ## coeffs_
 	fit_dBTheta     = fit[0:n_elements(dBMag)-1] 
 	fit_dBPhi       = fit[n_elements(dBMag):*] 
-	;fit_dBMag       = bFuncs ## coeffs_
 
 	Re    = 6.371d6
 	R     = Re + 780.0d3
 	u0    = 4.0*!dpi*1.0d-7
 	jPar  = (YkmBFns ## $
-	        (coeffs_[0:n_elements(YkmBFns[*,0])-1]*(-outNkValues*(outNkValues+1.0))))$
+	        (coeffs_[n_elements(YkmBFns[*,0]):*]*(-outNkValues*(outNkValues+1.0))))$
 	                        /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
 
 ;	generate basis fns at regular grid
@@ -249,10 +231,8 @@ pro clw_amp_v2, $
 	jParAACGM	= reform ( jParAACGM, nLatGrid, nLonGrid )
 
     fit_grid    = bFuncs_grid ## coeffs_
-   	;dBTheta_GEI_grid     = dYkmDPhBFns_grid ## coeffs_
- 	;dBPhi_GEI_grid       = dYkmDThBFns_grid ## coeffs_
-   	dBTheta_GEI_grid     = fit[0:n_elements(dBMag)-1] 
- 	dBPhi_GEI_grid       = fit[n_elements(dBMag):*]
+   	dBTheta_GEI_grid     = fit_grid[0:nLatGrid*nLonGrid-1] 
+ 	dBPhi_GEI_grid       = fit_grid[nLatGrid*nLonGrid:*]
  
 	rotate_gei_to_aacgm, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
 		aacgmGrid_R_km[*], aacgmGrid_coLat_deg[*]*!dtor, aacgmGrid_lon_deg[*]*!dtor, $
@@ -343,16 +323,11 @@ pro clw_amp_v2, $
 	map_set, 90, 0, 0, /ortho, /iso, $
      limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar AACGM-LON'
-	jParTmp	= jParAACGM[*]
-	lonTmp = aacgmGrid_lon_deg[*] $
-			+ randomu ( sysTime(/sec ), n_elements(jParTmp), /uni ) * 1e-5
-	latTmp = 90.0-aacgmGrid_coLat_deg[*]
-	contour, jParTmp, $
-			lonTmp, $
-			latTmp, $
-		 	c_labels=fltarr(n_elements(jLevels))+1,$
-        	/over, levels = jLevels, $
-           	c_colors = colors, /fill, /irreg
+    contour, transpose ( jParAACGM ), $
+            aacgmGrid_lon_deg[0,*], $
+            90.0 - aacgmGrid_coLat_deg[*,0], $
+            /over, levels = jLevels, $
+            c_colors = colors, /fill
 	map_grid, label = 1, latDel = 10.0
 
 

@@ -2,8 +2,6 @@ pro clw_amp_v2, $
 		numerical = numerical, $
         plot_bFns = plot_bFns
 
-; @'d:\cwac\hi_res\davidg\jpar_ver2\schabasisfunctions.pro'
-
 	if strCmp ( !version.os, 'linux' ) or strCmp ( !version.os, 'darwin' ) then begin
 		plotDev = 'X'
 		path	= '~/code/ampereFit/idl/'

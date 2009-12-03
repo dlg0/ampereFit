@@ -29,8 +29,6 @@ pro clw_amp_v2, $
 	;	 avgYrSec = avgYrSec, $
 	;   	 avgEpoch = avgEpoch
 
-    ;   need to replace this with info from the file!
-    
     savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
 	
     read_ampere_sav, $

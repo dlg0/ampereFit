@@ -16,8 +16,8 @@ pro clw_amp_v2, $
 	plotCapSize	= 50.0
 	fileName = path + '20050515_a_RevB.dat'
 
-	sHr = 23.4
-	eHr = 23.6
+	sHr = 23.5
+	eHr = 23.7
 
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $

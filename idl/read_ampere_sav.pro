@@ -184,27 +184,30 @@ pro read_ampere_sav, $
 
 ;   get spherical GEI vector
 
-    geoPack_bCarSp, data.px, data.py, -data.pz, $
+    geoPack_bCarSp, data.px, data.py, data.pz, $
 			data.dbx, data.dby, data.dbz, $
 			bR_GEI, bTheta_GEI, bPhi_GEI
 
-    for i = 0, n_elements ( data.px ) - 1 do begin
+    if keyword_set ( south ) then $
+        bTheta_GEI  = -bTheta_GEI
 
-        th  = gei_colat_rad[i]
-        ph  = gei_lon_rad[i]
-        r   = 1 
-        rotMat  = [ [ sin(th)*cos(ph), sin(th)*sin(ph), cos(th) ], $
-                    [ r*cos(th)*cos(ph), r*cos(th)*sin(ph), -r*sin(th) ], $
-                    [ -r*sin(ph), r*cos(ph), 0 ] ]
+    ;for i = 0, n_elements ( data.px ) - 1 do begin
 
-        sphVec  = rotMat ## [   [(data.dbx)[i]], $
-                                [(data.dby)[i]], $
-                                [(data.dbz)[i]] ]
+    ;    th  = gei_colat_rad[i]
+    ;    ph  = gei_lon_rad[i]
+    ;    r   = 1 
+    ;    rotMat  = [ [ sin(th)*cos(ph), sin(th)*sin(ph), cos(th) ], $
+    ;                [ r*cos(th)*cos(ph), r*cos(th)*sin(ph), -r*sin(th) ], $
+    ;                [ -r*sin(ph), r*cos(ph), 0 ] ]
 
-        bR_GEI[i]   = sphVec[0]
-        bTheta_GEI[i]   = sphVec[1]
-        bPhi_GEI[i] = sphVec[2]
-    endfor
+    ;    sphVec  = rotMat ## [   [(data.dbx)[i]], $
+    ;                            [(data.dby)[i]], $
+    ;                            [(data.dbz)[i]] ]
+
+    ;    bR_GEI[i]   = sphVec[0]
+    ;    bTheta_GEI[i]   = sphVec[1]
+    ;    bPhi_GEI[i] = sphVec[2]
+    ;endfor
 
 
 	plt_dat, gei_coLat_rad * !radeg, gei_lon_rad * !radeg, $
@@ -212,6 +215,9 @@ pro read_ampere_sav, $
 		title = 'GEI - Raw Data', $
         satNu = data.iSat, $
         capSize = 50 
+
+    plot_vec, gei_coLat_rad, gei_lon_rad, $
+        -bTheta_GEI, bPhi_GEI
 stop	
 ;   get the epoch and times for GEI to GEOG and AACGM conversion
 

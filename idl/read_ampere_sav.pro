@@ -210,14 +210,14 @@ pro read_ampere_sav, $
     ;endfor
 
 
-	plt_dat, gei_coLat_rad * !radeg, gei_lon_rad * !radeg, $
-		n_elements ( gei_coLat_rad ), -bTheta_GEI, bPhi_GEI, [1,1], [1,2], $
-		title = 'GEI - Raw Data', $
-        satNu = data.iSat, $
-        capSize = 50 
+	;plt_dat, gei_coLat_rad * !radeg, gei_lon_rad * !radeg, $
+	;	n_elements ( gei_coLat_rad ), -bTheta_GEI, bPhi_GEI, [1,1], [1,2], $
+	;	title = 'GEI - Raw Data', $
+    ;    satNu = data.iSat, $
+    ;    capSize = 50 
 
-    plot_vec, gei_coLat_rad, gei_lon_rad, $
-        -bTheta_GEI, bPhi_GEI
+    ;plot_vec, gei_coLat_rad, gei_lon_rad, $
+    ;    -bTheta_GEI, bPhi_GEI
 stop	
 ;   get the epoch and times for GEI to GEOG and AACGM conversion
 

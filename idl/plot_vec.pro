@@ -41,11 +41,13 @@ pro plot_vec, coLat_rad, lon_rad, bTh, bPh, $
     bMag_1  = sqrt ( bTh^2 + bPh^2 )
     bMag_2  = sqrt ( b_x^2 + b_y^2 )
 
-    plot, bMag_1
-    oPlot, bMag_2
+    ;plot, bMag_1
+    ;oPlot, bMag_2
 
-    endX    = x + b_x 
-    endY    = y + b_y 
+    scale   = 500
+
+    endX    = x + b_x / scale
+    endY    = y + b_y / scale
 
     end_coLat_rad   = sqrt ( endX^2 + endY^2 ) * !dtor
     end_lon_rad   = atan ( endY, endX )  

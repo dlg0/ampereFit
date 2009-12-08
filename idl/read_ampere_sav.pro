@@ -215,14 +215,49 @@ pro read_ampere_sav, $
 	;	title = 'GEI - Raw Data', $
     ;    satNu = data.iSat, $
     ;    capSize = 50 
-    plot_lon    = gei_lon_rad
-    iiPi    = where ( plot_lon ge !pi )
-    plot_lon[iiPi] -= 2*!Pi
 
+    np_coLat_rad    = 5 * !dtor
+    np_lon_rad      = 300 * !dtor
+    new_pole_rotate, np_coLat_rad, np_lon_rad, gei_coLat_rad, gei_lon_rad, $
+        bTheta_GEI, bPhi_GEI, $
+        coLat_rad_out = gei_coLat_rad_np, $
+        lon_rad_out = gei_lon_rad_np, $
+        bTh_out = bTheta_GEI_np, $
+        bPh_out = bPhi_GEI_np
+
+    ;plot_vec, gei_coLat_rad, gei_lon_rad, $
+    ;    bTheta_GEI, bPhi_GEI, /iTool
+
+    !p.multi = [0,2,2]
+    loadct, 12, /sil
+    window, 5, xSize = 800, ySize = 800
     plot_vec, gei_coLat_rad, gei_lon_rad, $
-        bTheta_GEI, bPhi_GEI, /iTool
+        bTh = bTheta_GEI, bPh = bPhi_GEI, $
+        /ptsOnly, $
+        title = 'GEI coords'
+    plots, fltArr(2)+np_lon_rad * !radeg, $
+            fltArr(2)+(90 - np_coLat_rad * !radeg), $
+            psym = 4, symSize = 2, $
+            color = 12*16-1
+ 
+    plot_vec, gei_coLat_rad_np, gei_lon_rad_np, $
+        bTh = bTheta_GEI, bPh = bPhi_GEI, $
+        /ptsOnly, $
+        title = 'New Pole coords'
+ 
     plot_vec, gei_coLat_rad, gei_lon_rad, $
-        bTheta_GEI, bPhi_GEI
+        bTh = bTheta_GEI, bPh = bPhi_GEI, $
+        title = 'GEI db vectors'
+    plots, fltArr(2)+np_lon_rad * !radeg, $
+            fltArr(2)+(90 - np_coLat_rad * !radeg), $
+            psym = 4, symSize = 2, $
+            color = 12*16-1
+ 
+    plot_vec, gei_coLat_rad_np, gei_lon_rad_np, $
+        bTh = bTheta_GEI_np, bPh = bPhi_GEI_np, $
+        title = 'New Pole db vectors'
+
+    !p.multi = 0
 
 stop	
 ;   get the epoch and times for GEI to GEOG and AACGM conversion

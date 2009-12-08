@@ -1,10 +1,13 @@
-pro plot_vec, coLat_rad, lon_rad, bTh, bPh, $
+pro plot_vec, coLat_rad, lon_rad, bTh=bTh, bPh=bPh, $
         capSize = capSize, $
         title = title, $
-        iTool = iTool
+        iTool = iTool, $
+        winNo = winNo, $
+        ptsOnly  = ptsOnly
 
     if not keyword_set ( title ) then title = 'good morning dave ;-)'
     if not keyword_set ( capSize ) then capSize = 50
+    if keyword_set ( winNo ) then window, winNo
 
     if keyword_set ( iTool ) then begin
 
@@ -81,18 +84,26 @@ pro plot_vec, coLat_rad, lon_rad, bTh, bPh, $
         end_coLat_rad   = sqrt ( endX^2 + endY^2 ) * !dtor
         end_lon_rad   = atan ( endY, endX )  
 
-        ;plots, lon_rad*!radeg, 90-coLat_rad*!radeg, psym = 4
-        for i = 0, n_elements ( x ) - 1 do begin
+        if keyword_set ( ptsOnly ) then begin
 
-            points  = [ [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg],$ 
-                        [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg] ]
-            plots,  [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg], $
-                [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg]
-            plots,  [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg], $
-                [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg]
+            plots, lon_rad*!radeg, 90-coLat_rad*!radeg, psym = 4
+
+        endif else begin
+
+            for i = 0, n_elements ( x ) - 1 do begin
+
+                points  = [ [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg],$ 
+                            [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg] ]
+                plots,  [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg], $
+                    [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg]
+                plots,  [lon_rad[i]*!radeg,end_lon_rad[i]*!radeg], $
+                    [90-coLat_rad[i]*!radeg, 90-end_coLat_rad[i]*!radeg]
 
 
-        endfor
+            endfor
+
+        endelse
+
     endelse    
-    stop
+
 end

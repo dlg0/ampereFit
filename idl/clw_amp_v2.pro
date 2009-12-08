@@ -16,8 +16,8 @@ pro clw_amp_v2, $
 	plotCapSize	= 50.0
 	fileName = path + '20050515_a_RevB.dat'
 
-	sHr = 10.4
-	eHr = 10.6
+	sHr = 23.4
+	eHr = 23.6
 
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
 	;   	 yrSec = yrSec, $
@@ -27,7 +27,7 @@ pro clw_amp_v2, $
 	;	 avgYrSec = avgYrSec, $
 	;   	 avgEpoch = avgEpoch
 
-    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
+    savFileName = '~/code/ampereFit/data/20091022Amp_invert.sav'
 
     read_ampere_sav, $
         savFileName = savFileName, $
@@ -41,7 +41,7 @@ pro clw_amp_v2, $
         avgYrSec = avgYrSec, $
         avgEpoch = avgEpoch, $
         south = 1, $
-        fillPoleLine = 1
+        fillPoleLine = 0
 
 	nLatGrid	= 200
 	nLonGrid	= 10

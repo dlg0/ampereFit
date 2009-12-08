@@ -117,14 +117,14 @@ pro read_ampere_sav, $
         endif
 
         iiTrack1    = where ( plane_number_total[iiTime] eq track1 )
-	    map_set, 90, 0, 0, $
-	    	/ortho, $
-   	    	/iso, $
-        	limit = [ 90.0 - ( 50 + 2 ), 0, 90, 360 ],$
-   	    	/noborder,$
-   	    	/advance, title = 'GEI'
-	    map_grid, label = 1, latDel = 10.0
-
+;	    map_set, 90, 0, 0, $
+;	    	/ortho, $
+;   	    	/iso, $
+;        	limit = [ 90.0 - ( 50 + 2 ), 0, 90, 360 ],$
+;   	    	/noborder,$
+;   	    	/advance, title = 'GEI'
+;	    map_grid, label = 1, latDel = 10.0
+;
 	    ;plots, (gei_lon_rad_TMP[iiTime])[iiTrack1]*!radeg, $
         ;        90.0-(gei_coLat_rad_TMP[iiTime])[iiTrack1]*!radeg, psym = 4
 
@@ -215,9 +215,15 @@ pro read_ampere_sav, $
 	;	title = 'GEI - Raw Data', $
     ;    satNu = data.iSat, $
     ;    capSize = 50 
+    plot_lon    = gei_lon_rad
+    iiPi    = where ( plot_lon ge !pi )
+    plot_lon[iiPi] -= 2*!Pi
 
-    ;plot_vec, gei_coLat_rad, gei_lon_rad, $
-    ;    -bTheta_GEI, bPhi_GEI
+    plot_vec, gei_coLat_rad, gei_lon_rad, $
+        bTheta_GEI, bPhi_GEI, /iTool
+    plot_vec, gei_coLat_rad, gei_lon_rad, $
+        bTheta_GEI, bPhi_GEI
+
 stop	
 ;   get the epoch and times for GEI to GEOG and AACGM conversion
 

@@ -1,3 +1,22 @@
+; AMPERE dB to FAC code
+; Given a set of Iridium dB data (in GEI coords), compute the associated dB vectors
+; in AACGM and the FAC pattern using SCHA
+;
+; C.L. Waters and D.L. Green
+; Dec 2009
+;
+Pro tmestr1,Hr,Mn,Sc,hr_str,mn_str,sc_str
+; Form string expression from time
+ hr_str=strtrim(string(Hr),2)
+ If Hr lt 10 then hr_str='0'+hr_str
+ mn_str=strtrim(string(Mn),2)
+ If Mn lt 10 then mn_str='0'+mn_str
+ sc_str=strtrim(string(fix(sc)),2)
+ If Sc lt 10 then sc_str='0'+sc_str
+end
+;
+; -----------------------------------------------------------------------------------
+;
 pro amp_fit, $
 		numerical = numerical, $
         plot_bFns = plot_bFns
@@ -19,19 +38,23 @@ pro amp_fit, $
 ; Input data file
 ;	fileName = path + '20050515_a_RevB.dat'
 ;    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
-    savFileName = path+'20091124Amp_invert.sav'
+    savFileName = path+'20091023Amp_invert.sav'
+;    savFileName = path+'20091125Amp_invert.sav'
 
 ; Time interval (UT)
-	sHr = 12.0+1./6.
-	eHr = 12.0+3./6.
+	sHr = 0.0+1./6.
+	eHr = sHr+600./3600.
 
 ; Hemisphere switch
     south=0               ; 0=North, 1=South
 
 ; Basis functions
-	kMax    = 15
+	kMax    = 35
 	mMax    = 5          ; 0 to 5
 
+; Data weighting parameters
+	thresh=80.0         ; dBMag threshold, below this we apply a reduction factor, sigma
+	sigma=2.0            ; sigma=2 would halve the amplitude of each component of the data
 ; Controls final solution grid
 	nLatGrid	= 50
 	nLonGrid	= 24
@@ -168,6 +191,13 @@ pro amp_fit, $
 ;	Fit |dB| to dB.grad Ykm in the shifted GEI system
 ;	-----------------------------------------
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
+; Apply weighting [after Dec 10 discussion at APL]
+    w_idx=where(dBMag lt thresh)
+    If w_idx(0) gt -1 then begin
+     data[w_idx].dBTheta=data[w_idx].dBTheta/sigma
+     data[w_idx].dBPhi=data[w_idx].dBPhi/sigma
+    end
+;
     bFuncs  = temporary ( $
                 [ [ dYkmDThBfns, -dYkmDPhBfns ], $
                   [ dYkmDPhBfns,  dYkmDthBfns ] ] )
@@ -307,14 +337,6 @@ pro amp_fit, $
                     dBTheta_GEI_grid, dBPhi_GEI_grid, $
      mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph,err,/to_aacgm
 
-;	rotate_gei_to_aacgm, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
-;		aacgmGrid_R_km[*], aacgmGrid_coLat_deg[*]*!dtor, aacgmGrid_lon_deg[*]*!dtor, $
-;		dBTheta_GEI_grid, dBPhi_GEI_grid, $
-;		aacgm_dbTh = aacgm_dbTh, $
-;		aacgm_dbPh = aacgm_dbPh, $
-;		year = year, $
-;		epoch = avgEpoch
-
 ;	plot stuff
 ;	----------
 	set_plot, plotDev
@@ -323,10 +345,23 @@ pro amp_fit, $
 	!p.background = 255
 	winNum	= 1
 
+    yr_str=strtrim(string(fix(year)),2)
+    mnth_str=strtrim(string(fix(month)),2)
+    dy_str=strtrim(string(fix(day)),2)
+	date_str='dd/mm/yyyy= '+dy_str+'/'+mnth_str+'/'+dy_str
+
+    StHr=fix(sHr)
+    StMn=fix((SHr*3600.0-float(StHr)*3600.0)/60.0)
+    StSc=sHr*3600.0-float(StHr)*3600.0-float(StMn)*60.0
+	tmestr1,StHr,StMn,StSc,hr_str,mn_str,sc_str
+	tme_str='hh:mm:ss= '+hr_str+':'+mn_str+':'+sc_str
+
 ;	plot the db vectors
 ;	-------------------
+
+;Window 1
 	!p.multi = [0,2,2]
-	window, winnum, xSize=700, ySize=700
+	window, winnum, xSize=700, ySize=700,title='dB vecs for '+date_str+'  '+tme_str
 	winNum++
 	plt_dat, data.gei_coLat_rad*!radeg, data.gei_lon_rad*!radeg, $
              n_elements(data.gei_coLat_rad), -data.dbTheta, data.dbPhi, [1,1], [1,2], $
@@ -351,10 +386,18 @@ pro amp_fit, $
 ;			 title = 'AACGM-LON', $
 ;            capSize = plotCapSize
 
+    png_file=path+'amp_dB_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+    image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    Write_PNG,png_file,image,r,g,b
+    Print,'PNG for dB written to ', png_file
+
+
 ;	plot the FAC maps
 ;	-----------------
+
+; Window 2
 	loadct, 13, file = path + 'davect.tbl'
-	window, winnum, xSize = 650, ySize = 650
+	window, winnum, xSize = 650, ySize = 650,title='FACs for '+date_str+'  '+tme_str
 	winnum++
 	!p.backGround = 0
 	!p.multi = [0,2,2,0]
@@ -378,7 +421,6 @@ pro amp_fit, $
 			lons = [0,90,180,270,360], $
 			latLab = 45, $
 			latDel = 20.0
-
 
    	map_set, 90, 0, 0, /ortho, /iso, $
      limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
@@ -447,6 +489,11 @@ pro amp_fit, $
 			latLab = 45+ln_sh, $
 			latDel = 20.0
 	map_continents,color=60
+
+    png_file=path+'amp_FAC_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+    image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    Write_PNG,png_file,image,r,g,b
+    Print,'PNG for FACs written to ', png_file
 
 ;	map_set, 90, 0, 0, /ortho, /iso, $
 ;     limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $

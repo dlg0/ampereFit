@@ -2,7 +2,7 @@
 ; Sub_code to plot arrow vectors
 ;
 ;	doing this without a map_set is terribly incovenient!
-;	please fix to use a map_set so we can overlay things, 
+;	please fix to use a map_set so we can overlay things,
 ;	use a real grid, etc ...
 ;
 
@@ -18,13 +18,13 @@ if keyword_set ( satNu ) then begin
     allowedColors   = [ 0,1,3,7,8]
     presentColorIndex    = 0
     satColors   = satNu * 0
-    satMatch    = [[presentColorIndex],[satNu[0]]] 
+    satMatch    = [[presentColorIndex],[satNu[0]]]
     for i = 0, n_elements ( satNu ) - 1 do begin
 
         iiMatch = where ( satMatch[*,1] eq satNu[i], iiMatchCnt )
         if iiMatchCnt eq 0 then begin
-    
-            ++presentColorIndex 
+
+            ++presentColorIndex
             satMatch = [[satMatch[*,0], presentColorIndex mod 5], $
                         [satMatch[*,1], satNu[i] ] ]
             satColors[i]    = allowedColors[presentColorIndex mod 5]
@@ -33,7 +33,7 @@ if keyword_set ( satNu ) then begin
 
             satColors[i]    = allowedColors[satMatch[iiMatch,0]]
 
-        endelse            
+        endelse
 
     endfor
 
@@ -75,8 +75,8 @@ for i=0,nlatlab-2 do $
         linestyle=1,$
         color=0
 
-loadct, 1
-if keyword_set ( satNu ) then loadct, 12 
+loadct, 1,/silent
+if keyword_set ( satNu ) then loadct, 12,/silent
 
 for ii=0,nirid-1 do begin
 
@@ -148,4 +148,4 @@ for ii=0,nirid-1 do begin
 
 endfor     ; NIrid Loop
 
-end     
+end

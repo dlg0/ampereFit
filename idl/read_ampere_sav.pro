@@ -46,15 +46,17 @@ pro read_ampere_sav, $
  ntot=n_elements(x_axis_frac_hour)
  rwpz_a=dblarr(ntot)
  rwpz_a=pos_eci_total(2,*)/1000.0   ; conv Z coord to km
-; Select data subset based on time interval and (whole) hemisphere
+
+; Select data subset based on time interval and hemisphere : above 20 deg lat.
+ r0_lim= (6357.0 + 110.0)*cos(70.0*!pi/180.0)
  If keyword_set(south) then begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
-                                      and rwpz_a lt 0.0, iiTimeCnt)
+                                      and rwpz_a lt r0_lim, iiTimeCnt)
  end else begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
-                                      and rwpz_a gt 0.0, iiTimeCnt)  ; Nth Hemisphere
+                                      and rwpz_a gt r0_lim, iiTimeCnt)  ; Nth Hemisphere
  end
-
+;stop
 ;	geoPack_sphCar, pos_ECI_total[0,*]*1d-3, $
 ;                    pos_ECI_total[1,*]*1d-3, $
 ;                    pos_ECI_total[2,*]*1d-3, $

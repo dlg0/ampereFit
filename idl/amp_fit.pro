@@ -31,25 +31,23 @@ pro amp_fit, $
 		path	= '~/code/ampereFit/idl/'
 		pnmPath	= path + 'pnmSavs/pnmSav'
 	endelse
-
-	capSize	= 60.0
-	plotCapSize	= 50.0
-
 ; Input data file
 ;	fileName = path + '20050515_a_RevB.dat'
 ;    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
-    savFileName = path+'20091023Amp_invert.sav'
-;    savFileName = path+'20091125Amp_invert.sav'
+;    savFileName = path+'20091022Amp_invert.sav'
+;    savFileName = path+'20091023Amp_invert.sav'
+    savFileName = path+'20091125Amp_invert.sav'
 
 ; Time interval (UT)
-	sHr = 0.0+1./6.
-	eHr = sHr+600./3600.
+	sHr = 8.0+2.001/6.
+	eHr = sHr+1200./3600.
 
 ; Hemisphere switch
     south=0               ; 0=North, 1=South
 
 ; Basis functions
 	kMax    = 35
+;	kMax    = 10         ; faster, use for testing
 	mMax    = 5          ; 0 to 5
 
 ; Data weighting parameters
@@ -59,8 +57,16 @@ pro amp_fit, $
 	nLatGrid	= 50
 	nLonGrid	= 24
 
-; Max FAC for plot
-	mx_fac=1.0
+; Min and Max FAC for plot
+	mn_fac=0.07              ; do not plot abs(FAC) lt than this
+	mx_fac=0.50
+
+; Switch to create PNG files of dB and FAC
+	plt_png=1
+
+; Plot range in Latitude
+	capSize	= 60.0
+	plotCapSize	= 50.0
 
 ; Select out relevant data from time and Hemisphere constraints
 	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
@@ -74,6 +80,8 @@ pro amp_fit, $
 ; Restore saveset of input data
 ; Calc Lat,Lon shift to place avg orbit intersection point at centre
 ; Rotate GEI coords and dBs to centred system
+	Print,'Reading AMPERE Data File....'
+	wait,0.001
     read_ampere_sav, $
         savFileName = savFileName, $
         capSize = capSize, $
@@ -90,6 +98,8 @@ pro amp_fit, $
         fillPoleLine = 0
 
 ; Generate final output data grid
+	Print,'Generating Uniforn Grid....'
+	wait,0.001
 	aacgm_grid, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
@@ -103,6 +113,8 @@ pro amp_fit, $
 	   	 epoch = avgEpoch
     mltShift    = mltShift[0]
 ; Expand on input data locations using the shifted GEI coords
+	Print,'Generating Basis Set at Input Data Locations....'
+	wait,0.001
 	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
 	     YkmBFns=YkmBFns, $
 	   	 dYkmDthBFns=dYkmDthBFns, $
@@ -188,6 +200,8 @@ pro amp_fit, $
 		outNkValues	= temporary ( outNkValues2);[iiSort] )
 	endif
 
+	Print,'Fitting dB Data to Basis Set....'
+	wait,0.001
 ;	Fit |dB| to dB.grad Ykm in the shifted GEI system
 ;	-----------------------------------------
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
@@ -212,6 +226,7 @@ pro amp_fit, $
         print, 'ERROR: la_least_squares threw an error code: ', stat
     endif
 
+	Print,'Calculating FAC at Input Data Locations....'
     fit = bFuncs ## coeffs_
 ; Shifted fit dBs
 	fit_dBTheta = fit[0:n_elements(dBMag)-1]  ; 1st half of fit
@@ -225,6 +240,8 @@ pro amp_fit, $
 	                        /(u0*R)*1.0d-9*1.0d6        ; uAm^{-2}
 ; jPar is an array[1,Num of dB values]
 
+	Print,'Generating Basis Set over Uniform Grid....'
+	wait,0.001
 ;	generate basis fns at regular grid (shifted)
 ;	----------------------------------
     sphcar, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
@@ -274,6 +291,8 @@ pro amp_fit, $
 		dYkmDphBFns_grid	= temporary ( dYkmDphBFns_grid2 )
 	endif
 
+	Print,'Calculating FAC over Uniform Grid....'
+	wait,0.001
     bFuncs_grid  = temporary($
                     [[dYkmDThBfns_grid, -dYkmDPhBfns_grid ], $
                      [dYkmDPhBfns_grid,  dYkmDthBfns_grid ]])
@@ -292,6 +311,8 @@ pro amp_fit, $
 	dBPhi_GEI_grid=dBPhi_GEI_grid_sh
 	dBR_GEI_grid_sh=dBPhi_GEI_grid_sh*0.0
 
+	Print,'Un-Shift the dB Vectors....'
+	wait,0.001
 ; Need to rotate the dBs back
 	rev_rot_mat=transpose(rot_mat)       ; undo rotation by transpose
     bspcar,geiGrid_coLat_rad_sh, geiGrid_lon_rad_sh, $     ; conv dB to XYZ comp
@@ -356,12 +377,14 @@ pro amp_fit, $
 	tmestr1,StHr,StMn,StSc,hr_str,mn_str,sc_str
 	tme_str='hh:mm:ss= '+hr_str+':'+mn_str+':'+sc_str
 
+	Print,'Plotting dB and FAC....'
+	wait,0.001
 ;	plot the db vectors
 ;	-------------------
 
 ;Window 1
 	!p.multi = [0,2,2]
-	window, winnum, xSize=700, ySize=700,title='dB vecs for '+date_str+'  '+tme_str
+	window, winnum, xSize=650, ySize=650,title='dB vecs for '+date_str+'  '+tme_str
 	winNum++
 	plt_dat, data.gei_coLat_rad*!radeg, data.gei_lon_rad*!radeg, $
              n_elements(data.gei_coLat_rad), -data.dbTheta, data.dbPhi, [1,1], [1,2], $
@@ -386,16 +409,18 @@ pro amp_fit, $
 ;			 title = 'AACGM-LON', $
 ;            capSize = plotCapSize
 
-    png_file=path+'amp_dB_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
-    image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
-    Write_PNG,png_file,image,r,g,b
-    Print,'PNG for dB written to ', png_file
-
+	If plt_png eq 1 then begin
+	    png_file=path+'amp_dB_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+    	image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    	Write_PNG,png_file,image,r,g,b
+    	Print,'PNG for dB written to ', png_file
+	end
 
 ;	plot the FAC maps
 ;	-----------------
 
 ; Window 2
+  	fac_div=mx_fac/10.
 	loadct, 13, file = path + 'davect.tbl'
 	window, winnum, xSize = 650, ySize = 650,title='FACs for '+date_str+'  '+tme_str
 	winnum++
@@ -405,13 +430,15 @@ pro amp_fit, $
 	map_set, 90, 0, 0, /ortho, /iso, $
 	    limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
 	    /noborder, /advance, title = 'jPar GEI (shifted)'
-	jLevels = (fIndGen(21)-10.)*0.1  ;1.0
+	jLevels = (fIndGen(21)-10.)*fac_div
 	colors  = bytScl ( jLevels, top = 253 ) + 1
 	oldbck=!p.background
 	!p.background=0
 	jpar=reform(jpar)
     triangulate, data.gei_lon_rad*!radeg, 90-data.gei_colat_rad*!radeg, $
         tri, sphere = sphere
+	fc_idx=where(abs(jPar) lt mn_fac)
+	if fc_idx(0) gt -1 then jPar(fc_idx)=0.0
 	contour, jPar, data.gei_lon_rad*!radeg, 90.0-data.gei_coLat_rad*!radeg, $
 	   	 	c_labels=fltarr(n_elements(jLevels))+1,$
 	       	/irreg, /over, levels = jLevels, $
@@ -426,8 +453,10 @@ pro amp_fit, $
      limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar AACGM-MLT'
 	jParTmp	= jParAACGM[*]
+	fc_idx=where(abs(jParTmp) lt mn_fac)
+	if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
 	lonTmp = ((aacgmGrid_lon_deg[*]/15.0+mltShift) mod 24 )*15.0 $
-			+ randomu ( sysTime(/sec ), n_elements(jParTmp), /uni ) * 1e-5
+			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1e-5-0.5e-5
 	latTmp = 90.0-aacgmGrid_coLat_deg[*]
    	contour, jParTmp, $
 			lonTmp, $
@@ -445,8 +474,10 @@ pro amp_fit, $
      limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar AACGM'
 	jParTmp	= jParAACGM[*]
-	lonTmp = ((aacgmGrid_lon_deg[*]/15.0) mod 24 )*15.0 $
-			+ randomu ( sysTime(/sec ), n_elements(jParTmp), /uni ) * 1e-5
+	fc_idx=where(abs(jParTmp) lt mn_fac)
+	if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+	lonTmp = ((aacgmGrid_lon_deg[*]/15.0+0.0) mod 24 )*15.0 $
+			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1.0e-5-0.5e-5
 	latTmp = 90.0-aacgmGrid_coLat_deg[*]
    	contour, jParTmp, $
 			lonTmp, $
@@ -462,12 +493,19 @@ pro amp_fit, $
 
 	avg_hr = (sHr+eHr)/2.0
 	ln_sh=(24.0-avg_hr)*15.0
-
 	If south eq 0 then begin                  ; Nth Hemisphere
      map_set, 90, 0, ln_sh, /ortho, /iso, $
       limit = [90.0-(plotCapSize + 2), 0, 90, 360 ], $
 	 /noborder, /advance, title = 'jPar GEOG - UT'
-   	 contour, jParaacgm, geog_lon_rad*!radeg, 90.0-geog_coLat_rad*!radeg, $
+     jParTmp	= jParAACGM[*]
+     fc_idx=where(abs(jParTmp) lt mn_fac)
+     if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+     lonTmp = ((geog_lon_rad[*]*!radeg/15.0+0.0) mod 24 )*15.0 $
+	          + randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1.0e-5-0.5e-5
+	 latTmp = 90.0-geog_coLat_rad[*]*!radeg
+   	 contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
 		 	c_labels=fltarr(n_elements(jLevels))+1,$
         	/over, levels = jLevels, $
            	c_colors = colors, /fill, /irreg
@@ -477,7 +515,15 @@ pro amp_fit, $
      map_set, -90, 0, ln_sh, /ortho, /iso, $
       limit = [-90, 0, -90+(plotCapSize + 2), 360 ], $
 	  /noborder, /advance, title = 'jPar GEOG - UT'
-   	 contour, jParaacgm, geog_lon_rad*!radeg, -90.0+geog_coLat_rad*!radeg, $
+     jParTmp	= jParAACGM[*]
+     fc_idx=where(abs(jParTmp) lt mn_fac)
+     if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+     lonTmp = ((geog_lon_rad[*]*!radeg/15.0+0.0) mod 24 )*15.0 $
+	          + randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1.0e-5-0.5e-5
+	 latTmp = -90.0+geog_coLat_rad[*]*!radeg
+   	 contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
 	          c_labels=fltarr(n_elements(jLevels))+1,$
               /over, levels = jLevels, $
            	  c_colors = colors, /fill, /irreg
@@ -490,25 +536,129 @@ pro amp_fit, $
 			latDel = 20.0
 	map_continents,color=60
 
-    png_file=path+'amp_FAC_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
-    image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
-    Write_PNG,png_file,image,r,g,b
-    Print,'PNG for FACs written to ', png_file
+	If plt_png eq 1 then begin
+	    png_file=path+'amp_FAC_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+    	image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    	Write_PNG,png_file,image,r,g,b
+    	Print,'PNG for FACs written to ', png_file
+    end
 
-;	map_set, 90, 0, 0, /ortho, /iso, $
-;     limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], $
-;	 /noborder, /advance, title = 'jPar AACGM-LON [GEI]'
-;	jParTmp	= jParAACGM[*]
-;	lonTmp = geiGrid_lon_rad[*]*!radeg
-;	latTmp = 90.0-geiGrid_coLat_rad[*]*!radeg
-;	contour, jParTmp, $
+; Window 3
+	Loadct,0,/silent
+	window, winnum, xSize = 1050, ySize = 400,title='dB and FAC for '+date_str+'  '+tme_str
+	winnum++
+	!p.backGround = 0
+	!p.multi = [0,3,1,0]
+	plt_dat, data.gei_coLat_rad*!radeg, data.gei_lon_rad*!radeg, $
+             n_elements(data.gei_coLat_rad), -data.dbTheta, data.dbPhi, [1,1], [1,2], $
+             title = 'GEI - Shifted Input dB Data', $
+             satNu = data.iSat, $
+             capSize = plotCapSize
+; ***** Check if it should be 90.0-abs(m_lat_a)	*****
+	plt_dat, 90.0-mlat_a[*], ((mlon_a[*]/15.0+mltShift) mod 24)*15.0, $
+	         n_elements(mlat_a[*] ), -mth_vec_gth, mph_vec_gph, [1,1], [1,2], $
+			 title = 'AACGM-MLT', $
+            capSize = plotCapSize
+
+	loadct, 13, file = path + 'davect.tbl'
+   	map_set, 90, 0, 0, /ortho, /iso, $
+     limit = [ 90.0 - ( plotCapSize + 2 ), 0, 90, 360 ], xmargin=[1,1], ymargin=[1,10], $
+	 /noborder, /advance, title = 'jPar AACGM-MLT'
+	jParTmp	= jParAACGM[*]
+	fc_idx=where(abs(jParTmp) lt mn_fac)
+	if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+	lonTmp = ((aacgmGrid_lon_deg[*]/15.0+mltShift) mod 24 )*15.0 $
+			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1e-5-0.5e-5
+	latTmp = 90.0-aacgmGrid_coLat_deg[*]
+   	contour, jParTmp, $
+			lonTmp, $
+			latTmp, $
+		 	c_labels=fltarr(n_elements(jLevels))+1,$
+        	/over, levels = jLevels, $
+           	c_colors = colors, /fill, /irreg
+	map_grid, label = 1, $
+			lonNames	= ['0/24','6','12','18',''], $
+			lons = [0,90,180,270,360], $
+			latLab = 45, $
+			latDel = 20.0
+
+	If plt_png eq 1 then begin
+	    png_file=path+'amp_dB&FAC_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+    	image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    	Write_PNG,png_file,image,r,g,b
+    	Print,'PNG for FACs written to ', png_file
+    end
+
+; Window 4, big GEO-UT Plot for NSF
+;	window, winnum, xSize = 750, ySize = 700,title='GEO_UT FAC for '+date_str+'  '+tme_str
+;	winnum++
+;	!p.backGround = 0
+;	!p.multi = 0
+;	loadct, 13, file = path + 'davect.tbl'
+;	If south eq 0 then begin                  ; Nth Hemisphere
+;    map_set, 90, 0, ln_sh, /ortho, /iso, $
+;      limit = [90.0-(plotCapSize + 2), 0, 90, 360 ], xmargin=[1,7], ymargin=[5,5], $
+;	  /noborder, /advance, title = 'AMPERE: j_par GEO - UT'
+;     jParTmp	= jParAACGM[*]
+;     fc_idx=where(abs(jParTmp) lt mn_fac)
+;     if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+;     lonTmp = ((geog_lon_rad[*]*!radeg/15.0+0.0) mod 24 )*15.0 $
+;	          + randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1.0e-5-0.5e-5
+;	 latTmp = 90.0-geog_coLat_rad[*]*!radeg
+;   	 contour, jParTmp, $
 ;			lonTmp, $
 ;			latTmp, $
 ;		 	c_labels=fltarr(n_elements(jLevels))+1,$
-;       	/over, levels = jLevels, $
+;        	/over, levels = jLevels, $
 ;           	c_colors = colors, /fill, /irreg
-;	map_grid, label = 1, latDel = 10.0
+;    end
+;
+;	If south eq 1 then begin                  ; Sth Hemisphere
+;     map_set, -90, 0, ln_sh, /ortho, /iso, $
+;      limit = [-90, 0, -90+(plotCapSize + 2), 360 ], xmargin=[1,7], ymargin=[5,5], $
+;	  /noborder, /advance, title = 'AMPERE: j_par GEO - UT'
+;     jParTmp	= jParAACGM[*]
+;     fc_idx=where(abs(jParTmp) lt mn_fac)
+;     if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0
+;     lonTmp = ((geog_lon_rad[*]*!radeg/15.0+0.0) mod 24 )*15.0 $
+;	          + randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1.0e-5-0.5e-5
+;	 latTmp = -90.0+geog_coLat_rad[*]*!radeg
+;   	 contour, jParTmp, $
+;			lonTmp, $
+;			latTmp, $
+;	          c_labels=fltarr(n_elements(jLevels))+1,$
+;              /over, levels = jLevels, $
+;           	  c_colors = colors, /fill, /irreg
+;    end
+;
+;	map_grid, label = 1, $
+;			lonNames	= ['0/24','6','12','18',''], $
+;			lons = [0,90,180,270,360]+ln_sh, $
+;			latLab = 45+ln_sh, $
+;			latDel = 20.0
+;	map_continents,color=60
+;
+; Color Bar
+;    width = 0.04               ; changes the width of the color bar
+;    XStrt = 0.88               ; changes the X location for the color bar, assuming vertical bar
+;    YStrt = 0.30               ; changes the Y starting point for the color bar, assuming vertical bar
+;    YEnd = 0.65                ; changes the height of the color bar, assuming vertical bar
+;    cl=255
+;    ttle = 'uAm!u-2!d'
+;    cbar = Obj_New('Colorbar',$
+;    	Position = [XStrt, YStrt, XStrt+width, YEnd],$
+;	    Vertical = 1,$
+;        Color=cl,$
+;	    Range = [-mx_fac,mx_fac], format='(f4.1)',TickLen=-0.1,major=10);, $
+	 ;   Title = Ttle)
+;    cbar->Draw
 
+;	If plt_png eq 1 then begin
+;	    png_file=path+'GEO_UT_FAC_'+dy_str+mnth_str+yr_str+' at '+hr_str+'_'+mn_str+'_'+sc_str+'.png'
+;    	image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+;    	Write_PNG,png_file,image,r,g,b
+;    	Print,'PNG for GEO_UT FAC written to ', png_file
+;    end
 
 ;	plot the data locations
 ;	-----------------------
@@ -547,6 +697,7 @@ pro amp_fit, $
 ;	map_grid, label = 1, latDel = 10.0
 ;	plots, data.geog_lon_rad*!radeg, 90.0-data.geog_coLat_rad*!radeg, psym = 4
 
+	Print,'Min:Max FAC = ',min(jParTmp),'  ',max(jParTmp)
 	!p.multi = 0
  	!p.background = oldbck
 ; stop

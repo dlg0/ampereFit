@@ -169,15 +169,15 @@ Pro vec_geo2aacgm,aacgm_coef_path,aacgm_yr,aacgm_hgt,$
 ; Get XYZ coords of GEO coords
  cglat_a=(90.0-glat_a)             ; Co_Latitude in degrees
 ; Conv GEO(Co_Lat,Long) to GEO(X,Y,Z)
- sphcar,aacgm_hgt,cglat_a,glon_a,xg_a,yg_a,zg_a,/to_rect,/degree
+ sphcar,aacgm_hgt[*],cglat_a,glon_a,xg_a,yg_a,zg_a,/to_rect,/degree
 ; geopack_sphcar,aacgm_hgt,cglat_a,glon_a,xgg_a,ygg_a,zgg_a,/to_rect,/degree
 ; Conv GEO(Lat,Long) to AACGM(Lat,Long)
- aacgm_conv_coord,gLat_a,gLon_a,aacgm_hgt,mlat_a,mlon_a,err,/to_aacgm,order=10
+ aacgm_conv_coord,gLat_a,gLon_a,aacgm_hgt[*],mlat_a,mlon_a,err,/to_aacgm,order=10
  ln_fxi=where(mlon_a lt 0.0)
  if ln_fxi(0) gt -1 then mlon_a(ln_fxi)=mlon_a(ln_fxi)+360.0
 ; Conv AACGM(CoLat,Long) to XYZ
  cmlat_a=(90.0-mlat_a)
- sphcar,aacgm_hgt,cmlat_a,mlon_a,xm_a,ym_a,zm_a,/to_rect,/degree
+ sphcar,aacgm_hgt[*],cmlat_a,mlon_a,xm_a,ym_a,zm_a,/to_rect,/degree
 
  vr=dblarr(NTOT)
  vth=dblarr(NTOT)
@@ -191,12 +191,12 @@ Pro vec_geo2aacgm,aacgm_coef_path,aacgm_yr,aacgm_hgt,$
  sphcar,rg_th,cglat_th,glon_th,xg_th,yg_th,zg_th,/to_sphere,/degree
  glat_th=90.0-cglat_th
 ;  Convert to AACGM mlat,mlon coords (from geo+dth)
- aacgm_conv_coord,glat_th,glon_th,aacgm_hgt,mlat_th,mlon_th,err,/to_aacgm,order=10
+ aacgm_conv_coord,glat_th,glon_th,aacgm_hgt[*],mlat_th,mlon_th,err,/to_aacgm,order=10
  ln_fxi=where(mlon_th lt 0.0)
  if ln_fxi(0) gt -1 then mlon_th(ln_fxi)=mlon_th(ln_fxi)+360.0
  cmlat_th=(90.0-mlat_th)  ; get AACGM colatitude
 ;  Get XYZ coords of AACGM+dth(geo) coords
- sphcar,aacgm_hgt,cmlat_th,mlon_th,xm_th,ym_th,zm_th,/to_rect,/degree
+ sphcar,aacgm_hgt[*],cmlat_th,mlon_th,xm_th,ym_th,zm_th,/to_rect,/degree
 
 ;  del_ph in GEO
  vr(*)=0.0 & vth(*)=0.0 & vph(*)=dgph              ; Construct a (0,0,phi) vector
@@ -207,12 +207,12 @@ Pro vec_geo2aacgm,aacgm_coef_path,aacgm_yr,aacgm_hgt,$
  sphcar,rg_ph,cglat_ph,glon_ph,xg_ph,yg_ph,zg_ph,/to_sphere,/degree
  glat_ph=90.0-cglat_ph
 ;  Convert to AACGM mlat,mlon coords (from geo+dph)
- aacgm_conv_coord,glat_ph,glon_ph,aacgm_hgt,mlat_ph,mlon_ph,err,/to_aacgm,order=10
+ aacgm_conv_coord,glat_ph,glon_ph,aacgm_hgt[*],mlat_ph,mlon_ph,err,/to_aacgm,order=10
  ln_fxi=where(mlon_ph lt 0.0)
  if ln_fxi(0) gt -1 then mlon_ph(ln_fxi)=mlon_ph(ln_fxi)+360.0
  cmlat_ph=(90.0-mlat_ph)  ; get AACGM colatitude
 ;  Get XYZ coords of AACGM+dph(geo) coords
- sphcar,aacgm_hgt,cmlat_ph,mlon_ph,xm_ph,ym_ph,zm_ph,/to_rect,/degree
+ sphcar,aacgm_hgt[*],cmlat_ph,mlon_ph,xm_ph,ym_ph,zm_ph,/to_rect,/degree
 
 ; Get aacgm radial unit vector
  mxyz_r=[[xm_a],[ym_a],[zm_a]]

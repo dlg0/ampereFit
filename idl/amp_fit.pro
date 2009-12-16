@@ -62,7 +62,7 @@ pro amp_fit, $
 	mx_fac=0.50
 
 ; Switch to create PNG files of dB and FAC
-	plt_png=1
+	plt_png=0
 
 ; Plot range in Latitude
 	capSize	= 60.0
@@ -354,9 +354,15 @@ pro amp_fit, $
 
     gLat_a=90.0-geog_coLat_rad*!radeg
     gLon_a=geog_lon_rad*!radeg
-    aacgm_conv_vec, gLat_a, gLon_a, geog_R_km-Re_km, $
-                    dBTheta_GEI_grid, dBPhi_GEI_grid, $
-     mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph,err,/to_aacgm
+;    aacgm_conv_vec, gLat_a, gLon_a, geog_R_km-Re_km, $
+;                    dBTheta_GEI_grid, dBPhi_GEI_grid, $
+;     mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph,err,/to_aacgm
+
+    aacgm_yr=2005
+    vec_geo2aacgm,path,aacgm_yr,geog_R_km-Re_km,$
+                       gLat_a,gLon_a,dBTheta_GEI_grid,dBPhi_GEI_grid,$
+                       mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph
+
 
 ;	plot stuff
 ;	----------

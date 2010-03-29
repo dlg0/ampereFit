@@ -171,7 +171,7 @@ pro read_ampere_dlg, $
 
 	aacgm_load_coef, year<2000 ; once we have newer coeffs update this
  	aacgm_conv_coord, 90.0 - geog_coLat_rad * !radeg, geog_lon_rad * !radeg, $
-		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
+		 geog_R_km-6371.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
  	aacgm_coLat_deg	= 90.0-aacgm_lat_deg
 	mlt	= aacgm_mlt ( fltArr(iiCnt) + year, fltArr(iiCnt) + yrSec, aacgm_lon_deg )
 

@@ -18,7 +18,7 @@ pro aacgm_grid, $
  max_coLat = 50.0
  if (not keyword_set(nLat)) then nLat = 40
  if (not keyword_set(nLon)) then nLon = 24
- Re_km = 6357.0
+ Re_km = 6371.0
  R_km = 780.0 + Re_km                       ; Iridium altitude
  aacgm_coLat_deg=(fIndGen(nLat)+1)/nLat*max_coLat
  aacgm_lon_deg = (fIndGen(nLon))*(360.0-360.0/nLon)/(nLon-1)

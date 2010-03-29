@@ -48,7 +48,7 @@ pro read_ampere_sav, $
  rwpz_a=pos_eci_total(2,*)/1000.0   ; conv Z coord to km
 
 ; Select data subset based on time interval and hemisphere : above 20 deg lat.
- r0_lim= (6357.0 + 110.0)*cos(70.0*!pi/180.0)
+ r0_lim= (6371.0 + 110.0)*cos(70.0*!pi/180.0)
  If keyword_set(south) then begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
                                       and rwpz_a lt r0_lim, iiTimeCnt)
@@ -271,7 +271,7 @@ pro read_ampere_sav, $
 ;   get AACGM coords
  aacgm_load_coef, year<2000 ; once we have newer coeffs update this
  aacgm_conv_coord, 90.0-geog_coLat_rad*!radeg, geog_lon_rad*!radeg, $
-		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
+		 geog_R_km-6371.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
  aacgm_coLat_deg = 90.0-aacgm_lat_deg
  iiNeg = where(aacgm_lon_deg lt 0.0, iiNegCnt)
  if iiNegCnt gt 0 then aacgm_lon_deg[iiNeg]=aacgm_lon_deg[iiNeg] + 360.

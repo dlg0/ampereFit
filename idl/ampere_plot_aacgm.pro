@@ -82,7 +82,7 @@ Pro AmpPar_mag_event,ev
           If HemSp eq 'S' Then plt_dat,cglat,glon,np, data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
           If HemSp eq 'N' Then plt_dat,cglat,glon,np,-data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
 ; Take GEI -> GEOG -> AACGM
-          Re_km = 6357.0
+          Re_km = 6371.0
           R_km = 110.0 + Re_km
 ; conv GEI r,thet,phi -> GEI XYZ
           sphcar,data_in.pr, data_in.pth, data_in.pph,$
@@ -180,7 +180,7 @@ Pro AmpPar_mag_event,ev
           If HemSp eq 'S' Then plt_dat,cglat,glon,np, data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
           If HemSp eq 'N' Then plt_dat,cglat,glon,np,-data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
 ; Take GEI -> GEOG -> AACGM
-          Re_km = 6357.0
+          Re_km = 6371.0
           R_km = 110.0 + Re_km
 ; conv GEI r,thet,phi -> GEI XYZ
           sphcar,data_in.pr, data_in.pth, data_in.pph,$
@@ -260,7 +260,7 @@ Pro AmpPar_mag_event,ev
           If HemSp eq 'S' Then plt_dat,cglat,glon,np, data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
           If HemSp eq 'N' Then plt_dat,cglat,glon,np,-data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
 ; Take GEI -> GEOG -> AACGM
-          Re_km = 6357.0
+          Re_km = 6371.0
           R_km = 110.0 + Re_km
 ; conv GEI r,thet,phi -> GEI XYZ
           sphcar,data_in.pr, data_in.pth, data_in.pph,$

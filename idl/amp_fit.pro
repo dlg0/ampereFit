@@ -26,17 +26,19 @@ pro amp_fit, $
 		path	= 'd:\cwac\hi_res\davidg\'
 		pnmPath	= path + 'jpar_ver2\pnmsavs\pnmSav'
 		aacgm_set_path,path
+		savPath	= path 
 	endif else begin                        ; other systems (linux, darwin etc.)
 		plotDev = 'X'
 		path	= '~/code/ampereFit/idl/'
 		pnmPath	= path + 'pnmSavs/pnmSav'
+		savPath	= '~/code/ampereFit/data/'
 	endelse
 ; Input data file
 ;	fileName = path + '20050515_a_RevB.dat'
 ;    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
 ;    savFileName = path+'20091022Amp_invert.sav'
 ;    savFileName = path+'20091023Amp_invert.sav'
-    savFileName = path+'20091125Amp_invert.sav'
+    savFileName = savPath+'20091125Amp_invert.sav'
 
 ; Time interval (UT)
 	sHr = 8.0+2.001/6.
@@ -65,7 +67,7 @@ pro amp_fit, $
 	plt_png=0
 
 ; Plot range in Latitude
-	capSize	= 60.0
+	capSize	= 70.0
 	plotCapSize	= 50.0
 
 ; Select out relevant data from time and Hemisphere constraints
@@ -336,7 +338,7 @@ pro amp_fit, $
     end
 
 ; Take GEI -> GEOG -> AACGM
-    Re_km = 6357.0
+    Re_km = 6371.0
     R_km = 110.0 + Re_km
 ; conv GEI r,thet,phi -> GEI XYZ
     sphcar,geiGrid_R_km, geiGrid_coLat_rad, geiGrid_lon_rad,$

@@ -164,7 +164,9 @@ Pro vec_geo2aacgm,aacgm_coef_path,aacgm_yr,aacgm_hgt,$
  mph_vec_gph=dblarr(NTOT)
 
 ; Load AACGM coeff data
- aacgm_set_path,aacgm_coef_path    ; set aacgm coeff path
+	if  strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN62') then begin
+ 		aacgm_set_path,aacgm_coef_path    ; set aacgm coeff path
+	endif
  aacgm_load_coef,aacgm_yr          ; load the coeffs
 ; Get XYZ coords of GEO coords
  cglat_a=(90.0-glat_a)             ; Co_Latitude in degrees

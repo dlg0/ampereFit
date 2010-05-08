@@ -31,6 +31,7 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
 ; Step 1: Calc x,y coords (funky cylindrical) of locations
  npl=6                     ; 6 orbit planes
  mnpnts=20                 ; Min number of points in a track to proceed
+
 ; Make Co_Lat with 0 at centre (for track fit)
  clat_a=data_in.pth
  idx=where(data_in.pth gt 90.)
@@ -46,6 +47,7 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
  end
  If keyword_set(diag) then Print,'Num. Points read from Input File=',n_elements(data_in)
  If keyword_set(diag) then Print,'Num. Points per Orbit track:',p_cnt_pl
+
 ; Check for sufficient data on all orbit tracks
  If (min(p_cnt_pl) le mnpnts) then $
  Begin

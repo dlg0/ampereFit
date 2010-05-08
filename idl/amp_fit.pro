@@ -19,65 +19,65 @@ end
 ;
 pro amp_fit, $
 		numerical = numerical, $
-        plot_bFns = plot_bFns
+        plot_bFns = plot_bFns, $
+		path = path, $
+		aacgmpath = aacgmpath, $
+		pnmPath = pnmpath, $
+		savFileName = SavFileName, $
+		sHr = sHr, eHr=eHr, $
+		south = south, $
+		kmax = kmax, mmax = mmax, $
+		thresh = thresh, $
+		sigma = sigma, $
+		nLatGrid = nLatGrid, nLonGrid = nLonGrid, $
+		mn_fac = mn_fac, mx_fac=mx_fac, $
+		plt_png = plt_png, $
+		max_coLat = max_coLat, $
+		calc_coLat = calc_coLat
 
 	if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN62') then begin
 		plotDev	= 'win'
-		path	= 'd:\cwac\hi_res\davidg\'
-		pnmPath	= path + 'jpar_ver2\pnmsavs\pnmSav'
-		aacgm_set_path,path
-		savPath	= path 
+		if not keyword_set(path) then path	= 'd:\cwac\hi_res\davidg\'
+		if not keyword_set(pnmpath) then pnmPath = path + 'jpar_ver2\pnmsavs\pnmSav'
 	endif else begin                        ; other systems (linux, darwin etc.)
 		plotDev = 'X'
-		path	= '~/code/ampereFit/idl/'
-		pnmPath	= path + 'pnmSavs/pnmSav'
-		savPath	= '~/code/ampereFit/data/'
+		if not keyword_set(path) then path = '~/code/ampereFit/idl/'
+		if not keyword_set(pnmpath) then pnmPath = path + 'pnmSavs/pnmSav'
 	endelse
+	if keyword_set(aacgmpath) then aacgm_set_path,aacgmpath else aacgm_set_path,path
+
 ; Input data file
-;	fileName = path + '20050515_a_RevB.dat'
-;    savFileName = '~/code/ampereFit/data/20091023Amp_invert_test2.sav'
-;    savFileName = path+'20091022Amp_invert.sav'
-;    savFileName = path+'20091023Amp_invert.sav'
-    savFileName = savPath+'20091125Amp_invert.sav'
+	if not keyword_set(savFileName) then savFileName = path+'20091125Amp_invert.sav'
 
 ; Time interval (UT)
-	sHr = 8.0+2.001/6.
-	eHr = sHr+1200./3600.
+	if not keyword_set(sHr) then sHr = 8.0+2.001/6.
+	if not keyword_set(eHr) then eHr = sHr+1200./3600.
 
 ; Hemisphere switch
-    south=0               ; 0=North, 1=South
+    if not keyword_set(south) then south=0           ; 0=North, 1=South
 
 ; Basis functions
-	kMax    = 35
-;	kMax    = 10         ; faster, use for testing
-	mMax    = 5          ; 0 to 5
+	if not keyword_set(kmax) then kmax = 35
+	if not keyword_set(mmax) then mmax = 5           ; 0 to 5
 
 ; Data weighting parameters
-	thresh=80.0         ; dBMag threshold, below this we apply a reduction factor, sigma
-	sigma=2.0            ; sigma=2 would halve the amplitude of each component of the data
+	if not keyword_set(thresh) then thresh=80.0      ; dBMag threshold, below this we apply 1/sigma: no weighting if thresh=0
+	if not keyword_set(sigma) then sigma=1.0         ; sigma=2 would halve the amplitude of each component of the data
+
 ; Controls final solution grid
-	nLatGrid	= 50
-	nLonGrid	= 24
+	if not keyword_set(nLatGrid) then nLatGrid	= 50 ; default fit grid
+	if not keyword_set(nLonGrid) then nLonGrid	= 24
 
 ; Min and Max FAC for plot
-	mn_fac=0.07              ; do not plot abs(FAC) lt than this
-	mx_fac=0.50
+	if not keyword_set(mn_fac) then mn_fac=0.07      ; do not plot abs(FAC) < mn_fac
+	if not keyword_set(mx_fac) then mx_fac=0.50
 
 ; Switch to create PNG files of dB and FAC
-	plt_png=0
+	if not keyword_set(plt_png) then plt_png=0       ; default is to not output PNG files
 
 ; Plot range in Latitude
-	capSize	= 70.0
-	plotCapSize	= 50.0
-
-; Select out relevant data from time and Hemisphere constraints
-	;read_ampere_dlg, fileName, sHr, eHr, data, t_arr, capSize, $
-	;   	 yrSec = yrSec, $
-	;   	 year = year, $
-	;   	 month = month, $
-	;   	 day = day, $
-	;	 avgYrSec = avgYrSec, $
-	;   	 avgEpoch = avgEpoch
+	if not keyword_set(max_coLat) then max_coLat = 70.0
+	if not keyword_set(calc_coLat) then calc_coLat = 40.0
 
 ; Restore saveset of input data
 ; Calc Lat,Lon shift to place avg orbit intersection point at centre
@@ -86,13 +86,10 @@ pro amp_fit, $
 	wait,0.001
     read_ampere_sav, $
         savFileName = savFileName, $
-        capSize = capSize, $
+        max_coLat = max_coLat, $
         dataOut = data, $         ; GEI are all shifted in structure data
-        sHr = sHr, $
-        eHr = eHr, $
-        year = year, $
-        month = month, $
-        day = day, $
+        sHr = sHr, eHr = eHr, $
+        year = year, month = month, day = day, $
         avgYrSec = avgYrSec, $
         avgEpoch = avgEpoch, $
         south = south, $
@@ -102,7 +99,7 @@ pro amp_fit, $
 ; Generate final output data grid
 	Print,'Generating Uniforn Grid....'
 	wait,0.001
-	aacgm_grid, $
+	aacgm_grid, calc_coLat, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
 	   	 aacgmGrid_R_km = aacgmGrid_R_km, $
@@ -117,7 +114,7 @@ pro amp_fit, $
 ; Expand on input data locations using the shifted GEI coords
 	Print,'Generating Basis Set at Input Data Locations....'
 	wait,0.001
-	schaBasisFunctions, kMax, mMax, capSize, data.gei_coLat_rad, data.gei_lon_rad, $
+	schaBasisFunctions, kMax, mMax, calc_coLat, data.gei_coLat_rad, data.gei_lon_rad, $
 	     YkmBFns=YkmBFns, $
 	   	 dYkmDthBFns=dYkmDthBFns, $
 	   	 dYkmDphBFns=dYkmDphBFns, $
@@ -138,7 +135,7 @@ pro amp_fit, $
 			kArr = outKValues2;, $
             ;/bc2
 
-    if keyword_set ( plot_bFns ) then begin
+    if keyword_set ( plot_bFns ) then begin            ; set this keyword to plot basis set - used for diagnostics
 	    !p.multi = [0,3,4]
 	    !p.charSize = 2.0
 	    device, decomposed = 0
@@ -207,11 +204,13 @@ pro amp_fit, $
 ;	Fit |dB| to dB.grad Ykm in the shifted GEI system
 ;	-----------------------------------------
 	dBMag   = sqrt(data.dBTheta^2+data.dBPhi^2)
+    If (sigma ne 1.) then begin
 ; Apply weighting [after Dec 10 discussion at APL]
-    w_idx=where(dBMag lt thresh)
-    If w_idx(0) gt -1 then begin
-     data[w_idx].dBTheta=data[w_idx].dBTheta/sigma
-     data[w_idx].dBPhi=data[w_idx].dBPhi/sigma
+     w_idx=where(dBMag lt thresh)
+     If w_idx(0) gt -1 then begin
+      data.dBTheta[w_idx]=data.dBTheta[w_idx]/sigma
+      data.dBPhi[w_idx]=data.dBPhi[w_idx]/sigma
+     end
     end
 ;
     bFuncs  = temporary ( $
@@ -224,9 +223,7 @@ pro amp_fit, $
                status = stat, $
                method = 3, $
                /double, rank = rank )
-    if stat ne 0 then begin
-        print, 'ERROR: la_least_squares threw an error code: ', stat
-    endif
+    if stat ne 0 then print, 'ERROR: la_least_squares threw an error code: ', stat
 
 	Print,'Calculating FAC at Input Data Locations....'
     fit = bFuncs ## coeffs_
@@ -248,9 +245,11 @@ pro amp_fit, $
 ;	----------------------------------
     sphcar, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
             gei_xGrid, gei_yGrid, gei_zGrid,/to_rect       ; XYZ coord of GEI grid (unshifted)
+
 ; create room for shifted [Lat,Lon]
 	geiGrid_coLat_rad_sh=geiGrid_coLat_rad[*]
 	geiGrid_lon_rad_sh=geiGrid_lon_rad[*]
+
 ; r and r_sh are the same as its a rotation about the same origin
     For ii=Long(0),n_elements(gei_xGrid)-1 do begin
 ; rotate coord locations
@@ -339,7 +338,7 @@ pro amp_fit, $
 
 ; Take GEI -> GEOG -> AACGM
     Re_km = 6371.0
-    R_km = 110.0 + Re_km
+    R_km = 780.0 + Re_km
 ; conv GEI r,thet,phi -> GEI XYZ
     sphcar,geiGrid_R_km, geiGrid_coLat_rad, geiGrid_lon_rad,$
            gei_x, gei_y, gei_z, /to_rect

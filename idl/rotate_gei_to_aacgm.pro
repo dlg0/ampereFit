@@ -2,10 +2,10 @@ pro gei_to_aacgm, gei_R_km, gei_coLat_rad, gei_lon_rad, $
  aacgm_R_km, aacgm_coLat_rad, aacgm_lon_rad, $
  year = year, epoch = epoch
 
- if (not keyword_set(year)) then year = 2000
- aacgm_load_coef, year<2000 ; once we have newer coeffs update this
- Re_km = 6371.0
- R_km = 110.0 + Re_km
+ if (not keyword_set(year)) then year = 2005
+ aacgm_load_coef, year<2006 ; once we have newer coeffs update this
+ Re_km = 6357.0
+ R_km = 780.0 + Re_km
 
 ; conv GEI r,thet,phi -> GEI XYZ
  geoPack_sphCar, gei_R_km, gei_coLat_rad, gei_lon_rad, $
@@ -48,9 +48,9 @@ rot_method = rot_method
 
 
 if ( (not keyword_set ( dot_method )) and (not keyword_set ( rot_method )) ) then rot_method = 1
-if ( not keyword_set ( year ) ) then year = 2000
+if ( not keyword_set ( year ) ) then year = 2005
 
-aacgm_load_coef, year<2000 ; once we have newer coeffs update this
+aacgm_load_coef, year<2006 ; once we have newer coeffs update this
 Re_km = 6371.0
 R_km = 780.0 + Re_km
 
@@ -91,7 +91,7 @@ GEI_th_unit_y = GEI_R_unit_x
 ; small step in aacgm r direction & convert to geo coords
 
   aacgm_conv_coord, (90.0 - aacgm_coLat_rad * !radeg)+dR, aacgm_lon_rad * !radeg, $
-gei_R_km-6371.0, GEO_lat_deg_R, GEO_lon_deg_R, err, /to_geo
+gei_R_km-6357.0, GEO_lat_deg_R, GEO_lon_deg_R, err, /to_geo
 
 ; convert geo to gei
 

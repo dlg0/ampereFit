@@ -55,8 +55,8 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 
 	bFnCnt	= 0;
 	for m = -maxM, maxM do begin
-		print, 'M: ',m;
-	print, 'Calling realLegendre ...';
+;		print, 'M: ',m
+;		print, 'Calling realLegendre ...';
 		legendreFnsBC1	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), $
 			lowEndBC = 0, plotFns = 0, nVals = nValsBC1, $
 			dLegendreFns = dLegendreFnsBC1, $
@@ -69,41 +69,29 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 			kVals = kValsBC2, highEndBC = 0 , $
 			minTheta = minTheta, maxTheta = maxTheta );
 
-        ;kValsBC1    = kValsBC1 - 1
-
         if keyword_set ( bc1 ) then begin
-
-		    legendreFns	= legendreFnsBC1;
-		    dLegendreFns	= dLegendreFnsBC1;
-
-		    nVals	= nValsBC1;
-		    kVals	= kValsBC1;
+		    legendreFns	= legendreFnsBC1
+		    dLegendreFns	= dLegendreFnsBC1
+		    nVals	= nValsBC1
+		    kVals	= kValsBC1
 
         endif else if keyword_set ( bc2 ) then begin
-
-		    legendreFns	= legendreFnsBC2;
-		    dLegendreFns	= dLegendreFnsBC2;
-
-		    nVals	= nValsBC2;
-		    kVals	= kValsBC2;
-
+		    legendreFns	= legendreFnsBC2
+		    dLegendreFns	= dLegendreFnsBC2
+		    nVals	= nValsBC2
+		    kVals	= kValsBC2
         endif else begin
-
-            print, 'both sets'
-		    legendreFns	= [ [ legendreFnsBC2 ], [ legendreFnsBC1 ] ];
-		    dLegendreFns	= [ [ dLegendreFnsBC2 ], [ dLegendreFnsBC1 ] ];
-
-		    nVals	= [ nValsBC2, nValsBC1 ];
-		    kVals	= [	kValsBC2, kValsBC1 ];
-
-        endelse
-
-		print, '+++++++++++++++++++++++'
-		print, n_elements ( kVals )
-		print, maxK - abs ( m)
+;            print, 'both sets'
+		    legendreFns	= [ [ legendreFnsBC2 ], [ legendreFnsBC1 ]]
+		    dLegendreFns	= [ [ dLegendreFnsBC2 ], [ dLegendreFnsBC1 ]]
+		    nVals	= [ nValsBC2, nValsBC1 ]
+		    kVals	= [	kValsBC2, kValsBC1 ]
+		endelse
+;		print, '+++++++++++++++++++++++'
+;		print, n_elements ( kVals )
+;		print, maxK - abs ( m)
 
 		for i = 0, n_elements ( kVals ) - 1 do begin
-
 			rDep	= r^nVals[i] * $
 				( 1d0 + nVals[i] / ( nVals[i] + 1d0 ) * ( rE / r )^( 2d0 * nVals[i] + 1d0 ) );
 			dYdr_rDep	= nVals[i] * r^( nVals[i] - 1d0 ) * $
@@ -112,7 +100,6 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 			;print, rDep, dYdr_rDep;
 
 			if m ge 0 then begin
-
 				YBFnArr[bFnCnt,*]	= rDep * legendreFns[*,i] * cos ( m * lon );
 				brBFnArr[bFnCnt,*]	= dYdr_rDep * legendreFns[*,i] * cos ( m * lon );
 				bThBFnArr[bFnCnt,*]	= 1d0 / r * rDep * dLegendreFns[*,i] * cos ( m * lon );
@@ -135,9 +122,7 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 				mArr[bFnCnt]	= m;
 				nArr[bFnCnt]	= nVals[i];
 				kArr[bFnCnt]	= kVals[i];
-
 				++bFnCnt;
-
 			endif else begin
 
 		;		YBFnArr[bFnCnt,*]	= rDep * legendreFns[*,i] * cos ( m * lon );
@@ -158,32 +143,28 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 					legendreFns[*,i] * cos ( abs(m) * lon );
 
 				;orthoNormFactor	=  sqrt ( 1d0 / ( total ( legendreFns[*,i]^2 * $
-				;	dLat * dLon * sin ( coLat ) ) ) );
+				;	dLat * dLon * sin ( coLat ) ) ) )
 
-				;YBFnArr[bFnCnt,*]	= orthoNormFactor * YBFnArr[bFnCnt,*];
-				;brBFnArr[bFnCnt,*]	= orthoNormFactor * brBFnArr[bFnCnt,*];
-				;bThBFnArr[bFnCnt,*]	= orthoNormFactor * bThBFnArr[bFnCnt,*];
-				;bPhBFnArr[bFnCnt,*]	= orthoNormFactor * bPhBFnArr[bFnCnt,*];
+				;YBFnArr[bFnCnt,*]	= orthoNormFactor * YBFnArr[bFnCnt,*]
+				;brBFnArr[bFnCnt,*]	= orthoNormFactor * brBFnArr[bFnCnt,*]
+				;bThBFnArr[bFnCnt,*]	= orthoNormFactor * bThBFnArr[bFnCnt,*]
+				;bPhBFnArr[bFnCnt,*]	= orthoNormFactor * bPhBFnArr[bFnCnt,*]
 
-				mArr[bFnCnt]	= m;
-				nArr[bFnCnt]	= nVals[i];
-				kArr[bFnCnt]	= kVals[i];
-				++bFnCnt;
-
+				mArr[bFnCnt]	= m
+				nArr[bFnCnt]	= nVals[i]
+				kArr[bFnCnt]	= kVals[i]
+				++bFnCnt
 			endelse
-
 		endfor
-
 	endfor
 
 ;	Remove zero functions if only one set chosen
 
-	YBFnArr	= YBFnArr[0:bFnCnt-1,*];
-	brBFnArr	= brBFnArr[0:bFnCnt-1,*];
-	bThBFnArr	= bThBFnArr[0:bFnCnt-1,*];
-	bPhBFnArr	= -bPhBFnArr[0:bFnCnt-1,*];
-	nArr	= nArr[0:bFnCnt-1];
-	mArr	= mArr[0:bFnCnt-1];
-	kArr	= kArr[0:bFnCnt-1];
-
+	YBFnArr	= YBFnArr[0:bFnCnt-1,*]
+	brBFnArr	= brBFnArr[0:bFnCnt-1,*]
+	bThBFnArr	= bThBFnArr[0:bFnCnt-1,*]
+	bPhBFnArr	= -bPhBFnArr[0:bFnCnt-1,*]
+	nArr	= nArr[0:bFnCnt-1]
+	mArr	= mArr[0:bFnCnt-1]
+	kArr	= kArr[0:bFnCnt-1]
 end

@@ -1,26 +1,25 @@
+; Reads AMPERE data SAV file
+; DLG & CLW, Dec 2009
+;
+; Comments:
+; data selection -> latitude range set to max_coLat
+;
 pro read_ampere_sav, $
     savFileName = savFileName, $
-    capSize = capSize, $
+    max_CoLat = max_coLat, $
     dataOut = dataOut, $
     sHr = sHr, eHr = eHr, $
-    year = year, $
-    month = month, $
-    day = day, $
+    year = year, month = month, day = day, $
     avgYrSec = yrSecAvg, $
     avgEpoch = avgEpoch, $
     south = south, $
     rot_mat=rot_mat, $
-;    fillPole = fillPole, $
     fillPoleLine = fillPoleLine
 
- if not keyword_set(savFileName) then $
-  savFileName = '~/code/ampereFit/data/20091023Amp_invert.sav'
- if not keyword_set ( capSize ) then capSize = 40 * !dtor
+ if not keyword_set(max_coLat) then max_coLat=70.0
 
  dateStr=''
- reads, strmid(file_baseName ( savFileName ),0,8), $
-		year, month, day, format='(i4,i2,i2)'
-
+ reads, strmid(file_baseName ( savFileName ),0,8), year, month, day, format='(i4,i2,i2)'
  restore, savFileName
 ;   variables are
 ;
@@ -47,15 +46,16 @@ pro read_ampere_sav, $
  rwpz_a=dblarr(ntot)
  rwpz_a=pos_eci_total(2,*)/1000.0   ; conv Z coord to km
 
-; Select data subset based on time interval and hemisphere : above 20 deg lat.
- r0_lim= (6371.0 + 110.0)*cos(70.0*!pi/180.0)
+; Select data subset based on time interval and hemisphere : above 90-max_coLat deg lat.
+ z0_lim= (6371.0 + 780.0)*cos(max_coLat*!pi/180.0)
  If keyword_set(south) then begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
-                                      and rwpz_a lt r0_lim, iiTimeCnt)
+                                      and rwpz_a lt z0_lim, iiTimeCnt)
  end else begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
-                                      and rwpz_a gt r0_lim, iiTimeCnt)  ; Nth Hemisphere
+                                      and rwpz_a gt z0_lim, iiTimeCnt)  ; Nth Hemisphere
  end
+
 ;stop
 ;	geoPack_sphCar, pos_ECI_total[0,*]*1d-3, $
 ;                    pos_ECI_total[1,*]*1d-3, $
@@ -96,6 +96,7 @@ pro read_ampere_sav, $
   data[ii].dbth=vbth
   data[ii].dbph=vbph
  end
+
 ;; plot the db vectors
 ; window, 1, xSize = 500, ySize = 500,title='Input Data'
 ; If HemSp eq 'S' Then plt_dat,cglat,glon,np, data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
@@ -109,88 +110,9 @@ pro read_ampere_sav, $
   idx=where(data_sh.pth gt 90.)             ; Find Sth hemisphere points
   If (idx(0) gt -1) then data_sh[idx].pth=180.0-data_sh[idx].pth
  end
-; ***   ***   ***   ***   ***   ***
 
-;  add some extra data near the pole ;-)
-
-; if keyword_set ( fillPoleLine ) then begin
-        ;   identify which two tracks surround the gap
-;  iiTenLat = where ( gei_coLat_rad_TMP[iiTime]*!radeg gt 6 $
-;                 and gei_coLat_rad_TMP[iiTime]*!radeg lt 8, iiTenCnt )
-;
-;  tenLons = (gei_lon_rad_TMP[iiTime])[iiTenLat] * !radeg
-;  iiSortTenLons   = sort ( tenLons )
-;  tenLons = tenLons[iiSortTenLons]
-;
-;  derivLons   = fltArr ( n_elements ( tenLons ) )
-;  for i=0,n_elements ( tenLons ) - 2 do begin
-;   derivLons[i]   = tenLons[i+1] - tenLons[i]
-;  endfor
-;
-;  derivLons[n_elements(tenLons)-1]    = tenLons[0]+360 - tenLons[n_elements(tenLons)-1]
-;  iiMaxGap = where ( derivLons eq max ( derivLons ) )
-;
-;  track1  = (((plane_number_total[iiTime])[tenLons])[iiSortTenLons])[iiMaxGap]
-;  track2  = (((plane_number_total[iiTime])[tenLons])[iiSortTenLons])[iiMaxGap+1]
-;
-;  if track1 eq track2 then begin
-;   print, 'Awww crap!, the detection of which tracks straddle the intersection'
-;   print, 'point hole has failed.'
-;  endif
-;
-;  iiTrack1    = where ( plane_number_total[iiTime] eq track1 )
-;  map_set, 90, 0, 0, /ortho, /iso, $
-;       	limit = [ 90.0 - ( 50 + 2 ), 0, 90, 360 ],$
-;    	/noborder,/advance, title = 'GEI'
-;  map_grid, label = 1, latDel = 10.0
-;  plots, (gei_lon_rad_TMP[iiTime])[iiTrack1]*!radeg, $
-;        90.0-(gei_coLat_rad_TMP[iiTime])[iiTrack1]*!radeg, psym = 4
-;   stop
-; endif
-
-; if keyword_set ( fillPole ) then begin
-;  nPts    = 5
-;  spreadFac   = 200
-;  newX    = rebin ( fIndGen ( nPts ) - nPts / 2, nPts, nPts ) * spreadFac
-;  newY    = transpose ( newX )
-;
-;  iiKeep    = where ( newX ne 0 and newY ne 0, nExtra )
-;  if nExtra gt 0 then begin
-;   newX    = newX[iiKeep]
-;   newY    = newY[iiKeep]
-;  endif
-;
-;  if keyword_set ( south ) then minVal = min ( data.pz ) $
-;         else minVal = max ( data.pz )
-;  newZ    = newX * 0 + minVal
-;
-;  minIdx  = where ( data.pz eq minVal )
-;  new_dbX = (data.dbx)[minIdx]
-;  new_dbY = (data.dby)[minIdx]
-;  new_dbZ = (data.dbz)[minIdx]
-;
-;  data_    = replicate ( data_struct, iiTimeCnt + nExtra )
-;
-;  data_.px = [ data.px, newX[*] ]
-;  data_.py = [ data.py, newY[*] ]
-;  data_.pz = [ data.pz, newZ[*] ]
-;
-;  data_.dbx    = [ data.dbx, fltArr ( nExtra ) + new_dbX[0] ]
-;  data_.dby    = [ data.dby, fltArr ( nExtra ) + new_dbY[0] ]
-;  data_.dbz    = [ data.dbz, fltArr ( nExtra ) + new_dbZ[0] ]
-;  data_.isat   = [ data.isat, fltArr ( nExtra ) + 99 ]
-;  data_.utc    = [ data.utc, fltArr ( nExtra ) + data.utc[minIdx] ]
-;
-;  data = data_
-;
-;  iiTimeCnt += nExtra
-; endif
-
-;   get spherical GEI coords
-
-;	geoPack_sphCar, data.px, data.py, data.pz, $
-;            gei_R_km, gei_coLat_rad, gei_lon_rad, $
-;             /to_sphere         ; km -> km, radians
+print,'2. in read_ampere_sav: min,max dbThet=',min(data.dbth),max(data.dbth)
+print,'2. in read_ampere_sav: min,max dbPhi=',min(data.dbph),max(data.dbph)
 
 ; Shifted GEI data
  gei_R_km=data_sh.pr
@@ -269,13 +191,16 @@ pro read_ampere_sav, $
  if keyword_set(south) then geog_coLat_rad=!pi-geog_coLat_rad
 
 ;   get AACGM coords
- aacgm_load_coef, year<2000 ; once we have newer coeffs update this
+ aacgm_load_coef, year<2005 ; once we have newer coeffs update this
  aacgm_conv_coord, 90.0-geog_coLat_rad*!radeg, geog_lon_rad*!radeg, $
-		 geog_R_km-6371.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
+		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
  aacgm_coLat_deg = 90.0-aacgm_lat_deg
  iiNeg = where(aacgm_lon_deg lt 0.0, iiNegCnt)
  if iiNegCnt gt 0 then aacgm_lon_deg[iiNeg]=aacgm_lon_deg[iiNeg] + 360.
  mlt = aacgm_mlt(fltArr(iiTimeCnt) + year, fltArr(iiTimeCnt) + yrSec, aacgm_lon_deg)
+
+print,'3. in read_ampere_sav: min,max dbThet=',min(bTheta_GEI),max(bTheta_GEI)
+print,'3. in read_ampere_sav: min,max dbPhi=',min(bPhi_GEI),max(bPhi_GEI)
 
 ; Reminder: Data in the output is
 ; Shifted GEI data

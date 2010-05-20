@@ -1,39 +1,35 @@
-; Reads AMPERE data SAV file
-; DLG & CLW, Dec 2009
+; Reads AMPERE data SAV file (input data)
+;
+; David L Green & Colin L Waters
+; Centre for Space Physics
+; University of NEwcastle
+; Dec 2009
 ;
 ; Comments:
 ; data selection -> latitude range set to max_coLat
+; modified may 2010 - sort data by orbit plane and sequentially alomg track (for diagnostics)
+;                   - tweak ampdata shift routine
 ;
-pro read_ampere_sav, $
+pro read_ampere_sav, sHr, eHr, south, rd_coLat, $
     savFileName = savFileName, $
-    max_CoLat = max_coLat, $
     dataOut = dataOut, $
-    sHr = sHr, eHr = eHr, $
     year = year, month = month, day = day, $
     avgYrSec = yrSecAvg, $
     avgEpoch = avgEpoch, $
-    south = south, $
-    rot_mat=rot_mat, $
-    fillPoleLine = fillPoleLine
+    rot_mat=rot_mat
+
+ Forward_function cnvTime                ; IDL sometimes treats this as a variable. This stops it doing that
 
  if not keyword_set(max_coLat) then max_coLat=70.0
-
  dateStr=''
  reads, strmid(file_baseName ( savFileName ),0,8), year, month, day, format='(i4,i2,i2)'
  restore, savFileName
 ;   variables are
 ;
-;   x_axis_frac_hour
-;   xaxis_frac_hour UTC in fractional hours
-;   plane_number_total
-;   plane_number_total, is integer number 0-5
-;   for the 6 orbit planes.
-;   pos_ECI_total
-;   pos_eci is ECI position in meters and has
-;   dimensions [3,x]  where x is number of points
-;   and 0-2 in the first dimension is X,Y,Z
-;   B_ECI
-;   B_eci is the same dimension as pos_eci but has delta B in nT
+;   x_axis_frac_hour   : UTC in fractional hours
+;   plane_number_total : integer number 0-5 for the 6 orbit planes.
+;   pos_ECI_total      : ECI position in meters, dimensions [3,x] where x is number of points, 0-2 in the first dimension is X,Y,Z
+;   B_ECI              : the same dimension as pos_eci but has delta B in nT
 
  data_struct={ipln: 0, $
               isat: 0, $
@@ -45,186 +41,185 @@ pro read_ampere_sav, $
  ntot=n_elements(x_axis_frac_hour)
  rwpz_a=dblarr(ntot)
  rwpz_a=pos_eci_total(2,*)/1000.0   ; conv Z coord to km
+ earth_rad=6371.0                   ; Earth radius in km
+ sat_rad=780.0                      ; Iridium satellite orbit height in km
 
 ; Select data subset based on time interval and hemisphere : above 90-max_coLat deg lat.
- z0_lim= (6371.0 + 780.0)*cos(max_coLat*!pi/180.0)
- If keyword_set(south) then begin
+ z0_lim= (earth_rad + sat_rad)*cos(rd_coLat*!pi/180.0)         ; z-comp of max_coLat
+
+ If south then begin
+  z0_lim=-z0_lim
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
                                       and rwpz_a lt z0_lim, iiTimeCnt)
  end else begin
   iiTime=where(x_axis_frac_hour ge sHr and x_axis_frac_hour le eHr $
                                       and rwpz_a gt z0_lim, iiTimeCnt)  ; Nth Hemisphere
  end
-
 ;stop
-;	geoPack_sphCar, pos_ECI_total[0,*]*1d-3, $
-;                    pos_ECI_total[1,*]*1d-3, $
-;                    pos_ECI_total[2,*]*1d-3, $
-;            gei_R_km_TMP, gei_coLat_rad_TMP, gei_lon_rad_TMP, $
-;             /to_sphere         ; km -> km, radians
-; if keyword_set ( south ) then gei_coLat_rad_Tmp   = !pi - gei_coLat_rad_Tmp
-
+; Sort data along each orbit track - unnecessary for the fit, but very useful for debugging
  data=replicate(data_struct, iiTimeCnt)
- data.ipln= plane_number_total[iiTime]
- data.isat= pseudoSVNum_total[iiTime]
- data.utc = x_axis_frac_hour[iiTime]
+ ipln_tmp= plane_number_total[iiTime]               ; orbit plane number
+ isat_tmp= pseudoSVNum_total[iiTime]                ; satellite number
+ utc_tmp = x_axis_frac_hour[iiTime]                 ; UT time
 
- data.px = (pos_ECI_total[0,*])[iiTime]*1d-3
- data.py = (pos_ECI_total[1,*])[iiTime]*1d-3
- data.pz = (pos_ECI_total[2,*])[iiTime]*1d-3
+ px_tmp = (pos_ECI_total[0,*])[iiTime]*1d-3         ; Cartesian (geog) x posn, conv to km
+ py_tmp = (pos_ECI_total[1,*])[iiTime]*1d-3
+ pz_tmp = (pos_ECI_total[2,*])[iiTime]*1d-3
 
- data.dbx = (B_ECI[0,*])[iiTime]
- data.dby = (B_ECI[1,*])[iiTime]
- data.dbz = (B_ECI[2,*])[iiTime]
+ dbx_tmp = (B_ECI[0,*])[iiTime]                     ; Cartesion (geog) bx vector
+ dby_tmp = (B_ECI[1,*])[iiTime]
+ dbz_tmp = (B_ECI[2,*])[iiTime]
 
-; Get spherical ccords of the GEI XYZ locations
- sphcar,rg_th,cglat,glon,data.px,data.py,data.pz,/to_sphere,/degree   ; Get GEI(r,thet,phi)
- data[*].pr=rg_th
- data[*].pth=cglat
- data[*].pph=glon
- If keyword_set(south) then begin
-  idx=where(cglat gt 90.)             ; Find Sth hemisphere points
-  If (idx(0) gt -1) then data[idx].pth=180.0-data[idx].pth
+ data.ipln= ipln_tmp
+ data.isat= isat_tmp
+ data.utc = utc_tmp
+
+ data.px = px_tmp
+ data.py = py_tmp
+ data.pz = pz_tmp
+
+ data.dbx = dbx_tmp
+ data.dby = dby_tmp
+ data.dbz = dbz_tmp
+
+ st=0
+ For tt=0,5 do begin
+  tt_idx=where(ipln_tmp eq tt)              ; search selected data values (time, lat)
+
+  ipln_tmp_pl= ipln_tmp[tt_idx]             ; orbit plane number, one orbit plane at a time
+  isat_tmp_pl= isat_tmp[tt_idx]             ; satellite number
+  utc_tmp_pl = utc_tmp[tt_idx]              ; UT time
+
+  px_tmp_pl = px_tmp[tt_idx]                ; ECI location, one orbit plane
+  py_tmp_pl = py_tmp[tt_idx]
+  pz_tmp_pl = pz_tmp[tt_idx]
+
+  dbx_tmp_pl = dbx_tmp[tt_idx]              ; dB, one orbit plane
+  dby_tmp_pl = dby_tmp[tt_idx]
+  dbz_tmp_pl = dbz_tmp[tt_idx]
+
+  dist=sqrt(px_tmp_pl^2 + py_tmp_pl^2)      ; dist calc on x,y only
+  mx=max(dist,mx_idx)                       ; find location furthest away
+  rel_dist=sqrt( (px_tmp_pl-px_tmp_pl[mx_idx])^2 + (py_tmp_pl-py_tmp_pl[mx_idx])^2)   ; cal dist from this furthest point
+  srt_idx=sort(rel_dist)                    ; array index sort pattern
+  np_pln=n_elements(srt_idx)
+
+  data[st:st+np_pln-1].ipln = ipln_tmp_pl[srt_idx]    ; put sorted data back into data structure
+  data[st:st+np_pln-1].isat = isat_tmp_pl[srt_idx]
+  data[st:st+np_pln-1].utc = utc_tmp_pl[srt_idx]
+
+  data[st:st+np_pln-1].px = px_tmp_pl[srt_idx]
+  data[st:st+np_pln-1].py = py_tmp_pl[srt_idx]
+  data[st:st+np_pln-1].pz = pz_tmp_pl[srt_idx]
+
+  data[st:st+np_pln-1].dbx = dbx_tmp_pl[srt_idx]
+  data[st:st+np_pln-1].dby = dby_tmp_pl[srt_idx]
+  data[st:st+np_pln-1].dbz = dbz_tmp_pl[srt_idx]
+  st=st+np_pln
  end
+; end of track sort section
+;stop
+;stop
+; Get spherical coords of the GEI XYZ locations
+; sphcar,rg_th,cglat,glon,data.px,data.py,data.pz,/to_sphere,/degree   ; Get GEI(r,thet,phi)
+; np=n_elements(data.px)
+; rg_th=dblarr(np) & cglat=dblarr(np) & glon=dblarr(np)
+ geopack_sphcar,data.px,data.py,data.pz,rg_th,cglat,glon,/to_sphere,/degree   ; Get GEI(r,thet,phi)
+ data.pr=rg_th
+ data.pth=cglat                                   ; coLat: 0->90 for Nth and 90->180 for Sth (deg)
+ data.pph=glon
 
 ; Put the XYZ GEI input db data into spherical components
- For ii=Long(0),iiTimeCnt-Long(1) do begin
-  bcarsp, data[ii].px, data[ii].py, data[ii].pz, $
-          data[ii].dbx, data[ii].dby, data[ii].dbz, $
-          vbr,vbth,vbph
-  data[ii].dbr=vbr
-  data[ii].dbth=vbth
-  data[ii].dbph=vbph
- end
+  geopack_bcarsp, data.px, data.py, data.pz, data.dbx, data.dby, data.dbz, $
+          dbr, dbth, dbph
+ data.dbr = dbr
+ data.dbth= dbth                                   ; coLat: 0->90 for Nth and 90->180 for Sth (deg)
+ data.dbph= dbph
 
-;; plot the db vectors
+; For ii=Long(0),iiTimeCnt-Long(1) do begin               ; Nth has pz +ve, Sth has pz -ve
+;  bcarsp, data[ii].px, data[ii].py, data[ii].pz, $
+;          data[ii].dbx, data[ii].dby, data[ii].dbz, $
+;          vbr,vbth,vbph
+;  data[ii].dbr=vbr
+;  data[ii].dbth=vbth
+;  data[ii].dbph=vbph
+; end
+
+; plot the db vectors : for testing
 ; window, 1, xSize = 500, ySize = 500,title='Input Data'
-; If HemSp eq 'S' Then plt_dat,cglat,glon,np, data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
-; If HemSp eq 'N' Then plt_dat,cglat,glon,np,-data_in.dbth, data_in.dbph,[1,1],[1,2],title=st_str
-
+; If south Then plt_dat,data.pth,data.pph,n_elements(data.pth),data.dbth,data.dbph,[1,1],[1,2],south,title='Input Data',capSize=max_coLat else $
+;  plt_dat,data.pth,data.pph,n_elements(data.pth),-data.dbth, data.dbph,[1,1],[1,2],south,title='Input Data'
+;
 ; ***   ***   ***   ***   ***   ***
 ; Shift the data
- amp_shiftdata,data,data_sh,rot_mat,south=south;,/diag
-; cshlat=data_sh.pth
- If keyword_set(south) then begin
-  idx=where(data_sh.pth gt 90.)             ; Find Sth hemisphere points
-  If (idx(0) gt -1) then data_sh[idx].pth=180.0-data_sh[idx].pth
- end
+ amp_shiftdata,data,data_sh,rot_mat,south;,/diag
+; ************** Bypass the data shift routine
+; data_sh=data
+; rot_mat=[[1.0,0.0,0.0],$
+;          [0.0,1.0,0.0],$
+;          [0.0,0.0,1.0]]
+; *********************************************
 
-print,'2. in read_ampere_sav: min,max dbThet=',min(data.dbth),max(data.dbth)
-print,'2. in read_ampere_sav: min,max dbPhi=',min(data.dbph),max(data.dbph)
+; plot the db vectors : for testing
+; window, 2, xSize = 500, ySize = 500,title='Input Data Shifted'
+; If south Then plt_dat,data_sh.pth,data_sh.pph,n_elements(data_sh.pth),data_sh.dbth,data_sh.dbph,[1,1],[1,2],south,title='Input Data',capSize=max_coLat else $
+;  plt_dat,data_sh.pth,data_sh.pph,n_elements(data_sh.pth),-data_sh.dbth, data_sh.dbph,[1,1],[1,2],south,title='Input Data: Shifted'
+;
+; input data
+ gei_R_km=data.pr
+ gei_coLat_rad=data.pth*!dpi/180.0
+ gei_lon_rad=data.pph*!dpi/180.0
+
+ br_GEI=data.dbr
+ bTheta_GEI=data.dbth
+ bPhi_GEI=data.dbph
 
 ; Shifted GEI data
- gei_R_km=data_sh.pr
- gei_coLat_rad=data_sh.pth*!dpi/180.0
- gei_lon_rad=data_sh.pph*!dpi/180.0
+ gei_R_km_sh=data_sh.pr
+ gei_coLat_rad_sh=data_sh.pth*!dpi/180.0
+ gei_lon_rad_sh=data_sh.pph*!dpi/180.0
 
-;   get spherical GEI vector
+ br_GEI_sh=data_sh.dbr
+ bTheta_GEI_sh=data_sh.dbth
+ bPhi_GEI_sh=data_sh.dbph
 
-;    geoPack_bCarSp, data.px, data.py, data.pz, $
-;			data.dbx, data.dby, data.dbz, $
-;			bR_GEI, bTheta_GEI, bPhi_GEI
+; ********* Check this ************
+; If south then bTheta_GEI_sh = -bTheta_GEI_sh
+;stop
 
-; Shifted dB data
- br_GEI=data_sh.dbr
- bTheta_GEI=data_sh.dbth
- bPhi_GEI=data_sh.dbph
- If keyword_set(south) then bTheta_GEI = -bTheta_GEI
-
-	;plt_dat, gei_coLat_rad * !radeg, gei_lon_rad * !radeg, $
-	;	n_elements ( gei_coLat_rad ), -bTheta_GEI, bPhi_GEI, [1,1], [1,2], $
-	;	title = 'GEI - Raw Data', $
-    ;    satNu = data.iSat, $
-    ;    capSize = 50
-
-    ;plot_vec, gei_coLat_rad, gei_lon_rad, $
-    ;    -bTheta_GEI, bPhi_GEI
 ;   get the epoch and times for GEI to GEOG and AACGM conversion
-
  Print,'Year, Month, Day : ',year,' ',month,' ',day
  cdf_epoch, epoch0, year, month, day, /compute_epoch
  epoch=data.utc*3600d0*1d3 + epoch0
  avgEpoch = mean(epoch)
-; t_arr	= epoch
  avgHour	= fix ( (sHr + eHr) / 2.0 )
  avgMin	= ( (sHr + eHr) / 2.0 mod 1 ) * 60
- yrSecAvg	= cnvTime ( year, month, day, avgHour, avgMin, 0.0 )
-
- julTime = julDay(month, day, year, 0.0, 0.0, data.utc*3600d0)
- calDat, julTime, month_, day_, year_, hour_, minute_, second_  ; arrays
- yrSec=fltArr(n_elements(year_))
- for i=0,n_elements(year_)-1 do $
-  yrSec[i]	= cnvTime ( year_[i], month_[i], day_[i], $
-			hour_[i], minute_[i], second_[i] )
-
-;   convert to GEOG from input (unshifted) GEI
- geoPack_reCalc, year, month, day, /date
-
- For i = 0, n_elements ( data.px ) / 10000 do begin   ; If too many data points in time segment
-;  print, i
-  thisIndex   = indGen(10000)+i*10000
-  iiKeep  = where ( thisIndex lt n_elements(data.px) )
-  thisIndex   = thisIndex[iiKeep]
-  geoPack_conv_coord, (data.px)[thisIndex], $
-                      (data.py)[thisIndex], $
-                      (data.pz)[thisIndex], $  ; units of km
-	xGEO_tmp, yGEO_tmp, zGEO_tmp, /from_gei, /to_geo, $
-	epoch = epoch[thisIndex]
-;
-;; Use input unshifted locations in XYZ
-;  geoPack_conv_coord, data.px, data.py, data.pz, $  ; units of km
-;	xGEO, yGEO, zGEO, /from_gei, /to_geo, epoch=epoch
-
-  if size ( xGEO, /dim ) ne 0 then begin
-   xGEO    = [ xGEO, xGEO_tmp ]
-   yGEO    = [ yGEO, yGEO_tmp ]
-   zGEO    = [ zGEO, zGEO_tmp ]
-  endif else begin
-   xGEO    = xGEO_tmp
-   yGEO    = yGEO_tmp
-   zGEO    = zGEO_tmp
-  endelse
- endfor
-
- geoPack_sphCar, xGEO, yGEO, zGEO, $
-            geog_R_km, geog_coLat_rad, geog_lon_rad, /to_sphere         ; km -> km, radians
- if keyword_set(south) then geog_coLat_rad=!pi-geog_coLat_rad
-
-;   get AACGM coords
- aacgm_load_coef, year<2005 ; once we have newer coeffs update this
- aacgm_conv_coord, 90.0-geog_coLat_rad*!radeg, geog_lon_rad*!radeg, $
-		 geog_R_km-6357.0, aacgm_lat_deg, aacgm_lon_deg, err, /to_aacgm
- aacgm_coLat_deg = 90.0-aacgm_lat_deg
- iiNeg = where(aacgm_lon_deg lt 0.0, iiNegCnt)
- if iiNegCnt gt 0 then aacgm_lon_deg[iiNeg]=aacgm_lon_deg[iiNeg] + 360.
- mlt = aacgm_mlt(fltArr(iiTimeCnt) + year, fltArr(iiTimeCnt) + yrSec, aacgm_lon_deg)
-
-print,'3. in read_ampere_sav: min,max dbThet=',min(bTheta_GEI),max(bTheta_GEI)
-print,'3. in read_ampere_sav: min,max dbPhi=',min(bPhi_GEI),max(bPhi_GEI)
+ yrSecAvg = cnvTime ( year, month, day, avgHour, avgMin, 0.0 )
+ geoPack_reCalc, year, month, day, /date              ; initialise geoPack using data/time
 
 ; Reminder: Data in the output is
 ; Shifted GEI data
-; gei_R_km=data_sh.pr
-; gei_coLat_rad=data_sh.pth*!dpi/180.0
-; gei_lon_rad=data_sh.pph*!dpi/180.0
+; gei_R_km_sh=data_sh.pr
+; gei_coLat_rad_sh=data_sh.pth*!dpi/180.0
+; gei_lon_rad_sh=data_sh.pph*!dpi/180.0
 ;
 ; Shifted dB data
-; br_GEI=data_sh.dbr
-; bTheta_GEI=data_sh.dbth
-; bPhi_GEI=data_sh.dbph
+; br_GEI_sh=data_sh.dbr
+; bTheta_GEI_sh=data_sh.dbth
+; bPhi_GEI_sh=data_sh.dbph
 ;
- dataOut = { gei_R_km : gei_R_km, $
+ dataOut = { gei_R_km : gei_R_km, $              ; Input data - unmodified
 		     gei_coLat_rad : gei_coLat_rad, $
 			 gei_lon_rad : gei_lon_rad, $
 			 dbR : bR_GEI, $
 			 dbTheta : bTheta_GEI, $
 			 dbPhi : bPhi_GEI, $
-			 geog_R_km : geog_R_km, $
-			 geog_coLat_rad : geog_coLat_rad, $
-			 geog_lon_rad : geog_lon_rad, $
-			 aacgm_coLat_rad : aacgm_coLat_deg * !dtor, $
-			 aacgm_lon_rad : aacgm_lon_deg * !dtor, $
-			 mlt : mlt, $
+			 gei_R_km_sh : gei_R_km_sh, $           ; Shifted input data
+		     gei_coLat_rad_sh : gei_coLat_rad_sh, $
+			 gei_lon_rad_sh : gei_lon_rad_sh, $
+			 dbR_sh : bR_GEI_sh, $
+			 dbTheta_sh : bTheta_GEI_sh, $
+			 dbPhi_sh : bPhi_GEI_sh, $
              iPln : data.iPln, $
              iSat : data.iSat, $
              utc : data.utc }

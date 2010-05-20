@@ -12,7 +12,7 @@
 ; Widget event routines
 Pro GetAmpPrms_event,ev
  Common WidgBlk,Base1,Base2,HrBut,MnSld,ScSld,DneBut
- Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,sigma,kmax,mmax,$
+ Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
   plt_png,HemSp,south
  Widget_Control,ev.id,Get_UValue=UVal
  Case UVal of
@@ -39,6 +39,7 @@ Pro GetAmpPrms_event,ev
  'npl' : Widget_Control,ev.id,Get_Value=NumPlts
  'sgs' : Widget_Control,ev.id,Get_Value=sigma
  'bth' : Widget_Control,ev.id,Get_Value=thresh
+ 'clt' : Widget_Control,ev.id,Get_Value=mxclat
  'lto' : Widget_Control,ev.id,Get_Value=kmax
  'lno' : Widget_Control,ev.id,Get_Value=mmax
  'pfc' : Widget_Control,ev.id,Get_Value=plt_png
@@ -52,7 +53,7 @@ Pro GetAmpPrms_event,ev
           PrmFile=path+'amp_fit.par'
           OpenW,u1,PrmFile,/Get_Lun
           PrintF,u1,StHr,StMn,StSc,GetSc,TmSep,NumPlts
-          PrintF,u1,south,kmax,mmax,thresh,sigma,plt_png
+          PrintF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png
           Free_Lun,u1
          end
  end
@@ -60,7 +61,7 @@ end
 ;
 Pro GetAmpPrms
  Common WidgBlk,Base1,Base2,HrBut,MnSld,ScSld,DneBut
- Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,sigma,kmax,mmax,$
+ Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
   plt_png,HemSp,south
 
  WXPos=1 & WYPos=10 & WXSz=200  ; Widget Placement
@@ -72,8 +73,8 @@ Pro GetAmpPrms
  OpenR,u1,PrmFile,/Get_Lun
  StHr=8 & StMn=0 & StSc=0 & GetSc=3600 & TmSep=900 & NumPlts=1
  ReadF,u1,StHr,StMn,StSc,GetSc,TmSep,NumPlts
- south=0 & kmax=35 & mmax=5 & thresh=80 & sigma=2. & plt_png=1
- ReadF,u1,south,kmax,mmax,thresh,sigma,plt_png
+ south=0 & kmax=35 & mmax=5 & thresh=80 & mxclat=50. & sigma=2. & plt_png=1
+ ReadF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png
  Free_Lun,u1
 
  HrBut = Widget_Button(base1,value='Start Hour = '+StrTrim(String(StHr),2)+' UT',UValue='shr')
@@ -93,6 +94,7 @@ Pro GetAmpPrms
  Base2 = Widget_Base(Title='AMPERE FAC Menu',Group_Leader=Base1,XOffset=WXPos+WXSz+8,YOffset=WYPos,/Column,XSize=WXSz)
  SgSld = Widget_SLider(base2,value=sigma,UValue='sgs',Minimum=1,Maximum=10,Title='Data Sigma')
  bthSld= Widget_SLider(base2,value=thresh,UValue='bth',Minimum=1,Maximum=200,Title='dB Threshold [nT]')
+ pltSld= Widget_SLider(base2,value=mxclat,UValue='clt',Minimum=20,Maximum=90,Title='Plot CoLat Range [Deg]')
  LatSld= Widget_SLider(base2,value=kmax,UValue='lto',Minimum=2,Maximum=65,Title='Latitude Order')
  LonSld= Widget_SLider(base2,value=mmax,UValue='lno',Minimum=2,Maximum=6,Title='Longitude Order')
  z1Arr=StrArr(2)
@@ -112,48 +114,47 @@ end
 ;
 ; Main driver code starts here
 Pro amp_fit_wij
- Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,sigma,kmax,mmax,$
+ Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
   plt_png,HemSp,south
 
 ; set default values
   if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN62') then begin
 	plotDev	= 'win'
 	path	= 'd:\cwac\hi_res\davidg\'
-	pnmPath = path + 'jpar_ver2\pnmsavs\pnmSav'
   endif else begin                        ; other systems (linux, darwin etc.)
 	plotDev = 'X'
 	path = '~/code/ampereFit/idl/'
-	pnmPath = path + 'pnmSavs/pnmSav'
+;	pnmPath = path + 'pnmSavs/pnmSav'
   endelse
+  set_plot,plotdev
+  loadct,0
+  device,decomposed=0
   aacgmpath=path                          ; location of AACGM coeff file (*.asc)
-  mn_fac=0.07              ; do not plot abs(FAC) lt than this
+  mn_fac=0.05              ; do not plot abs(FAC) lt than this
   mx_fac=1.0
-  max_coLat = 70.0         ; must allow for shift **
-  calc_coLat=50.0
-  nLatGrid	= 50                          ; fit grid defaults
-  nLonGrid	= 24
 
   GetAmpPrms
-  numerical = 1            ; use numerical or recursion method for basis functions
+  nLatGrid	= mxclat    ; fit grid defaults
+  plt_coLat=mxclat
+  nLonGrid	= 24
   plot_bFns = 0            ; plot switch for basis set diagnostics
   sHr = float(StHr)+float(StMn)/60.0+StSc/3600.0
   eHr = sHr+GetSc/3600.0
-  amp_fit, $
-		numerical = numerical, $
+  plt_tracks = 0           ; plot dbTh and dbPh data by Iridium orbit track
+
+  amp_fit, sHr, eHr, south, $
         plot_bFns = plot_bFns, $
 		path = path, $
 		aacgmpath = aacgmpath, $
-		pnmPath = pnmpath, $
+;		pnmPath = pnmpath, $
 		savFileName = SavFileName, $
-		sHr = sHr, eHr=eHr, $
-		south = south, $
 		kmax = kmax, mmax = mmax, $
 		thresh = thresh, $
 		sigma = sigma, $
 		nLatGrid = nLatGrid, nLonGrid = nLonGrid, $
 		mn_fac = mn_fac, mx_fac=mx_fac, $
 		plt_png = plt_png, $
-		max_coLat = max_coLat, $
-		calc_coLat = calc_coLat
+		plt_tracks = plt_tracks, $
+		plt_coLat = plt_coLat
   print,'Finished'
  end

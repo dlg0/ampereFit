@@ -13,12 +13,7 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
     bc1 = bc1, $
     bc2 = bc2
 
-	;r	= 1d0;
 	rE	= 1d0;
-
-	;dLat	= abs ( coLat[0] - coLat[1] );
-	;dLon	= abs ( lon[0] - lon[1] );
-
 ;------
 ;	Test variables
 ;	maxM = 2;
@@ -35,14 +30,10 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 ;------
 
 	nPts	= n_elements ( coLat );
-
 	nBFns = 0;
-	for k = 1, maxK do begin
-		nBFns	= nBFns + (k<maxM) * 2;
-	endfor
-	nBFns	= nBFns + maxK;
-
-	nBFns	= nBFns * 2;
+	for k = 1, maxK do nBFns = nBFns + (k<maxM) * 2
+	nBFns	= nBFns + maxK
+	nBFns	= nBFns * 2
 
 	mArr	= intArr ( nBFns );
 	nArr	= dblArr ( nBFns );
@@ -54,28 +45,32 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 	bPhBFnArr	= dblArr ( nBFns, nPts );
 
 	bFnCnt	= 0;
-	for m = -maxM, maxM do begin
+	for m = -maxM, maxM do begin            ; loop in 'm'
 ;		print, 'M: ',m
 ;		print, 'Calling realLegendre ...';
-		legendreFnsBC1	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), $
-			lowEndBC = 0, plotFns = 0, nVals = nValsBC1, $
+; lowEndBC = 0 => Y=0
+; highEndBC = 0
+		legendreFnsBC1	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), 0, 0, $ ; returns values at requested coLat - interpolate in ampere_realLegendre
+			plotFns = 0, nVals = nValsBC1, $
 			dLegendreFns = dLegendreFnsBC1, $
-			kVals = kValsBC1, highEndBC = 0 , $
-			minTheta = minTheta, maxTheta = maxTheta );
+			kVals = kValsBC1, $
+			minTheta = minTheta, maxTheta = maxTheta )
 
-		legendreFnsBC2	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), $
-			lowEndBC = 1, plotFns = 0, nVals = nValsBC2, $
+; lowEndBC = 1 => dY/dthet=0
+; highEndBC = 1
+		legendreFnsBC2	= ampere_realLegendre ( coLat * !radeg, maxK, abs(m), 1, 1, $
+			plotFns = 0, nVals = nValsBC2, $
 			dLegendreFns = dLegendreFnsBC2, $
-			kVals = kValsBC2, highEndBC = 0 , $
-			minTheta = minTheta, maxTheta = maxTheta );
+			kVals = kValsBC2, $
+			minTheta = minTheta, maxTheta = maxTheta )
 
-        if keyword_set ( bc1 ) then begin
+        if keyword_set (bc1) then begin
 		    legendreFns	= legendreFnsBC1
 		    dLegendreFns	= dLegendreFnsBC1
 		    nVals	= nValsBC1
 		    kVals	= kValsBC1
 
-        endif else if keyword_set ( bc2 ) then begin
+        endif else if keyword_set (bc2) then begin
 		    legendreFns	= legendreFnsBC2
 		    dLegendreFns	= dLegendreFnsBC2
 		    nVals	= nValsBC2
@@ -138,9 +133,8 @@ pro ampere_setupSHFns, r, coLat, lon, maxK, maxM, $
 
 				YBFnArr[bFnCnt,*]	= rDep * legendreFns[*,i] * sin ( abs(m) * lon );
 				brBFnArr[bFnCnt,*]	= dYdr_rDep * legendreFns[*,i] * sin ( abs(m) * lon );
-				bThBFnArr[bFnCnt,*]	= 1d0 / r * rDep * dLegendreFns[*,i] * sin ( abs(m) * lon );
-				bPhBFnArr[bFnCnt,*]	= abs(m) * rDep / ( r * sin ( coLat ) ) * $
-					legendreFns[*,i] * cos ( abs(m) * lon );
+				bThBFnArr[bFnCnt,*]	= 1d0/r * rDep * dLegendreFns[*,i] * sin ( abs(m) * lon );
+				bPhBFnArr[bFnCnt,*]	= abs(m)*rDep/(r*sin(coLat))*legendreFns[*,i]*cos(abs(m)*lon)
 
 				;orthoNormFactor	=  sqrt ( 1d0 / ( total ( legendreFns[*,i]^2 * $
 				;	dLat * dLon * sin ( coLat ) ) ) )

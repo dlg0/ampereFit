@@ -1,8 +1,8 @@
 ; Procedure to centre AMPERE data orbit plane tracks
 ; Input : data_in (data structure)
-;         keyword 'south' -> if set, data is for Sth hemisphere
+;         'south' -> if set, data is for Sth hemisphere
 ; output : data_out (data structure)
-;          rot_mat : rotation matric for GEI XYZ to centre orbit intersections
+;          rot_mat : rotation matrix for GEI XYZ to centre orbit intersections
 ;          south=south -> data is Sth Hemis
 ;          diag=diag -> print diagnostic messages
 ;
@@ -26,21 +26,22 @@
 ;   Added Vec_rot and rot_ang to output list so that the rotation can be reversed [Dec, 2009]
 ;
 ;
-Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
+Pro amp_shiftdata,data_in,data_out,rot_mat,south,diag=diag
 ; Estimate the average track intersection location
 ; Step 1: Calc x,y coords (funky cylindrical) of locations
  npl=6                     ; 6 orbit planes
  mnpnts=20                 ; Min number of points in a track to proceed
 
 ; Make Co_Lat with 0 at centre (for track fit)
- clat_a=data_in.pth
- idx=where(data_in.pth gt 90.)
+ clat_a=data_in.pth               ; co_Lat in degrees
+
+ idx=where(data_in.pth gt 90.)    ; Sth hemisphere data
  if idx(0) gt -1 then clat_a[idx]=180.0-data_in.pth
  xcrd_a=clat_a*cos(data_in.pph*!dpi/180.0)
  ycrd_a=clat_a*sin(data_in.pph*!dpi/180.0)
 ;
  p_cnt_pl=intarr(npl)                    ; space to store num points per orbit plane
- For mp=0,npl-1 do $                     ; Get Merid Planes in order (makes ghost routine easier)
+ For mp=0,npl-1 do $                     ; Get Merid Planes in order, ipln runs from 0->5
  Begin
   idx1=where(data_in.ipln eq mp,cnt1)
   p_cnt_pl[mp]=cnt1
@@ -59,19 +60,27 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
 
 ; Calc the coeffs of the parabolic eqn of each orbit track (in x,y)
  pcoef=dblarr(NPl,3)
+ t_cnt=0
  For mp=0,NPl-1 do begin
 ; WARNING : SVDFIT crashes if we get a straight track along the 0600-1800 line: CLW
   idx=where(data_in.ipln eq mp)                     ; select out each orbit track
-  res_a=SVDFIT(xcrd_a[idx],ycrd_a[idx],3)  ; parabola fit to each track location data
-  pcoef(mp,*)=res_a                              ; store parabola eqn coefficients
+  res_a=SVDFIT(xcrd_a[idx],ycrd_a[idx],3,status=status)  ; parabola fit to each track location data
+;print,'t_cnt=',t_cnt
+  pcoef(t_cnt,*)=res_a                              ; store parabola eqn coefficients
+  t_cnt++
+  if status ne 0 then begin
+   print,'WARNING: amp_shiftdata - Track intersection solver, excluding track'
+   t_cnt=t_cnt-1
+  end
  end
- XInt=dblarr(15)                                 ; There are 15 orbit track intersection combinations
+ n_com=total(indgen(t_cnt))
+ XInt=dblarr(n_com)                  ; There are n_com orbit track intersection combinations
  YInt=XInt
  IntCnt=0
 ; Loop through every combination of the 6 planes to find intersections
- For aa=0,NPl-1 do $
+ For aa=0,t_cnt-1 do $
  Begin
-  For bb=1,NPl-1 do $
+  For bb=1,t_cnt-1 do $
   Begin
    If (bb gt aa) then $
    Begin
@@ -102,26 +111,33 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
    end     ; if bb gt aa -> MPlane combinations
   end      ; bb MPlane Loop
  end       ; aa MPlane Loop
+
 ; Calc equally weighted, average location of track intersections
  XAvg=mean(XInt)
  YAvg=mean(YInt)
+; ********** Turn off shift
+; XAvg=0.0 & YAvg=0.0
+; ************************
+
  If keyword_set(diag) then Print,'Intersect X Values: ',XInt
  If keyword_set(diag) then Print,'Intersect Y Values: ',YInt
  If keyword_set(diag) then begin
   Print,'PCoeffs for each Track [x^2, x, c] : '
   For aa=0,npl-1 do print,transpose(pcoef(aa,*))
  end
- If keyword_set(diag) then Print,'Coordinate Shift is [x,y]: ',XAvg,YAvg
+; If keyword_set(diag) then Print,'Coordinate Shift is [x,y]: ',XAvg,YAvg
+ Print,'In amp_shiftdata: Coordinate Shift is [x,y]: ',XAvg,YAvg
  CRLat=sqrt(XAvg*XAvg+YAvg*YAvg)                   ; Find Lat,Lon corresponding to XAvg,YAvg
  RLon=180.0+atan(YAvg,XAvg)*180.0/!dpi
- If keyword_set(south) then CRLat=180.0-CRLat            ; Report CRLat in correct Hemisphere
+ If south then CRLat=180.0-CRLat            ; Report CRLat in correct Hemisphere
  If keyword_set(diag) then Print,'Shift in Lat,Lon [deg]=',CRLat,RLon
 
 ; Get rotation axis (perp to plane defined by z and shifted point and the origin)
  r0=mean(sqrt(data_in.px^2+data_in.py^2+data_in.pz^2))      ; always +ve
- sphcar,abs(r0),CRLat,RLon,x_sh,y_sh,z_sh,/to_rect,/degree  ; XYZ coord of new pole in old system (in correct Hemis)
+; sphcar,abs(r0),CRLat,RLon,x_sh,y_sh,z_sh,/to_rect,/degree  ; XYZ coord of new pole in old system (in correct Hemis)
+ geopack_sphcar,abs(r0),CRLat,RLon,x_sh,y_sh,z_sh,/to_rect,/degree  ; XYZ coord of new pole in old system (in correct Hemis)
  sh_mag=sqrt(x_sh^2+y_sh^2+z_sh^2)                 ; magnitude of shifted pole vector
- If keyword_set(south) then r0=-r0                 ; point r vec along Z axis in correct direction for Hemis
+ If south then r0=-r0                 ; point r vec along Z axis in correct direction for Hemis
  cross_p,[0.0,0.0,r0],[x_sh,y_sh,z_sh],v_rot       ; rotation is about this axis, v_rot should always have a zero z component
  c_arg=(r0*z_sh)/(sh_mag*abs(r0))
  rot_ang=acos(c_arg)                               ; rotation angle, from dot product
@@ -166,13 +182,13 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south=south,diag=diag
                    data_in[ii].dby*rot_mat[1,2] + $
                    data_in[ii].dbz*rot_mat[2,2]
 ; convert to spherical ready for fitting
-  bcarsp, data_out[ii].px, data_out[ii].py, data_out[ii].pz, $
+  geopack_bcarsp, data_out[ii].px, data_out[ii].py, data_out[ii].pz, $
           data_out[ii].dbx, data_out[ii].dby, data_out[ii].dbz, vbr,vbth,vbph
   data_out[ii].dbr=vbr
   data_out[ii].dbth=vbth
   data_out[ii].dbph=vbph
  end
- sphcar,rg_th,cglat,glon,data_out.px,data_out.py,data_out.pz,/to_sphere,/degree   ; find shifted GEI(r,thet,phi)
+ geopack_sphcar,data_out.px,data_out.py,data_out.pz,rg_th,cglat,glon,/to_sphere,/degree   ; find shifted GEI(r,thet,phi)
  data_out.pr=rg_th
  data_out.pth=cglat
  data_out.pph=glon

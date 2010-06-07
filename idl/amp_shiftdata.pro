@@ -11,7 +11,7 @@
 ;          px:0d0, py:0d0, pz:0d0,$
 ;          dbx:0d0, dby:0d0, dbz:0d0,$
 ;          pr:0d0, pth:0d0, pph:0d0,$
-;          dbr:0d0, dbth:0d0, dbph:0d0,$
+;          br_GEI:0d0, bTheta_GEI:0d0, bPhi_GEI:0d0,$
 ;          xcrd:0d0, ycrd:0d0}
 ;
 ; C.L. Waters
@@ -33,12 +33,12 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south,diag=diag
  mnpnts=20                 ; Min number of points in a track to proceed
 
 ; Make Co_Lat with 0 at centre (for track fit)
- clat_a=data_in.pth               ; co_Lat in degrees
+ clat_a=data_in.GEI_coLat_deg               ; co_Lat in degrees
 
- idx=where(data_in.pth gt 90.)    ; Sth hemisphere data
- if idx(0) gt -1 then clat_a[idx]=180.0-data_in.pth
- xcrd_a=clat_a*cos(data_in.pph*!dpi/180.0)
- ycrd_a=clat_a*sin(data_in.pph*!dpi/180.0)
+ idx=where(data_in.GEI_coLat_deg gt 90.)    ; Sth hemisphere data
+ if idx(0) gt -1 then clat_a[idx]=180.0-data_in.GEI_coLat_deg
+ xcrd_a=clat_a*cos(data_in.GEI_lon_deg*!dpi/180.0)
+ ycrd_a=clat_a*sin(data_in.GEI_lon_deg*!dpi/180.0)
 ;
  p_cnt_pl=intarr(npl)                    ; space to store num points per orbit plane
  For mp=0,npl-1 do $                     ; Get Merid Planes in order, ipln runs from 0->5
@@ -184,12 +184,12 @@ Pro amp_shiftdata,data_in,data_out,rot_mat,south,diag=diag
 ; convert to spherical ready for fitting
   geopack_bcarsp, data_out[ii].px, data_out[ii].py, data_out[ii].pz, $
           data_out[ii].dbx, data_out[ii].dby, data_out[ii].dbz, vbr,vbth,vbph
-  data_out[ii].dbr=vbr
-  data_out[ii].dbth=vbth
-  data_out[ii].dbph=vbph
+  data_out[ii].br_GEI=vbr
+  data_out[ii].bTheta_GEI=vbth
+  data_out[ii].bPhi_GEI=vbph
  end
  geopack_sphcar,data_out.px,data_out.py,data_out.pz,rg_th,cglat,glon,/to_sphere,/degree   ; find shifted GEI(r,thet,phi)
- data_out.pr=rg_th
- data_out.pth=cglat
- data_out.pph=glon
+ data_out.GEI_R_km=rg_th
+ data_out.GEI_coLat_deg=cglat
+ data_out.GEI_lon_deg=glon
 end

@@ -6,7 +6,7 @@
 	; Input data file
 	if not keyword_set(savFileName) then savFileName = path+'20100215Amp_invert.sav'
 	; Basis functions
-	if not keyword_set(kmax) then kmax = 15
+	if not keyword_set(kmax) then kmax = 25
 	; 0 to 5
 	if not keyword_set(mmax) then mmax = 5           
 	; Data weighting parameters
@@ -29,6 +29,6 @@
 	; default is to not to plot track data
 	if not keyword_set(plt_tracks) then plt_tracks=0       
 	; Plot range in Latitude
-	if not keyword_set(plt_coLat) then plt_coLat = 50.0
+	if not keyword_set(aacgm_cap_coLat_deg) then aacgm_cap_coLat_deg = 50.0
 
 

@@ -42,7 +42,7 @@ pro amp_fit, sHr, eHr, south, $
 	mn_fac = mn_fac, mx_fac=mx_fac, $
 	plt_png = plt_png, $
 	plt_tracks = plt_tracks, $
-	plt_coLat = plt_coLat
+	aacgm_cap_coLat_deg = aacgm_cap_coLat_deg
 
 
 	; Check for reasonable inputs
@@ -95,7 +95,7 @@ pro amp_fit, sHr, eHr, south, $
 	; Create uniform grids in AACGM and GEI
 	; -------------------------------------
 
- 	aacgm_grid, plt_coLat, south, $
+ 	aacgm_grid, aacgm_cap_coLat_deg, south, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
 	   	 aacgmGrid_R_km = aacgmGrid_R_km, $
@@ -308,36 +308,19 @@ pro amp_fit, sHr, eHr, south, $
 	jPar  = (YkmBFns ## $
 	        (coeffs_[n_elements(YkmBFns[*,0]):*]*(-outNkValues*(outNkValues+1.0))))$
 	                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
+
+	pole = 90
+	capLimit = maxCoLat_GEI_deg_shifted
+	if(south) then begin
+		pole = -90
+		capLimit = minCoLat_GEI_deg_shifted
+	endif
+	plot_fac, jPar, pole, capLimit, $
+			data.gei_coLat_deg, data.gei_lon_deg, $
+			title = 'jPar GEI', $
+			south = south
 stop
 	; jPar is an array[1,Num of dB values]
-	; plot dbTh and dbPh by Iridium orbit track
-
-	if plt_tracks then begin
-
-	 	!p.multi=[0,1,6,0]
-	 	window,winnum,xsize=1100,ysize=800,title='db_Theta by Iridium Track'
-
-	 	For tt=0,5 do begin
-
-     	 	idx=where(data.ipln eq tt)
-     	 	plot,data[idx].dbTheta_sh,background=255,color=0
-     	 	oplot,fit_bTheta_GEI[idx],color=0,psym=2
-
-	 	endfor
-
-     	winnum++
-	 	window,winnum,xsize=1100,ysize=800,title='db_Phi by Iridium Track'
-
-	 	for tt=0,5 do begin
-
-     	 	idx=where(data.ipln eq tt)
-     	 	plot,data[idx].dbPhi_sh,background=255,color=0
-     	 	oplot,fit_bPhi_GEI[idx],color=0,psym=2
-
-	 	endfor
-
-     	winnum++
-	endif
 
 	; Calc rms error for these
 
@@ -349,14 +332,9 @@ stop
 	Print,'RMS Error : dbPhi = ',err_dbPhi
 
 	Print,'Generating Basis Set over Uniform Grid....'
-	wait,0.001
-
 
 	; generate basis fns at regular grid (shifted)
 	; ----------------------------------
-
-	;if south then idx_dat=where(geiGrid_coLat_rad_sh*180.0/!dpi ge minTheta) else $
-	;              idx_dat=where(geiGrid_coLat_rad_sh*180.0/!dpi le maxTheta)
 
    	ampere_setupSHFns, 1.0, geiGrid_coLat_rad_shifted[*], geiGrid_lon_rad_shifted[*], $
 			kMax, mMax, $
@@ -370,7 +348,7 @@ stop
 			kArr = outKValues_grid, /bc2
 
 	Print,'Calculating FAC over Uniform Grid....'
-	wait,0.001
+	
     bFuncs_grid  = temporary($
                     [[dYkmDThBfns_grid, -dYkmDPhBfns_grid ], $
                      [dYkmDPhBfns_grid,  dYkmDthBfns_grid ]])
@@ -534,7 +512,7 @@ stop
 
 	if south then begin
 	 	pole=-90
-	 	plt_colat=-plt_colat
+	 	aacgm_cap_coLat_deg=-aacgm_cap_coLat_deg
 	 	sgn=-1.
 	endif
 
@@ -553,40 +531,13 @@ stop
 	plt_dat, 90.0-mlat_a_in[*], ((mlon_a_in[*]/15.0+mltShift) mod 24)*15.0, $
 	         n_elements(mlat_a_in[*] ), -mth_vec_gth_in, mph_vec_gph_in, [1,1], [1,2], south,$
 			 title = 'Input data: AACGM-MLT', $
-            capSize = abs(plt_coLat)
+            capSize = abs(aacgm_cap_coLat_deg)
 
 	; ***** Check if it should be 90.0-abs(m_lat_a)	*****
 	plt_dat, 90.0-mlat_a[*], ((mlon_a[*]/15.0+mltShift) mod 24)*15.0, $
 	         n_elements(mlat_a[*] ), -mth_vec_gth, mph_vec_gph, [1,1], [1,2], south,$
 			 title = 'Fitted data: AACGM-MLT', $
-            capSize = abs(plt_coLat)
-
-	loadct, 13, file = path + 'davect.tbl',/silent
-   	map_set, pole, 0, 0, /ortho, /iso, $
-     limit = [ pole - plt_coLat, 0, pole, 360 ], xmargin=[1,1], ymargin=[1,10], $
-	 /noborder, /advance, title = 'Fitted data: jPar AACGM-MLT'
-	jParTmp	= jParAACGM[*]
-	fc_idx=where(abs(jParTmp) lt mn_fac)
-	if fc_idx(0) gt -1 then jParTmp(fc_idx)=0.0      ; Check for min val, set to white
-	fc_idx=where(jParTmp gt mx_fac)
-	if fc_idx(0) gt -1 then jParTmp(fc_idx)=mx_fac
-	fc_idx=where(jParTmp lt -mx_fac)
-	if fc_idx(0) gt -1 then jParTmp(fc_idx)=-mx_fac
-	lonTmp = ((aacgmGrid_lon_deg[*]/15.0+mltShift) mod 24 )*15.0 $
-			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1e-5-0.5e-5
-	latTmp = 90.0-aacgmGrid_coLat_deg[*]
-   	contour, jParTmp, $
-			lonTmp, $
-			latTmp, $
-		 	c_labels=fltarr(n_elements(jLevels))+1,$
-        	/over, levels = jLevels, $
-           	c_colors = colors, /fill, /irreg
-	map_grid, label = 1, $
-			lonNames	= ['0/24','6','12','18',''], $
-			lons = [0,90,180,270,360], $
-			lonlab=pole-plt_colat, $
-			latLab = 45, $
-			latDel = sgn*10.0
+            capSize = abs(aacgm_cap_coLat_deg)
 
 	If plt_png eq 1 then begin
 	    png_file=path+'amp_dB&FAC_'+yr_str+mnth_str+dy_str+' at '+hr_str+mn_str+sc_str+'_'+hem+'.png'

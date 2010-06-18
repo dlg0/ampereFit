@@ -1,24 +1,19 @@
 pro plot_fac, jPar, pole, cap_coLat_deg, coLat_deg, lon_deg, $
 		mlt_shift = mlt_shift, $
 		title = title, $
-		winNo = winNo, $
 		south = south
 
 	if not keyword_set(mlt_shift) then mlt_shift = 0
-	if not keyword_set(winNo) then winNo = 0
+	if not keyword_set(noErase) then noErase = 0
 
-	;loadct, 13, file = path + 'davect.tbl',/silent
-	loadct, 13, file = 'davect.tbl',/silent
-
-	window, winNo
+	loadct, 0, /silent
+	!p.background = 255
    	map_set, pole, 0, 0, /ortho, /iso, $
-     limit = [ pole - cap_coLat_deg, 0, pole, 360 ], xmargin=[1,1], ymargin=[1,10], $
-	 /noborder, /advance, title = title
+     limit = [ pole - cap_coLat_deg, 0, pole, 360 ], $
+	 /noborder, title = title, /advance, $
+	 yMargin = [0,3], color = 0, charSize = 2.0
 
 	jParTmp	= jPar[*]
-
-	;jParTmp = jParTmp>mn_fac
-	;jParTmp = jParTmp<mx_fac
 
 	lonTmp = ((lon_deg[*]/15.0+mlt_shift) mod 24 )*15.0 $
 			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1e-5-0.5e-5
@@ -75,13 +70,20 @@ pro plot_fac, jPar, pole, cap_coLat_deg, coLat_deg, lon_deg, $
 
 	loadct, 0, /silent
 
-	sgn = 1
+
+	if cap_coLat_deg gt 90 then begin
+		nLats = fix((180-cap_coLat_deg)/10)
+		lats = 180-(fIndGen(nLats)+1)*10
+	endif else begin
+		nLats = fix((cap_coLat_deg)/10)
+		lats = 90-(fIndGen(nLats)+1)*10
+	endelse
+
 	map_grid, label = 1, $
 			lonNames	= ['0/24','6','12','18',''], $
 			lons = [0,90,180,270,360], $
 			lonlab=10, $
 			latLab = 45, $
-			lats = (fIndGen(16)+1)*10, $
+			lats = lats, $
 			color = 0
-stop
 end

@@ -159,10 +159,12 @@ pro amp_fit, sHr, eHr, south, $
 	; Plot the AACGM grid in GEI, shifted and not
 	; -------------------------------------------
 
-	window, 0
+	winNo = 0
+	window, winNo 
 	set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid (GEI)'
 	plots, geiGrid_lon_rad*!radeg, 90-geiGrid_coLat_rad*!radeg, psym = 4
-	window, 1
+	winNo++
+	window, winNo
 	set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid Shifted (GEI)'
 	plots, geiGrid_lon_rad_shifted*!radeg, 90-geiGrid_coLat_rad_shifted*!radeg, psym = 4
 
@@ -286,6 +288,18 @@ pro amp_fit, sHr, eHr, south, $
 	fit_bPhi_GEI   = fit[n_elements(dBMag):*] 
 
 
+	; Calc rms error for these
+	; ------------------------
+
+	err_dbTheta	= total ( ( data.bTheta_GEI-fit_bTheta_GEI)^2 )
+	err_dbTheta	= sqrt ( err_dbTheta/n_elements(fit_bTheta_GEI))
+	err_dbPhi	= total ( ( data.bPhi_GEI-fit_bPhi_GEI)^2 )
+	err_dbPhi	= sqrt ( err_dbPhi/n_elements(fit_bPhi_GEI))
+
+	Print,'RMS Error : dbTheta = ',err_dbTheta
+	Print,'RMS Error : dbPhi = ',err_dbPhi
+
+
 	; Plot along track comparison of the raw and fitted data
 	; ------------------------------------------------------
 
@@ -304,42 +318,25 @@ pro amp_fit, sHr, eHr, south, $
 	endfor
 
 
+	; Construct jPar in the GEI system
+	; --------------------------------
+
 	@constants
 	jPar  = (YkmBFns ## $
 	        (coeffs_[n_elements(YkmBFns[*,0]):*]*(-outNkValues*(outNkValues+1.0))))$
 	                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
 
-	pole = 90
-	capLimit = maxCoLat_GEI_deg_shifted
-	if(south) then begin
-		pole = -90
-		capLimit = minCoLat_GEI_deg_shifted
-	endif
-	plot_fac, jPar, pole, capLimit, $
-			data.gei_coLat_deg, data.gei_lon_deg, $
-			title = 'jPar GEI', $
-			south = south
-stop
-	; jPar is an array[1,Num of dB values]
 
-	; Calc rms error for these
 
-	err_dbTheta=total( (data.bTheta_GEI-fit_bTheta_GEI)^2 )
-	err_dbTheta=sqrt(err_dbTheta/n_elements(fit_bTheta_GEI))
-	err_dbPhi=total( (data.bPhi_GEI-fit_bPhi_GEI)^2 )
-	err_dbPhi=sqrt(err_dbPhi/n_elements(fit_bPhi_GEI))
-	Print,'RMS Error : dbTheta = ',err_dbTheta
-	Print,'RMS Error : dbPhi = ',err_dbPhi
-
-	Print,'Generating Basis Set over Uniform Grid....'
-
-	; generate basis fns at regular grid (shifted)
+	; Generate basis fns at regular grid 
 	; ----------------------------------
+
+	print,'Generating Basis Set over Uniform Grid....'
 
    	ampere_setupSHFns, 1.0, geiGrid_coLat_rad_shifted[*], geiGrid_lon_rad_shifted[*], $
 			kMax, mMax, $
-			minTheta = minTheta, $
-			maxTheta = maxTheta, $
+			minTheta = minCoLat_GEI_deg_shifted, $
+			maxTheta = maxCoLat_GEI_deg_shifted, $
 			bThBFnArr = dYkmDThBFns_grid, $
 			bPhBFnArr = dYkmDPhBFns_grid, $
 			YBFnArr = YkmBFns_grid, $
@@ -356,6 +353,37 @@ stop
   	jParAACGM	= (YkmBFns_grid ## $
          (coeffs_[n_elements(YkmBFns_grid[*,0]):*]*(-outNkValues_grid*(outNkValues_grid+1.0))))$
                          /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
+
+
+	; Plot jPar in various coord systems
+	; ----------------------------------
+
+	pole = 90
+	capLimit = maxCoLat_GEI_deg_shifted
+	if(south) then begin
+		pole = -90
+		capLimit = minCoLat_GEI_deg_shifted
+	endif
+
+	winNo++
+	window, winNo, xSize = 900, ySize = 300
+	!p.multi = [0,3,1]	
+
+	plot_fac, jPar, pole, capLimit, $
+			data.gei_coLat_deg, data.gei_lon_deg, $
+			title = 'jPar [GEI]', $
+			south = south
+
+	plot_fac, jParAACGM[*], pole, capLimit, $
+			geiGRid_coLat_rad_shifted[*]*!radeg, geiGrid_lon_rad_shifted[*]*!radeg, $
+			title = 'jPar on grid [GEI]', $
+			south = south
+
+	plot_fac, jParAACGM[*], pole, capLimit, $
+			aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*], $
+			title = 'jPar on grid [AACGM]', $
+			south = south
+stop
 
 	; FAC array	of [nLatGrid, nLonGrid]
 
@@ -525,8 +553,8 @@ stop
 	jLevels = (fIndGen(21)-10.)*fac_div
 	colors  = bytScl ( jLevels, top = 253 ) + 1
 	Loadct,0,/silent
-	window, winnum, xSize = 1050, ySize = 400,title='dB and FAC for '+date_str+'  '+tme_str
-	winnum++
+	winNo ++
+	window, winNo, xSize = 1050, ySize = 400,title='dB and FAC for '+date_str+'  '+tme_str
 
 	plt_dat, 90.0-mlat_a_in[*], ((mlon_a_in[*]/15.0+mltShift) mod 24)*15.0, $
 	         n_elements(mlat_a_in[*] ), -mth_vec_gth_in, mph_vec_gph_in, [1,1], [1,2], south,$

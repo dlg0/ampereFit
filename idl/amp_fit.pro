@@ -33,7 +33,7 @@ pro amp_fit, sHr, eHr, south, $
 	plot_bFns = plot_bFns, $
 	path = path, $
 	aacgmpath = aacgmpath, $
-	pnmPath = pnmpath, $
+	;pnmPath = pnmpath, $
 	savFileName = SavFileName, $
 	kmax = kmax, mmax = mmax, $
 	thresh = thresh, $
@@ -60,7 +60,8 @@ pro amp_fit, sHr, eHr, south, $
 
 
 	; Set path to data files and pnmSav files
-	; ---------------------------------------
+	; Probably should make all these relative.
+	; ----------------------------------------
 
 	if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN64') then begin
 		if not keyword_set(path) then path	= 'd:\cwac\hi_res\davidg\'
@@ -109,6 +110,7 @@ pro amp_fit, sHr, eHr, south, $
 
 
 	; Shift the regular gei grid into the shifted gei system
+	; THIS SHOULD BE A SUBROUTINE
 	; ------------------------------------------------------
 
     geopack_sphcar, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
@@ -131,7 +133,7 @@ pro amp_fit, sHr, eHr, south, $
 	endfor
 
     geopack_sphcar, geiGridX_shifted, geiGridY_shifted, geiGridZ_shifted,$
-			geiGrid_R_km_shifted, geiGrid_coLat_rad_shifted, geiGrid_lon_rad_shifted,$
+			geiGrid_rIrid_km_shifted, geiGrid_coLat_rad_shifted, geiGrid_lon_rad_shifted,$
 			/to_sphere  
 
 
@@ -156,17 +158,17 @@ pro amp_fit, sHr, eHr, south, $
 	data = dataShifted[iiShiftedCap]
 
 
-	; Plot the AACGM grid in GEI, shifted and not
-	; -------------------------------------------
+	;; Plot the AACGM grid in GEI, shifted and not
+	;; -------------------------------------------
 
-	winNo = 0
-	window, winNo 
-	set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid (GEI)'
-	plots, geiGrid_lon_rad*!radeg, 90-geiGrid_coLat_rad*!radeg, psym = 4
-	winNo++
-	window, winNo
-	set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid Shifted (GEI)'
-	plots, geiGrid_lon_rad_shifted*!radeg, 90-geiGrid_coLat_rad_shifted*!radeg, psym = 4
+	;winNo = 0
+	;window, winNo 
+	;set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid (GEI)'
+	;plots, geiGrid_lon_rad*!radeg, 90-geiGrid_coLat_rad*!radeg, psym = 4
+	;winNo++
+	;window, winNo
+	;set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid Shifted (GEI)'
+	;plots, geiGrid_lon_rad_shifted*!radeg, 90-geiGrid_coLat_rad_shifted*!radeg, psym = 4
 
 
 	; Create basis functions at shifted GEI coords
@@ -187,45 +189,45 @@ pro amp_fit, sHr, eHr, south, $
 			kArr = outKValues, /bc2
 
 
-	; Compare the lookup table and 'on-the-fly' basis fns
-	; ---------------------------------------------------
+	;; Compare the lookup table and 'on-the-fly' basis fns
+	;; ---------------------------------------------------
 
-    if keyword_set ( plot_bFns ) then begin            
+    ;if keyword_set ( plot_bFns ) then begin            
 
-	    !p.multi = [0,3,4]
-	    !p.charSize = 2.0
-	    device, decomposed = 0
-	    window, 0, xSize = 1200, ySize = 800
-	    !p.background = 255
+	;    !p.multi = [0,3,4]
+	;    !p.charSize = 2.0
+	;    device, decomposed = 0
+	;    window, 0, xSize = 1200, ySize = 800
+	;    !p.background = 255
 
-        m1  = 0
-        k1  = 6
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	    		title = 'table lookup (m=2,k=5, Y)', $
-	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	    		title = 'table lookup (m=2,k=5), dYdTh', $
-	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	    		title = 'table lookup (m=2,k=5), dYdPh', $
-	    		psym=4,color=0
+    ;    m1  = 0
+    ;    k1  = 6
+	;    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
+	;    		title = 'table lookup (m=2,k=5, Y)', $
+	;    		psym=4,color=0
+	;    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
+	;    		title = 'table lookup (m=2,k=5), dYdTh', $
+	;    		psym=4,color=0
+	;    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
+	;    		title = 'table lookup (m=2,k=5), dYdPh', $
+	;    		psym=4,color=0
 
-        m2  = 0
-        k2  = 8
-	    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	    		title = 'table lookup (m=0,k=7)', $
-	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	    		title = 'table lookup (m=0,k=7)', $
-	    		psym=4,color=0
-	    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	    		title = 'table lookup (m=0,k=7)', $
-	    		psym=4,color=0
+    ;    m2  = 0
+    ;    k2  = 8
+	;    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	;    		title = 'table lookup (m=0,k=7)', $
+	;    		psym=4,color=0
+	;    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	;    		title = 'table lookup (m=0,k=7)', $
+	;    		psym=4,color=0
+	;    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
+	;    		title = 'table lookup (m=0,k=7)', $
+	;    		psym=4,color=0
 
-	    !p.multi = 0.0
-	    !p.charSize = 1.0
+	;    !p.multi = 0.0
+	;    !p.charSize = 1.0
 
-    endif
+    ;endif
 
 
 	; Fit |dB| to dB.grad Ykm in the shifted GEI system
@@ -327,7 +329,6 @@ pro amp_fit, sHr, eHr, south, $
 	                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
 
 
-
 	; Generate basis fns at regular grid 
 	; ----------------------------------
 
@@ -354,6 +355,8 @@ pro amp_fit, sHr, eHr, south, $
          (coeffs_[n_elements(YkmBFns_grid[*,0]):*]*(-outNkValues_grid*(outNkValues_grid+1.0))))$
                          /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
 
+	jParAACGM	= reform(jParAACGM, nLatGrid, nLonGrid)
+
 
 	; Plot jPar in various coord systems
 	; ----------------------------------
@@ -365,6 +368,7 @@ pro amp_fit, sHr, eHr, south, $
 		capLimit = minCoLat_GEI_deg_shifted
 	endif
 
+	winNo = -1
 	winNo++
 	window, winNo, xSize = 900, ySize = 300
 	!p.multi = [0,3,1]	
@@ -383,33 +387,30 @@ pro amp_fit, sHr, eHr, south, $
 			aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*], $
 			title = 'jPar on grid [AACGM]', $
 			south = south
-stop
 
-	; FAC array	of [nLatGrid, nLonGrid]
 
-	jParAACGM	= reform(jParAACGM, nLatGrid, nLonGrid)
+	; Reconstruct the dB vector from the fit
+	; --------------------------------------
 
-	; Still the shifted grid
+    recon_dB_GEI_grid	= bFuncs_grid ## coeffs_
+   	dBTheta_GEI_grid	= recon_dB_GEI_grid[0:nLatGrid*nLonGrid-1]
+ 	dBPhi_GEI_grid		= recon_dB_GEI_grid[nLatGrid*nLonGrid:*]
+	dBR_GEI_grid		= dBPhi_GEI_grid * 0
 
-    fit_grid_sh    = bFuncs_grid ## coeffs_
-   	dBTheta_GEI_grid_sh = fit_grid_sh[0:nLatGrid*nLonGrid-1]
- 	dBPhi_GEI_grid_sh   = fit_grid_sh[nLatGrid*nLonGrid:*]
-	dBTheta_GEI_grid=dBTheta_GEI_grid_sh
-	dBPhi_GEI_grid=dBPhi_GEI_grid_sh
-	dBR_GEI_grid_sh=dBPhi_GEI_grid_sh*0.0
 
-	Print,'Un-Shift the dB Vectors....'
+	; Un-Shift the dB Vectors
+	; THIS SHOULD ALSO BE A SUBROUTINE
+	; --------------------------------
 
-	; Need to rotate the dBs back
-	; undo rotation by transpose
-
-	rev_rot_mat=transpose(rot_mat)       
+	rev_rot_mat = transpose(rot_mat)       
 	
 	; conv dB to XYZ comp
 
-    geopack_bspcar,geiGrid_coLat_rad_shifted, geiGrid_lon_rad_shifted, $     
-           dBR_GEI_grid_sh, dBTheta_GEI_grid_sh, dBPhi_GEI_grid_sh ,$
+    geopack_bspcar,geiGrid_coLat_rad, geiGrid_lon_rad, $     
+           dBR_GEI_grid, dBTheta_GEI_grid, dBPhi_GEI_grid ,$
            vx_a,vy_a,vz_a
+
+   ; AAARRRGGGHH!!!! USE USEFUL VARIABLE NAMES!!!
 
 	for ii=Long(0),n_elements(dBTheta_GEI_grid_sh)-1 do begin
 
@@ -427,14 +428,17 @@ stop
 
     	geopack_bcarsp, geiGridX[ii], geiGridY[ii], geiGridZ[ii], $
     	      dbx, dBy, dBz, vbr,vbth,vbph
-    	dBTheta_GEI_grid[ii]=vbth
-    	dBPhi_GEI_grid[ii]=vbph
+
+    	dBTheta_GEI_grid[ii]	= vbth
+    	dBPhi_GEI_grid[ii]		= vbph
+
 	endfor
 
-	; Take GEI -> GEOG -> AACGM
 
-    Re_km = 6371.0
-    R_km = 780.0 + Re_km
+	; Rotate the final dB vectors into AACGM
+	; --------------------------------------
+
+	; Take GEI -> GEOG -> AACGM
 
 	; conv GEI r,thet,phi -> GEI XYZ
 
@@ -452,57 +456,54 @@ stop
 	; conv GEOG XYZ -> GEOG r,thet,phi
 
     geopack_sphcar, geo_x, geo_y, geo_z, $
-                    geog_R_km, geog_coLat_rad, geog_lon_rad, /to_sphere
+                    geog_rIrid_km, geog_coLat_rad, geog_lon_rad, /to_sphere
 
     gLat_a=90.0-geog_coLat_rad*!radeg
     gLon_a=geog_lon_rad*!radeg
     aacgm_yr=2005
-    aacgm_conv_vec,gLat_a, gLon_a, geog_R_km-Re_km, $
+    aacgm_conv_vec,gLat_a, gLon_a, geog_rIrid_km-rE_km, $
                    dBTheta_GEI_grid, dBPhi_GEI_grid, $
                    mlat_a, mlon_a, $
                    mth_vec_gth, mph_vec_gth, mth_vec_gph, mph_vec_gph, err,/to_aacgm
 
-    ;vec_geo2aacgm,path,aacgm_yr,geog_R_km-Re_km,$
+    ;vec_geo2aacgm,path,aacgm_yr,geog_rIrid_km-rE_km,$
     ;                   gLat_a,gLon_a,dBTheta_GEI_grid,dBPhi_GEI_grid,$
     ;                   mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph
 
 
-	; Input data
-	; Take GEI -> GEOG -> AACGM
+	;; Input data
+	;; Take GEI -> GEOG -> AACGM
 
-    Re_km = 6371.0
-    R_km = 780.0 + Re_km
+	;; conv GEI r,thet,phi -> GEI XYZ
 
-	; conv GEI r,thet,phi -> GEI XYZ
+    ;geopack_sphcar,data.gei_R_km, data.gei_coLat_rad, data.gei_lon_rad,$
+    ;       gei_x_in, gei_y_in, gei_z_in, /to_rect
 
-    geopack_sphcar,data.gei_R_km, data.gei_coLat_rad, data.gei_lon_rad,$
-           gei_x_in, gei_y_in, gei_z_in, /to_rect
+	;; conv GEI XYZ -> GEOG XYZ
 
-	; conv GEI XYZ -> GEOG XYZ
+    ;geoPack_conv_coord, gei_x_in, gei_y_in, gei_z_in, $
+    ;                    geo_x_in, geo_y_in, geo_z_in, $
+    ;                   /from_gei, /to_geo
 
-    geoPack_conv_coord, gei_x_in, gei_y_in, gei_z_in, $
-                        geo_x_in, geo_y_in, geo_z_in, $
-                       /from_gei, /to_geo
+    ;epoch = fltArr(n_elements(gei_x_in[*])) + Avgepoch
 
-    epoch = fltArr(n_elements(gei_x_in[*])) + Avgepoch
+	;; conv GEOG XYZ -> GEOG r,thet,phi
 
-	; conv GEOG XYZ -> GEOG r,thet,phi
+    ;geopack_sphcar, geo_x_in, geo_y_in, geo_z_in,$
+    ;                geog_rIrid_km_in, geog_coLat_rad_in, geog_lon_rad_in, /to_sphere
 
-    geopack_sphcar, geo_x_in, geo_y_in, geo_z_in,$
-                    geog_R_km_in, geog_coLat_rad_in, geog_lon_rad_in, /to_sphere
+    ;gLat_a_in=90.0-geog_coLat_rad_in*!radeg
+    ;gLon_a_in=geog_lon_rad_in*!radeg
 
-    gLat_a_in=90.0-geog_coLat_rad_in*!radeg
-    gLon_a_in=geog_lon_rad_in*!radeg
+    ;aacgm_conv_vec,gLat_a_in, gLon_a_in, geog_rIrid_km_in-rE_km, $
+    ;               data.bTheta_GEI, data.bPhi_GEI, $
+    ;               mlat_a_in, mlon_a_in, $
+    ;               mth_vec_gth_in, mph_vec_gth_in, mth_vec_gph_in, mph_vec_gph_in, err,/to_aacgm
 
-    aacgm_conv_vec,gLat_a_in, gLon_a_in, geog_R_km_in-Re_km, $
-                   data.bTheta_GEI, data.bPhi_GEI, $
-                   mlat_a_in, mlon_a_in, $
-                   mth_vec_gth_in, mph_vec_gth_in, mth_vec_gph_in, mph_vec_gph_in, err,/to_aacgm
-
-    ;vec_geo2aacgm,path,aacgm_yr,geog_R_km_in-Re_km,$
-    ;                   gLat_a_in,gLon_a_in,data.dBTheta,data.dBPhi,$
-    ;                   mlat_a_in,mlon_a_in,$
-    ;                   mth_vec_gth_in,mph_vec_gth_in,mth_vec_gph_in,mph_vec_gph_in
+    ;;vec_geo2aacgm,path,aacgm_yr,geog_rIrid_km_in-rE_km,$
+    ;;                   gLat_a_in,gLon_a_in,data.dBTheta,data.dBPhi,$
+    ;;                   mlat_a_in,mlon_a_in,$
+    ;;                   mth_vec_gth_in,mph_vec_gth_in,mth_vec_gph_in,mph_vec_gph_in
 
 
 
@@ -510,62 +511,66 @@ stop
 	; ----------
 
 
-	!p.background = 255
+	;!p.background = 255
 
-    yr_str=strtrim(string(fix(year)),2)
-    mnth_str=strtrim(string(fix(month)),2)
-    If month lt 10 then mnth_str='0'+mnth_str
-    dy_str=strtrim(string(fix(day)),2)
-    If day lt 10 then dy_str='0'+dy_str
-	date_str='dd/mm/yyyy= '+dy_str+'/'+mnth_str+'/'+dy_str
+    ;yr_str=strtrim(string(fix(year)),2)
+    ;mnth_str=strtrim(string(fix(month)),2)
+    ;If month lt 10 then mnth_str='0'+mnth_str
+    ;dy_str=strtrim(string(fix(day)),2)
+    ;If day lt 10 then dy_str='0'+dy_str
+	;date_str='dd/mm/yyyy= '+dy_str+'/'+mnth_str+'/'+dy_str
 
-    StHr=fix(sHr)
-    StMn=fix((SHr*3600.0-float(StHr)*3600.0)/60.0)
-    StSc=sHr*3600.0-float(StHr)*3600.0-float(StMn)*60.0
-	tmestr1,StHr,StMn,StSc,hr_str,mn_str,sc_str
-	tme_str='hh:mm:ss= '+hr_str+':'+mn_str+':'+sc_str
+    ;StHr=fix(sHr)
+    ;StMn=fix((SHr*3600.0-float(StHr)*3600.0)/60.0)
+    ;StSc=sHr*3600.0-float(StHr)*3600.0-float(StMn)*60.0
+	;tmestr1,StHr,StMn,StSc,hr_str,mn_str,sc_str
+	;tme_str='hh:mm:ss= '+hr_str+':'+mn_str+':'+sc_str
 
-	Print,'Plotting dB and FAC....'
-	wait,0.001
+	;Print,'Plotting dB and FAC....'
+	;wait,0.001
 
-	; plot the db vectors
-	; -------------------
-	; plot the FAC maps
+	;; plot the db vectors
+	;; -------------------
+	;; plot the FAC maps
 
-    hem='north'
-    if south then hem='south'
-  	fac_div=mx_fac/10.
-	pole=90
-	sgn=1.
+    ;hem='north'
+    ;if south then hem='south'
+  	;fac_div=mx_fac/10.
+	;pole=90
+	;sgn=1.
 
-	if south then begin
-	 	pole=-90
-	 	aacgm_cap_coLat_deg=-aacgm_cap_coLat_deg
-	 	sgn=-1.
-	endif
+	;if south then begin
+	; 	pole=-90
+	; 	aacgm_cap_coLat_deg=-aacgm_cap_coLat_deg
+	; 	sgn=-1.
+	;endif
 
-	winNum = 0
+	;winNum = 0
 
-	!p.backGround = 255
-	device, decomposed = 0
-	!p.font = 0
-	!p.multi = [0,3,1,0]
-	jLevels = (fIndGen(21)-10.)*fac_div
-	colors  = bytScl ( jLevels, top = 253 ) + 1
-	Loadct,0,/silent
+	;!p.backGround = 255
+	;device, decomposed = 0
+	;!p.font = 0
+	;!p.multi = [0,3,1,0]
+	;jLevels = (fIndGen(21)-10.)*fac_div
+	;colors  = bytScl ( jLevels, top = 253 ) + 1
+	;Loadct,0,/silent
+
 	winNo ++
-	window, winNo, xSize = 1050, ySize = 400,title='dB and FAC for '+date_str+'  '+tme_str
+	window, winNo, xSize = 900, ySize = 300;,title='dB and FAC for '+date_str+'  '+tme_str
+	!p.multi = [0,3,1]
 
-	plt_dat, 90.0-mlat_a_in[*], ((mlon_a_in[*]/15.0+mltShift) mod 24)*15.0, $
-	         n_elements(mlat_a_in[*] ), -mth_vec_gth_in, mph_vec_gph_in, [1,1], [1,2], south,$
-			 title = 'Input data: AACGM-MLT', $
-            capSize = abs(aacgm_cap_coLat_deg)
+	;plt_dat, 90.0-mlat_a_in[*], ((mlon_a_in[*]/15.0+mltShift) mod 24)*15.0, $
+	;         n_elements(mlat_a_in[*] ), -mth_vec_gth_in, mph_vec_gph_in, south,$
+	;		 title = 'Input data: AACGM-MLT', $
+    ;        capSize = abs(aacgm_cap_coLat_deg)
 
 	; ***** Check if it should be 90.0-abs(m_lat_a)	*****
 	plt_dat, 90.0-mlat_a[*], ((mlon_a[*]/15.0+mltShift) mod 24)*15.0, $
-	         n_elements(mlat_a[*] ), -mth_vec_gth, mph_vec_gph, [1,1], [1,2], south,$
-			 title = 'Fitted data: AACGM-MLT', $
-            capSize = abs(aacgm_cap_coLat_deg)
+	        n_elements(mlat_a[*] ), -mth_vec_gth, mph_vec_gph, south,$
+		 	title = 'Fitted data: AACGM-MLT', $
+ 			capSize = abs(aacgm_cap_coLat_deg)
+
+	!p.multi = 0
 
 	If plt_png eq 1 then begin
 	    png_file=path+'amp_dB&FAC_'+yr_str+mnth_str+dy_str+' at '+hr_str+mn_str+sc_str+'_'+hem+'.png'
@@ -576,7 +581,6 @@ stop
 
 	;@big_nsf_plot
 
-	Print,'Min:Max FAC = ',min(jParTmp),'  ',max(jParTmp)
-	!p.multi = 0
+	;Print,'Min:Max FAC = ',min(jParTmp),'  ',max(jParTmp)
 end
 

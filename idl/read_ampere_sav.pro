@@ -177,13 +177,13 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 
 			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
 				n_elements(data.GEI_coLat_deg),data.bTheta_GEI,data.bPhi_GEI,$
-				[1,1],[1,2],south,title='Input Data',capSize=max_coLat 
+				south,title='Input Data',capSize=max_coLat 
 
 		endif else begin
 
  			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
 				n_elements(data.GEI_coLat_deg),-data.bTheta_GEI, data.bPhi_GEI,$
-				[1,1],[1,2],south,title='Input Data'
+				south,title='Input Data'
 
   		endelse
 
@@ -219,11 +219,11 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 		if south then begin
 			plt_dat,dataShifted.GEI_coLat_deg,dataShifted.GEI_lon_deg,$
 				n_elements(dataShifted.GEI_coLat_deg),dataShifted.bTheta_GEI,dataShifted.bPhi_GEI,$
-				[1,1],[1,2],south,title='Input Data',capSize=max_coLat 
+				south,title='Input Data',capSize=max_coLat 
 		endif else begin
 			plt_dat,dataShifted.GEI_coLat_deg,dataShifted.GEI_lon_deg,$
 				n_elements(dataShifted.GEI_coLat_deg),-dataShifted.bTheta_GEI, dataShifted.bPhi_GEI,$
-				[1,1],[1,2],south,title='Input Data: Shifted'
+				south,title='Input Data: Shifted'
 		endelse
 
 	endif

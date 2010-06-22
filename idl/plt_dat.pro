@@ -8,11 +8,14 @@
 ;
 
 
-Pro plt_dat,inCLat,IrMLT,nirid,IrNCmp,IrECmp,xm,ym, south, $
+pro plt_dat,inCLat,IrMLT,nirid,IrNCmp,IrECmp,south, $
 		title = title, $
         satNu = satNu, $
         arrowHeads = arrowHeads, $
         capSize = cLatMin
+
+	xm = [0,0]
+	ym = [0,3]
 
  IrCLat=inCLat
  If south eq 1 then  IrCLat=180.0-inCLat
@@ -64,7 +67,8 @@ plot,x(nlatlab-1,*),y(nlatlab-1,*),$
     background=255,$
     color=0,$
     linestyle=1, $
-    title = title
+    title = title, $
+	charSize = 2.0
 
 for i=0,nlatlab-2 do $
     oPlot,x(i,*),y(i,*),$

@@ -1,4 +1,4 @@
-;
+; +
 ; Reads AMPERE data SAV file (input data)
 ;
 ; David L Green & Colin L Waters
@@ -11,6 +11,11 @@
 ; modified may 2010 - sort data by orbit plane and sequentially alomg track (for diagnostics)
 ;                   - tweak ampdata shift routine
 ;
+; DLG 4-Jul-10
+;	There are 2 data strucutres, the un-shifted and shifted.
+;	Both are always created and then selected from later.
+;
+
 
 pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 	savFileName = savFileName, $
@@ -20,7 +25,7 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 	avgYrSec = yrSecAvg, $
 	avgEpoch = avgEpoch, $
 	rot_mat=rot_mat, $
-	show = show, $
+	debug = debug, $
 	noShift = noShift
 
 	; IDL sometimes treats this as a variable. 
@@ -28,7 +33,7 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 	; This should not be needed and probably uncovers
    	; a problem with your IDL setup.	
 
-	forward_function cnvTime                
+	;forward_function cnvTime                
 
 	if not keyword_set( max_coLat ) then max_coLat = 70.0
 
@@ -164,32 +169,6 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 	data.bPhi_GEI = bPhi_GEI
 
 
-	; Plot data
-	; ---------
-
-	if keyword_set ( show ) then begin
-
-		device, decomposed = 0
-		window, 1, xSize = 500, ySize = 500, $
-			title='Input Data'
-
-		if south then begin
-
-			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
-				n_elements(data.GEI_coLat_deg),data.bTheta_GEI,data.bPhi_GEI,$
-				south,title='Input Data',capSize=max_coLat 
-
-		endif else begin
-
- 			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
-				n_elements(data.GEI_coLat_deg),-data.bTheta_GEI, data.bPhi_GEI,$
-				south,title='Input Data'
-
-  		endelse
-
-	endif
-
-
 	; Shift the data to be more centered near the 
 	; track intersection point. 
 	;
@@ -209,22 +188,45 @@ pro read_ampere_sav, sHr, eHr, south, cap_coLat_deg, $
 	endelse
 
 
-	; Plot the shifted data
-	; ---------------------	
+	; Plot data and shifted data
+	; --------------------------
 
-	if keyword_set ( show ) and ( not keyword_set ( noShift ) ) then begin
-	
-		window, 2, xSize = 500, ySize = 500,title='Input Data Shifted'
+	if keyword_set ( debug ) then begin
+
+		device, decomposed = 0
+		window, 9, xSize = 600, ySize = 300
+		!p.multi = [0,2,1]
 
 		if south then begin
+
+			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
+				n_elements(data.GEI_coLat_deg),data.bTheta_GEI,data.bPhi_GEI,$
+				south,title='Input Data',capSize=max_coLat 
+
+		endif else begin
+
+ 			plt_dat,data.GEI_coLat_deg,data.GEI_lon_deg,$
+				n_elements(data.GEI_coLat_deg),-data.bTheta_GEI, data.bPhi_GEI,$
+				south,title='Input Data'
+
+  		endelse
+
+
+		if south then begin
+
 			plt_dat,dataShifted.GEI_coLat_deg,dataShifted.GEI_lon_deg,$
 				n_elements(dataShifted.GEI_coLat_deg),dataShifted.bTheta_GEI,dataShifted.bPhi_GEI,$
 				south,title='Input Data',capSize=max_coLat 
+
 		endif else begin
+
 			plt_dat,dataShifted.GEI_coLat_deg,dataShifted.GEI_lon_deg,$
 				n_elements(dataShifted.GEI_coLat_deg),-dataShifted.bTheta_GEI, dataShifted.bPhi_GEI,$
 				south,title='Input Data: Shifted'
+
 		endelse
+
+		!p.multi = 0
 
 	endif
 

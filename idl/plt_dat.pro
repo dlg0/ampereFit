@@ -67,8 +67,7 @@ plot,x(nlatlab-1,*),y(nlatlab-1,*),$
     background=255,$
     color=0,$
     linestyle=1, $
-    title = title, $
-	charSize = 2.0
+    title = title
 
 for i=0,nlatlab-2 do $
     oPlot,x(i,*),y(i,*),$

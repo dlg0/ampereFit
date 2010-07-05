@@ -1,39 +1,18 @@
-; AMPERE dB to FAC code
-; Given a set of Iridium dB data (in GEI coords), compute the associated dB vectors
-; in AACGM and the FAC pattern using SCHA
+; +
+; AmpereFit
+; ---------
+;
+; Library to take Iridium vector (horizontal only) dB 
+; field and create a FAC and dB map on regular grid.
 ;
 ; C.L. Waters and D.L. Green
 ; Dec 2009
 ;
 
-
-; Form string expression from time
-pro tmestr1,Hr,Mn,Sc,hr_str,mn_str,sc_str
-
- 	hr_str=strtrim(string(Hr),2)
- 	if Hr lt 10 then hr_str='0'+hr_str
- 	mn_str=strtrim(string(Mn),2)
- 	if Mn lt 10 then mn_str='0'+mn_str
- 	sc_str=strtrim(string(fix(sc)),2)
- 	if Sc lt 10 then sc_str='0'+sc_str
-
-end
-
-pro cross_p,v1,v2,vout
-
- 	v1=reform(v1) & v2=reform(v2)
- 	vout=[[v1(1)*v2(2)-v1(2)*v2(1)],$
- 	      [v1(2)*v2(0)-v1(0)*v2(2)],$
- 	      [v1(0)*v2(1)-v1(1)*v2(0)]]
- 	vout=transpose(vout)
-
-end
-
 pro amp_fit, sHr, eHr, south, $
 	plot_bFns = plot_bFns, $
 	path = path, $
 	aacgmpath = aacgmpath, $
-	;pnmPath = pnmpath, $
 	savFileName = SavFileName, $
 	kmax = kmax, mmax = mmax, $
 	thresh = thresh, $
@@ -42,7 +21,9 @@ pro amp_fit, sHr, eHr, south, $
 	mn_fac = mn_fac, mx_fac=mx_fac, $
 	plt_png = plt_png, $
 	plt_tracks = plt_tracks, $
-	aacgm_cap_coLat_deg = aacgm_cap_coLat_deg
+	aacgm_cap_coLat_deg = aacgm_cap_coLat_deg, $
+	shiftGEI = shiftGEI, $
+	debug = debug
 
 
 	; Check for reasonable inputs
@@ -59,16 +40,14 @@ pro amp_fit, sHr, eHr, south, $
     endif
 
 
-	; Set path to data files and pnmSav files
-	; Probably should make all these relative.
-	; ----------------------------------------
+	; Set relative path to data
+	; (do NOT go back to absolute paths)
+	; ----------------------------------
 
 	if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN64') then begin
-		if not keyword_set(path) then path	= 'd:\cwac\hi_res\davidg\'
-		if not keyword_set(pnmpath) then pnmPath = path + 'jpar_ver2\pnmsavs\pnmSav'
+		if not keyword_set(path) then path	= 'data\'
 	endif else begin                        
-		if not keyword_set(path) then path = '~/code/ampereFit/idl/'
-		if not keyword_set(pnmpath) then pnmPath = path + 'pnmSavs/pnmSav'
+		if not keyword_set(path) then path = 'data/'
 	endelse
 
 
@@ -78,8 +57,10 @@ pro amp_fit, sHr, eHr, south, $
 	@amp_fit_defaults
 
 
-	; Read input data
-	; ---------------
+	; Read input data for full hemisphere
+	; Cap is selected out later based on 
+	; AACGM / GEOG pole offsets
+	; -----------------------------------
 
 	Print,'Reading AMPERE Data File....'
 
@@ -90,7 +71,7 @@ pro amp_fit, sHr, eHr, south, $
         year = year, month = month, day = day, $
         avgYrSec = avgYrSec, $
         avgEpoch = avgEpoch, $
-        rot_mat=rot_mat, /show, /noShift
+        rot_mat=rot_mat, debug = debug;, /noShift
 
 
 	; Create uniform grids in AACGM and GEI
@@ -109,9 +90,9 @@ pro amp_fit, sHr, eHr, south, $
 	   	 epoch = avgEpoch
 
 
-	; Shift the regular gei grid into the shifted gei system
+	; Shift GEI grid to the shifted GEI system
 	; THIS SHOULD BE A SUBROUTINE
-	; ------------------------------------------------------
+	; ----------------------------------------
 
     geopack_sphcar, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
             geiGridX, geiGridY, geiGridZ, $
@@ -137,6 +118,16 @@ pro amp_fit, sHr, eHr, south, $
 			/to_sphere  
 
 
+	; Choose shifted or unshifted data
+	; --------------------------------
+
+	if shiftGEI then begin
+			data = dataShifted
+	endif else begin
+			data = dataOriginal
+	endelse
+
+
 	; Use the maximum coLat of the regular grid in the shifted GEI 
 	; system as the capSize for the fit and hence also for the 
 	; selection of how much data to use in the fit. So here we select
@@ -151,11 +142,12 @@ pro amp_fit, sHr, eHr, south, $
 		maxCoLat_GEI_deg_shifted = max ( geiGrid_coLat_rad_shifted * !radeg ) + 2
 	endelse
 
-	iiShiftedCap = where ( dataShifted.gei_coLat_rad * !radeg ge minCoLat_GEI_deg_shifted $
-					and dataShifted.gei_coLat_rad*!radeg le maxCoLat_GEI_deg_shifted, $
+
+	iiShiftedCap = where ( data.gei_coLat_rad * !radeg ge minCoLat_GEI_deg_shifted $
+					and data.gei_coLat_rad*!radeg le maxCoLat_GEI_deg_shifted, $
 					iiShiftedCapCnt )
 
-	data = dataShifted[iiShiftedCap]
+	data = data[iiShiftedCap]
 
 
 	;; Plot the AACGM grid in GEI, shifted and not
@@ -189,47 +181,6 @@ pro amp_fit, sHr, eHr, south, $
 			kArr = outKValues, /bc2
 
 
-	;; Compare the lookup table and 'on-the-fly' basis fns
-	;; ---------------------------------------------------
-
-    ;if keyword_set ( plot_bFns ) then begin            
-
-	;    !p.multi = [0,3,4]
-	;    !p.charSize = 2.0
-	;    device, decomposed = 0
-	;    window, 0, xSize = 1200, ySize = 800
-	;    !p.background = 255
-
-    ;    m1  = 0
-    ;    k1  = 6
-	;    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	;    		title = 'table lookup (m=2,k=5, Y)', $
-	;    		psym=4,color=0
-	;    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	;    		title = 'table lookup (m=2,k=5), dYdTh', $
-	;    		psym=4,color=0
-	;    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues2 eq m1 and outkValues2 eq k1),*], $
-	;    		title = 'table lookup (m=2,k=5), dYdPh', $
-	;    		psym=4,color=0
-
-    ;    m2  = 0
-    ;    k2  = 8
-	;    plot, data.gei_coLat_rad*!radeg, ykmbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	;    		title = 'table lookup (m=0,k=7)', $
-	;    		psym=4,color=0
-	;    plot, data.gei_coLat_rad*!radeg, dykmdthbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	;    		title = 'table lookup (m=0,k=7)', $
-	;    		psym=4,color=0
-	;    plot, data.gei_coLat_rad*!radeg, dykmdphbfns[where(outmvalues eq m2 and outkValues eq k2),*], $
-	;    		title = 'table lookup (m=0,k=7)', $
-	;    		psym=4,color=0
-
-	;    !p.multi = 0.0
-	;    !p.charSize = 1.0
-
-    ;endif
-
-
 	; Fit |dB| to dB.grad Ykm in the shifted GEI system
 	; -------------------------------------------------
 
@@ -243,7 +194,7 @@ pro amp_fit, sHr, eHr, south, $
 	; the weighting should be applied to the LHS of the linear
 	; system to be solved.
 
-    if (sigma ne 1.) then begin
+    if (sigma ne 1) then begin
 
      	w_idx=where(dBMag lt thresh)
 
@@ -305,19 +256,21 @@ pro amp_fit, sHr, eHr, south, $
 	; Plot along track comparison of the raw and fitted data
 	; ------------------------------------------------------
 
-	@load_colors
-	iPlot, view_grid = [2,3]
-	for i=0,5 do begin
-		iiTrack = where ( data.iPln eq i, iiTrackCnt )
-		iPlot, (data.bPhi_GEI)[iiTrack], $
-				sym_index = 4, $
-				view_number = i+1, $
-				/stretch_to_fit, $
-				lineStyle = 6
-		iPlot, fit_bPhi_GEI[iiTrack], $
-				thick = 2, /over, $
-				color = red
-	endfor
+	if debug then begin
+		@load_colors
+		iPlot, view_grid = [2,3]
+		for i=0,5 do begin
+			iiTrack = where ( data.iPln eq i, iiTrackCnt )
+			iPlot, (data.bPhi_GEI)[iiTrack], $
+					sym_index = 4, $
+					view_number = i+1, $
+					/stretch_to_fit, $
+					lineStyle = 6
+			iPlot, fit_bPhi_GEI[iiTrack], $
+					thick = 2, /over, $
+					color = red
+		endfor
+	endif
 
 
 	; Construct jPar in the GEI system
@@ -361,226 +314,167 @@ pro amp_fit, sHr, eHr, south, $
 	; Plot jPar in various coord systems
 	; ----------------------------------
 
-	pole = 90
-	capLimit = maxCoLat_GEI_deg_shifted
-	if(south) then begin
-		pole = -90
-		capLimit = minCoLat_GEI_deg_shifted
+	if debug then begin
+
+		pole = 90
+		capLimit = maxCoLat_GEI_deg_shifted
+		if(south) then begin
+			pole = -90
+			capLimit = minCoLat_GEI_deg_shifted
+		endif
+
+		winNo = -1
+		winNo++
+		window, winNo, xSize = 600, ySize = 600
+		!p.multi = [0,2,2]	
+		!p.charSize = 1.0
+
+		plot_fac, jPar, pole, capLimit, $
+				data.gei_coLat_deg, data.gei_lon_deg, $
+				title = 'jPar [GEI]', $
+				south = south
+
+		plot_fac, jParAACGM[*], pole, capLimit, $
+				geiGRid_coLat_rad_shifted[*]*!radeg, geiGrid_lon_rad_shifted[*]*!radeg, $
+				title = 'jPar on grid [GEI]', $
+				south = south
+
+		plot_fac, jParAACGM[*], pole, capLimit, $
+				aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*], $
+				title = 'jPar on grid [AACGM]', $
+				south = south
+
+		plot_fac, jParAACGM[*], pole, capLimit, $
+				aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*]+mltShift*15, $
+				title = 'jPar on grid [AACGM-MLT]', $
+				south = south
+
 	endif
-
-	winNo = -1
-	winNo++
-	window, winNo, xSize = 900, ySize = 300
-	!p.multi = [0,3,1]	
-
-	plot_fac, jPar, pole, capLimit, $
-			data.gei_coLat_deg, data.gei_lon_deg, $
-			title = 'jPar [GEI]', $
-			south = south
-
-	plot_fac, jParAACGM[*], pole, capLimit, $
-			geiGRid_coLat_rad_shifted[*]*!radeg, geiGrid_lon_rad_shifted[*]*!radeg, $
-			title = 'jPar on grid [GEI]', $
-			south = south
-
-	plot_fac, jParAACGM[*], pole, capLimit, $
-			aacgmGrid_coLat_deg[*], aacgmGrid_lon_deg[*], $
-			title = 'jPar on grid [AACGM]', $
-			south = south
 
 
 	; Reconstruct the dB vector from the fit
 	; --------------------------------------
 
-    recon_dB_GEI_grid	= bFuncs_grid ## coeffs_
-   	dBTheta_GEI_grid	= recon_dB_GEI_grid[0:nLatGrid*nLonGrid-1]
- 	dBPhi_GEI_grid		= recon_dB_GEI_grid[nLatGrid*nLonGrid:*]
-	dBR_GEI_grid		= dBPhi_GEI_grid * 0
+    recon_dB_geiGrid	= bFuncs_grid ## coeffs_
+   	dBTheta_geiGrid	= recon_dB_geiGrid[0:nLatGrid*nLonGrid-1]
+ 	dBPhi_geiGrid		= recon_dB_geiGrid[nLatGrid*nLonGrid:*]
+	dBR_geiGrid		= dBPhi_geiGrid * 0
 
 
 	; Un-Shift the dB Vectors
 	; THIS SHOULD ALSO BE A SUBROUTINE
 	; --------------------------------
 
-	rev_rot_mat = transpose(rot_mat)       
-	
-	; conv dB to XYZ comp
+	if shiftGEI then begin
 
-    geopack_bspcar,geiGrid_coLat_rad, geiGrid_lon_rad, $     
-           dBR_GEI_grid, dBTheta_GEI_grid, dBPhi_GEI_grid ,$
-           vx_a,vy_a,vz_a
+		rev_rot_mat = transpose(rot_mat)       
+		
+		; conv dB to XYZ comp
 
-   ; AAARRRGGGHH!!!! USE USEFUL VARIABLE NAMES!!!
+    	geopack_bspcar,geiGrid_coLat_rad, geiGrid_lon_rad, $     
+    	       dBR_geiGrid, dBTheta_geiGrid, dBPhi_geiGrid ,$
+    	       vx_a,vy_a,vz_a
 
-	for ii=Long(0),n_elements(dBTheta_GEI_grid_sh)-1 do begin
+   ;	 AAARRRGGGHH!!!! USE USEFUL VARIABLE NAMES!!!
 
-    	dBx=vx_a[ii]*rev_rot_mat[0,0] + $
-    	    vy_a[ii]*rev_rot_mat[1,0] + $
-    	    vz_a[ii]*rev_rot_mat[2,0]
-    	dBy=vx_a[ii]*rev_rot_mat[0,1] + $
-    	    vy_a[ii]*rev_rot_mat[1,1] + $
-    	    vz_a[ii]*rev_rot_mat[2,1]
-    	dBz=vx_a[ii]*rev_rot_mat[0,2] + $
-    	    vy_a[ii]*rev_rot_mat[1,2] + $
-    	    vz_a[ii]*rev_rot_mat[2,2]
+		for ii=Long(0),n_elements(dBTheta_geiGrid_sh)-1 do begin
 
-		; convert to spherical
+    		dBx=vx_a[ii]*rev_rot_mat[0,0] + $
+    		    vy_a[ii]*rev_rot_mat[1,0] + $
+    		    vz_a[ii]*rev_rot_mat[2,0]
+    		dBy=vx_a[ii]*rev_rot_mat[0,1] + $
+    		    vy_a[ii]*rev_rot_mat[1,1] + $
+    		    vz_a[ii]*rev_rot_mat[2,1]
+    		dBz=vx_a[ii]*rev_rot_mat[0,2] + $
+    		    vy_a[ii]*rev_rot_mat[1,2] + $
+    		    vz_a[ii]*rev_rot_mat[2,2]
 
-    	geopack_bcarsp, geiGridX[ii], geiGridY[ii], geiGridZ[ii], $
-    	      dbx, dBy, dBz, vbr,vbth,vbph
+			; convert to spherical
 
-    	dBTheta_GEI_grid[ii]	= vbth
-    	dBPhi_GEI_grid[ii]		= vbph
+    		geopack_bcarsp, geiGridX[ii], geiGridY[ii], geiGridZ[ii], $
+    		      dbx, dBy, dBz, vbr,vbth,vbph
 
-	endfor
+    		dBTheta_geiGrid[ii]	= vbth
+    		dBPhi_geiGrid[ii]		= vbph
 
+		endfor
 
-	; Rotate the final dB vectors into AACGM
-	; --------------------------------------
-
-	; Take GEI -> GEOG -> AACGM
-
-	; conv GEI r,thet,phi -> GEI XYZ
-
-    geopack_sphcar,geiGrid_R_km, geiGrid_coLat_rad, geiGrid_lon_rad,$
-           gei_x, gei_y, gei_z, /to_rect
-
-	; conv GEI XYZ -> GEOG XYZ
-
-    geoPack_conv_coord, gei_x, gei_y, gei_z, $
-                        geo_x, geo_y, geo_z, $
-                       /from_gei, /to_geo
-
-    epoch = fltArr(n_elements(gei_x[*])) + Avgepoch
-
-	; conv GEOG XYZ -> GEOG r,thet,phi
-
-    geopack_sphcar, geo_x, geo_y, geo_z, $
-                    geog_rIrid_km, geog_coLat_rad, geog_lon_rad, /to_sphere
-
-    gLat_a=90.0-geog_coLat_rad*!radeg
-    gLon_a=geog_lon_rad*!radeg
-    aacgm_yr=2005
-    aacgm_conv_vec,gLat_a, gLon_a, geog_rIrid_km-rE_km, $
-                   dBTheta_GEI_grid, dBPhi_GEI_grid, $
-                   mlat_a, mlon_a, $
-                   mth_vec_gth, mph_vec_gth, mth_vec_gph, mph_vec_gph, err,/to_aacgm
-
-    ;vec_geo2aacgm,path,aacgm_yr,geog_rIrid_km-rE_km,$
-    ;                   gLat_a,gLon_a,dBTheta_GEI_grid,dBPhi_GEI_grid,$
-    ;                   mlat_a,mlon_a,mth_vec_gth,mph_vec_gth,mth_vec_gph,mph_vec_gph
+	endif
 
 
-	;; Input data
-	;; Take GEI -> GEOG -> AACGM
+	; Rotate fitted, raw and shifted (or not) dB vectors to AACGM
+	; -----------------------------------------------------------
 
-	;; conv GEI r,thet,phi -> GEI XYZ
+	geiVec_to_aacgmVec, $
+		geiGrid_R_km, geiGrid_coLat_rad, geiGrid_lon_rad, $
+		dBTheta_geiGrid, dbPhi_geiGrid, $
+		dBTheta_aacgm_gth = dBTheta_aacgmGrid_gth, $
+		dBPhi_aacgm_gph = dBPhi_aacgmGrid_gph
 
-    ;geopack_sphcar,data.gei_R_km, data.gei_coLat_rad, data.gei_lon_rad,$
-    ;       gei_x_in, gei_y_in, gei_z_in, /to_rect
+	geiVec_to_aacgmVec, $
+		data.gei_R_km, data.gei_coLat_rad, data.gei_lon_rad, $
+		data.bTheta_gei, data.bPhi_gei, $
+		dBTheta_aacgm_gth = dBTheta_aacgmData_gth, $
+		dBPhi_aacgm_gph = dBPhi_aacgmData_gph, $
+		aacgm_lat_deg = aacgmData_lat_deg, $
+		aacgm_lon_deg = aacgmData_lon_deg
 
-	;; conv GEI XYZ -> GEOG XYZ
-
-    ;geoPack_conv_coord, gei_x_in, gei_y_in, gei_z_in, $
-    ;                    geo_x_in, geo_y_in, geo_z_in, $
-    ;                   /from_gei, /to_geo
-
-    ;epoch = fltArr(n_elements(gei_x_in[*])) + Avgepoch
-
-	;; conv GEOG XYZ -> GEOG r,thet,phi
-
-    ;geopack_sphcar, geo_x_in, geo_y_in, geo_z_in,$
-    ;                geog_rIrid_km_in, geog_coLat_rad_in, geog_lon_rad_in, /to_sphere
-
-    ;gLat_a_in=90.0-geog_coLat_rad_in*!radeg
-    ;gLon_a_in=geog_lon_rad_in*!radeg
-
-    ;aacgm_conv_vec,gLat_a_in, gLon_a_in, geog_rIrid_km_in-rE_km, $
-    ;               data.bTheta_GEI, data.bPhi_GEI, $
-    ;               mlat_a_in, mlon_a_in, $
-    ;               mth_vec_gth_in, mph_vec_gth_in, mth_vec_gph_in, mph_vec_gph_in, err,/to_aacgm
-
-    ;;vec_geo2aacgm,path,aacgm_yr,geog_rIrid_km_in-rE_km,$
-    ;;                   gLat_a_in,gLon_a_in,data.dBTheta,data.dBPhi,$
-    ;;                   mlat_a_in,mlon_a_in,$
-    ;;                   mth_vec_gth_in,mph_vec_gth_in,mth_vec_gph_in,mph_vec_gph_in
+	geiVec_to_aacgmVec, $
+		dataOriginal.gei_R_km, dataOriginal.gei_coLat_rad, dataOriginal.gei_lon_rad, $
+		dataOriginal.bTheta_gei, dataOriginal.bPhi_gei, $
+		dBTheta_aacgm_gth = dBTheta_aacgmDataOriginal_gth, $
+		dBPhi_aacgm_gph = dBPhi_aacgmDataOriginal_gph, $
+		aacgm_lat_deg = aacgmDataOriginal_lat_deg, $
+		aacgm_lon_deg = aacgmDataOriginal_lon_deg
 
 
+	; Plot the dB vectors in AACGM-MLT
+	; --------------------------------
 
-	; plot stuff
-	; ----------
+	if debug then begin
+
+		winNo ++
+		window, winNo, xSize = 900, ySize = 300
+		!p.multi = [0,3,1]
+		!p.charSize = 2.0
+
+		plt_dat, 90.0-aacgmDataOriginal_lat_deg[*], ((aacgmDataOriginal_lon_deg[*]/15.0+mltShift) mod 24)*15.0, $
+			n_elements(aacgmDataOriginal_lat_deg[*] ), $
+			-dBTheta_aacgmDataOriginal_gth, dBPhi_aacgmDataOriginal_gph, $
+			south, title = 'Input dataOriginal: AACGM-MLT', $
+			capSize = abs(aacgm_cap_coLat_deg)
 
 
-	;!p.background = 255
+		plt_dat, 90.0-aacgmData_lat_deg[*], ((aacgmData_lon_deg[*]/15.0+mltShift) mod 24)*15.0, $
+		         n_elements(aacgmData_lat_deg[*] ), -dBTheta_aacgmData_gth, dBPhi_aacgmData_gph, south,$
+				 title = 'Input data: AACGM-MLT', $
+    	        capSize = abs(aacgm_cap_coLat_deg)
 
-    ;yr_str=strtrim(string(fix(year)),2)
-    ;mnth_str=strtrim(string(fix(month)),2)
-    ;If month lt 10 then mnth_str='0'+mnth_str
-    ;dy_str=strtrim(string(fix(day)),2)
-    ;If day lt 10 then dy_str='0'+dy_str
-	;date_str='dd/mm/yyyy= '+dy_str+'/'+mnth_str+'/'+dy_str
+		; ***** Check if it should be 90.0-abs(m_lat_a)	*****
+		plt_dat, aacgmGrid_coLat_deg[*], ((aacgmGrid_lon_deg[*]/15.0+mltShift) mod 24)*15.0, $
+		        n_elements(aacgmGrid_coLat_deg[*] ), -dBTheta_aacgmGrid_gth, dBPhi_aacgmGrid_gph, south,$
+			 	title = 'Fitted data: AACGM-MLT', $
+ 				capSize = abs(aacgm_cap_coLat_deg)
 
-    ;StHr=fix(sHr)
-    ;StMn=fix((SHr*3600.0-float(StHr)*3600.0)/60.0)
-    ;StSc=sHr*3600.0-float(StHr)*3600.0-float(StMn)*60.0
-	;tmestr1,StHr,StMn,StSc,hr_str,mn_str,sc_str
-	;tme_str='hh:mm:ss= '+hr_str+':'+mn_str+':'+sc_str
+		!p.charSize = 1.0
+		!p.multi = 0
 
-	;Print,'Plotting dB and FAC....'
-	;wait,0.001
 
-	;; plot the db vectors
-	;; -------------------
-	;; plot the FAC maps
+		; Write PNG image
+		; ---------------
 
-    ;hem='north'
-    ;if south then hem='south'
-  	;fac_div=mx_fac/10.
-	;pole=90
-	;sgn=1.
+		if plt_png eq 1 then begin
 
-	;if south then begin
-	; 	pole=-90
-	; 	aacgm_cap_coLat_deg=-aacgm_cap_coLat_deg
-	; 	sgn=-1.
-	;endif
+		    png_file=path+'amp_dB&FAC_'+yr_str+mnth_str+dy_str+' at '+hr_str+mn_str+sc_str+'_'+hem+'.png'
+    		image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
+    		write_PNG,png_file,image,r,g,b
+    		Print,'PNG for FACs written to ', png_file
 
-	;winNum = 0
+    	end
 
-	;!p.backGround = 255
-	;device, decomposed = 0
-	;!p.font = 0
-	;!p.multi = [0,3,1,0]
-	;jLevels = (fIndGen(21)-10.)*fac_div
-	;colors  = bytScl ( jLevels, top = 253 ) + 1
-	;Loadct,0,/silent
-
-	winNo ++
-	window, winNo, xSize = 900, ySize = 300;,title='dB and FAC for '+date_str+'  '+tme_str
-	!p.multi = [0,3,1]
-
-	;plt_dat, 90.0-mlat_a_in[*], ((mlon_a_in[*]/15.0+mltShift) mod 24)*15.0, $
-	;         n_elements(mlat_a_in[*] ), -mth_vec_gth_in, mph_vec_gph_in, south,$
-	;		 title = 'Input data: AACGM-MLT', $
-    ;        capSize = abs(aacgm_cap_coLat_deg)
-
-	; ***** Check if it should be 90.0-abs(m_lat_a)	*****
-	plt_dat, 90.0-mlat_a[*], ((mlon_a[*]/15.0+mltShift) mod 24)*15.0, $
-	        n_elements(mlat_a[*] ), -mth_vec_gth, mph_vec_gph, south,$
-		 	title = 'Fitted data: AACGM-MLT', $
- 			capSize = abs(aacgm_cap_coLat_deg)
-
-	!p.multi = 0
-
-	If plt_png eq 1 then begin
-	    png_file=path+'amp_dB&FAC_'+yr_str+mnth_str+dy_str+' at '+hr_str+mn_str+sc_str+'_'+hem+'.png'
-    	image = TVRD(0,0,!d.X_size,!d.Y_size,true=1)
-    	Write_PNG,png_file,image,r,g,b
-    	Print,'PNG for FACs written to ', png_file
-    end
+	endif
 
 	;@big_nsf_plot
 
-	;Print,'Min:Max FAC = ',min(jParTmp),'  ',max(jParTmp)
 end
 

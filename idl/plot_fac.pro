@@ -11,7 +11,7 @@ pro plot_fac, jPar, pole, cap_coLat_deg, coLat_deg, lon_deg, $
    	map_set, pole, 0, 0, /ortho, /iso, $
      limit = [ pole - cap_coLat_deg, 0, pole, 360 ], $
 	 /noborder, title = title, /advance, $
-	 yMargin = [0,3], color = 0, charSize = 2.0
+	 yMargin = [0,3], color = 0
 
 	jParTmp	= jPar[*]
 

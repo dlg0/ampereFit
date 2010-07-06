@@ -8,17 +8,25 @@ pro plot_fac, jPar, pole, cap_coLat_deg, coLat_deg, lon_deg, $
 
 	loadct, 0, /silent
 	!p.background = 255
+
+	if south then begin
+			limit = [ pole, 0, pole + (180-cap_coLat_deg), 360 ]
+	endif else begin
+			limit = [ pole - cap_coLat_deg, 0, pole, 360 ]
+	endelse
+
    	map_set, pole, 0, 0, /ortho, /iso, $
-     limit = [ pole - cap_coLat_deg, 0, pole, 360 ], $
+     limit = limit, $
 	 /noborder, title = title, /advance, $
 	 yMargin = [0,3], color = 0
-
 	jParTmp	= jPar[*]
 
+	randFac = 1e-3
 	lonTmp = ((lon_deg[*]/15.0+mlt_shift) mod 24 )*15.0 $
-			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*1e-5-0.5e-5
+			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*randFac-randFac/2
 
-	latTmp = 90.0-coLat_deg[*]
+	latTmp = 90.0-coLat_deg[*] $
+			+ randomu(sysTime(/sec ), n_elements(jParTmp), /uni)*randFac-randFac/2
 
 
 	facScale = 1.0
@@ -74,6 +82,7 @@ pro plot_fac, jPar, pole, cap_coLat_deg, coLat_deg, lon_deg, $
 	if cap_coLat_deg gt 90 then begin
 		nLats = fix((180-cap_coLat_deg)/10)
 		lats = 180-(fIndGen(nLats)+1)*10
+		lats = -90+180-lats
 	endif else begin
 		nLats = fix((cap_coLat_deg)/10)
 		lats = 90-(fIndGen(nLats)+1)*10

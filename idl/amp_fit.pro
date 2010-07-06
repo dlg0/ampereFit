@@ -328,7 +328,7 @@ pro amp_fit, sHr, eHr, south, $
 		window, winNo, xSize = 600, ySize = 600
 		!p.multi = [0,2,2]	
 		!p.charSize = 1.0
-
+	
 		plot_fac, jPar, pole, capLimit, $
 				data.gei_coLat_deg, data.gei_lon_deg, $
 				title = 'jPar [GEI]', $

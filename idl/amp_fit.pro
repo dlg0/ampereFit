@@ -356,9 +356,9 @@ pro amp_fit, sHr, eHr, south, $
 	; --------------------------------------
 
     recon_dB_geiGrid	= bFuncs_grid ## coeffs_
-   	dBTheta_geiGrid	= recon_dB_geiGrid[0:nLatGrid*nLonGrid-1]
+   	dBTheta_geiGrid		= recon_dB_geiGrid[0:nLatGrid*nLonGrid-1]
  	dBPhi_geiGrid		= recon_dB_geiGrid[nLatGrid*nLonGrid:*]
-	dBR_geiGrid		= dBPhi_geiGrid * 0
+	dBR_geiGrid			= dBPhi_geiGrid * 0
 
 
 	; Un-Shift the dB Vectors

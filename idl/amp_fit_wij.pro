@@ -13,7 +13,7 @@
 Pro GetAmpPrms_event,ev
  Common WidgBlk,Base1,Base2,HrBut,MnSld,ScSld,DneBut
  Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
-  plt_png,HemSp,south
+  plt_png,HemSp,south,debug
  Widget_Control,ev.id,Get_UValue=UVal
  Case UVal of
  'gfi' : Begin
@@ -43,6 +43,7 @@ Pro GetAmpPrms_event,ev
  'lto' : Widget_Control,ev.id,Get_Value=kmax
  'lno' : Widget_Control,ev.id,Get_Value=mmax
  'pfc' : Widget_Control,ev.id,Get_Value=plt_png
+ 'dbg' : Widget_Control,ev.id,Get_Value=debug
  'hms' : Begin
           Widget_Control,ev.id,Get_Value=south
           If south eq 0 then HemSp='N'
@@ -53,7 +54,7 @@ Pro GetAmpPrms_event,ev
           PrmFile=path+'amp_fit.par'
           OpenW,u1,PrmFile,/Get_Lun
           PrintF,u1,StHr,StMn,StSc,GetSc,TmSep,NumPlts
-          PrintF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png
+          PrintF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png,debug
           Free_Lun,u1
          end
  end
@@ -62,7 +63,7 @@ end
 Pro GetAmpPrms
  Common WidgBlk,Base1,Base2,HrBut,MnSld,ScSld,DneBut
  Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
-  plt_png,HemSp,south
+  plt_png,HemSp,south,debug
 
  WXPos=1 & WYPos=10 & WXSz=200  ; Widget Placement
  Base1 = WIDGET_BASE(Title='AMPERE FAC Menu',XOFFSET=WXPos,YOFFSET=WYPos,/COLUMN,XSize=WXSz)
@@ -74,7 +75,7 @@ Pro GetAmpPrms
  StHr=8 & StMn=0 & StSc=0 & GetSc=3600 & TmSep=900 & NumPlts=1
  ReadF,u1,StHr,StMn,StSc,GetSc,TmSep,NumPlts
  south=0 & kmax=35 & mmax=5 & thresh=80 & mxclat=50. & sigma=2. & plt_png=1
- ReadF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png
+ ReadF,u1,south,kmax,mmax,thresh,mxclat,sigma,plt_png,debug
  Free_Lun,u1
 
  HrBut = Widget_Button(base1,value='Start Hour = '+StrTrim(String(StHr),2)+' UT',UValue='shr')
@@ -97,14 +98,21 @@ Pro GetAmpPrms
  pltSld= Widget_SLider(base2,value=mxclat,UValue='clt',Minimum=20,Maximum=90,Title='Plot CoLat Range [Deg]')
  LatSld= Widget_SLider(base2,value=kmax,UValue='lto',Minimum=2,Maximum=65,Title='Latitude Order')
  LonSld= Widget_SLider(base2,value=mmax,UValue='lno',Minimum=2,Maximum=6,Title='Longitude Order')
+;
  z1Arr=StrArr(2)
  For i=0,1 do z1Arr(i)=StrTrim(String(i),2)
  PFac = CW_BGroup(base2,z1Arr,UValue='pfc',Label_top='PNG FAC Output',Set_Value=plt_png,/row,/Exclusive)
+;
  hArr=StrArr(2)
  hArr(0)='N'
  hArr(1)='S'
  HmSB = CW_BGroup(base2,hArr,UValue='hms',Label_top='Hemisphere',Set_Value=south,/row,/Exclusive)
  HemSp=hArr(south)
+;
+ dbgch=StrArr(2)
+ For i=0,1 do dbgch(i)=StrTrim(String(i),2)
+ dbSB = CW_BGroup(base2,dbgch,UValue='dbg',Label_top='Debug',Set_Value=debug,/row,/Exclusive)
+;
  WIDGET_CONTROL, base2, /REALIZE
  XMANAGER, 'GetAmpPrms',base1,/NO_BLOCK
  XMANAGER, 'GetAmpPrms',base2
@@ -115,7 +123,7 @@ end
 ; Main driver code starts here
 Pro amp_fit_wij
  Common WValBlk1,path,SavFileName,StHr,StMn,StSc,GetSc,TmSep,NumPlts,thresh,mxclat,sigma,kmax,mmax,$
-  plt_png,HemSp,south
+  plt_png,HemSp,south,debug
 
 ; set default values
   if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN62') then begin
@@ -137,16 +145,13 @@ Pro amp_fit_wij
   nLatGrid	= mxclat    ; fit grid defaults
   plt_coLat=mxclat
   nLonGrid	= 24
-  plot_bFns = 0            ; plot switch for basis set diagnostics
   sHr = float(StHr)+float(StMn)/60.0+StSc/3600.0
   eHr = sHr+GetSc/3600.0
-  plt_tracks = 0           ; plot dbTh and dbPh data by Iridium orbit track
 
   amp_fit, sHr, eHr, south, $
         plot_bFns = plot_bFns, $
 		path = path, $
 		aacgmpath = aacgmpath, $
-;		pnmPath = pnmpath, $
 		savFileName = SavFileName, $
 		kmax = kmax, mmax = mmax, $
 		thresh = thresh, $
@@ -154,7 +159,7 @@ Pro amp_fit_wij
 		nLatGrid = nLatGrid, nLonGrid = nLonGrid, $
 		mn_fac = mn_fac, mx_fac=mx_fac, $
 		plt_png = plt_png, $
-		plt_tracks = plt_tracks, $
-		plt_coLat = plt_coLat
+		debug=debug
+
   print,'Finished'
  end

@@ -2,7 +2,7 @@
 ; AmpereFit
 ; ---------
 ;
-; Library to take Iridium vector (horizontal only) dB 
+; Library to take Iridium vector (horizontal only) dB
 ; field and create a FAC and dB map on regular grid.
 ;
 ; C.L. Waters and D.L. Green
@@ -20,7 +20,6 @@ pro amp_fit, sHr, eHr, south, $
 	nLatGrid = nLatGrid, nLonGrid = nLonGrid, $
 	mn_fac = mn_fac, mx_fac=mx_fac, $
 	plt_png = plt_png, $
-	plt_tracks = plt_tracks, $
 	aacgm_cap_coLat_deg = aacgm_cap_coLat_deg, $
 	shiftGEI = shiftGEI, $
 	debug = debug
@@ -41,32 +40,31 @@ pro amp_fit, sHr, eHr, south, $
 
 
 	; Set relative path to data
-	; (do NOT go back to absolute paths)
 	; ----------------------------------
 
 	if strCmp (!version.os, 'Win32') or strCmp (!version.os, 'WIN64') then begin
 		if not keyword_set(path) then path	= 'data\'
-	endif else begin                        
+	endif else begin
 		if not keyword_set(path) then path = 'data/'
 	endelse
 
 
 	; Set default keyword values
-	; --------------------------	
+	; --------------------------
 
 	@amp_fit_defaults
 
 
 	; Read input data for full hemisphere
-	; Cap is selected out later based on 
+	; Cap is selected out later based on
 	; AACGM / GEOG pole offsets
 	; -----------------------------------
 
 	Print,'Reading AMPERE Data File....'
 
-    read_ampere_sav, sHr, eHr, south, 90.0,$            
+    read_ampere_sav, sHr, eHr, south, 90.0,$
         savFileName = savFileName, $
-        dataOrig = dataOriginal, $                            
+        dataOrig = dataOriginal, $
 		dataShif = dataShifted, $
         year = year, month = month, day = day, $
         avgYrSec = avgYrSec, $
@@ -76,7 +74,8 @@ pro amp_fit, sHr, eHr, south, $
 
 	; Create uniform grids in AACGM and GEI
 	; -------------------------------------
-
+; 1. Calculate Uniform AACGM grid
+; 2. Conv to geog -> then to GEI coord
  	aacgm_grid, aacgm_cap_coLat_deg, south, $
 	   	 aacgmGrid_coLat_deg = aacgmGrid_coLat_deg, $
 	   	 aacgmGrid_lon_deg = aacgmGrid_lon_deg, $
@@ -90,20 +89,19 @@ pro amp_fit, sHr, eHr, south, $
 	   	 epoch = avgEpoch
 
 
-	; Shift GEI grid to the shifted GEI system
-	; THIS SHOULD BE A SUBROUTINE
-	; ----------------------------------------
-
+; 3. Calc shifted GEI from uniform AACGM grid -> get max coLat
+; ----------------------------------------
+; Calc XYZ components of uniform unshifted GEI grid
     geopack_sphcar, geiGrid_R_km[*], geiGrid_coLat_rad[*], geiGrid_lon_rad[*], $
             geiGridX, geiGridY, geiGridZ, $
-			/to_rect       
+			/to_rect
 
 	geiGridX_shifted = fltArr ( size(geiGridX,/dim) )
 	geiGridY_shifted = fltArr ( size(geiGridY,/dim) )
 	geiGridZ_shifted = fltArr ( size(geiGridZ,/dim) )
 
     for ii=long(0),n_elements(geiGridX)-1 do begin
-			
+
 		xyzGrid = [geiGridX[ii],geiGridY[ii],geiGridZ[ii]]
 		xyzGridShifted = matrix_multiply ( rot_mat, xyzGrid, /Atrans )
 
@@ -115,7 +113,7 @@ pro amp_fit, sHr, eHr, south, $
 
     geopack_sphcar, geiGridX_shifted, geiGridY_shifted, geiGridZ_shifted,$
 			geiGrid_rIrid_km_shifted, geiGrid_coLat_rad_shifted, geiGrid_lon_rad_shifted,$
-			/to_sphere  
+			/to_sphere
 
 
 	; Choose shifted or unshifted data
@@ -128,8 +126,8 @@ pro amp_fit, sHr, eHr, south, $
 	endelse
 
 
-	; Use the maximum coLat of the regular grid in the shifted GEI 
-	; system as the capSize for the fit and hence also for the 
+	; Use the maximum coLat of the regular grid in the shifted GEI
+	; system as the capSize for the fit and hence also for the
 	; selection of how much data to use in the fit. So here we select
 	; out data to cover the requested regular grid.
 	; ---------------------------------------------------------------
@@ -154,7 +152,7 @@ pro amp_fit, sHr, eHr, south, $
 	;; -------------------------------------------
 
 	;winNo = 0
-	;window, winNo 
+	;window, winNo
 	;set_map, maxCoLat_GEI_deg_shifted, title = 'AACGM Grid (GEI)'
 	;plots, geiGrid_lon_rad*!radeg, 90-geiGrid_coLat_rad*!radeg, psym = 4
 	;winNo++
@@ -169,7 +167,7 @@ pro amp_fit, sHr, eHr, south, $
 	Print,'Generating Basis Set at Input Data Locations....'
 
 	; For Sth, 90->180 deg
- 	ampere_setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $   
+ 	ampere_setupSHFns, 1.0, data.gei_coLat_rad, data.gei_lon_rad, $
 			kMax, mMax, $
 			minTheta = minCoLat_GEI_deg_shifted, $
 			maxTheta = maxCoLat_GEI_deg_shifted, $
@@ -188,23 +186,23 @@ pro amp_fit, sHr, eHr, south, $
 
 	dBMag   = sqrt(data.bTheta_GEI^2+data.bPhi_GEI^2)
 
-	; Apply weighting [after Dec 10 discussion at APL]
-	; Please include a description here of said discussion.
-	; Since right now I do not see the point. Also, I think
-	; the weighting should be applied to the LHS of the linear
-	; system to be solved.
-
-    if (sigma ne 1) then begin
-
-     	w_idx=where(dBMag lt thresh)
-
-     	If w_idx(0) gt -1 then begin
-
-     	 	data[w_idx].bTheta_GEI=data[w_idx].dTheta_GEI/sigma         ; CHECK THIS
-     	 	data[w_idx].bPhi_GEI=data[w_idx].dPhi_GEI/sigma
-
-	 	endif
-	endif
+;	; Apply weighting [after Dec 10 discussion at APL]
+;	; Please include a description here of said discussion.
+;	; Since right now I do not see the point. Also, I think
+;	; the weighting should be applied to the LHS of the linear
+;	; system to be solved.
+;
+;   if (sigma ne 1) then begin
+;
+;     	w_idx=where(dBMag lt thresh)
+;
+;     	If w_idx(0) gt -1 then begin
+;
+;     	 	data[w_idx].bTheta_GEI=data[w_idx].dTheta_GEI/sigma         ; CHECK THIS
+;     	 	data[w_idx].bPhi_GEI=data[w_idx].dPhi_GEI/sigma
+;
+;	 	endif
+;	endif
 
     bFuncs  = temporary ( $
                 [[ dYkmDThBfns, -dYkmDPhBfns ], $
@@ -237,8 +235,8 @@ pro amp_fit, sHr, eHr, south, $
 	; Extract theta and phi component of fit from solution
 	; ----------------------------------------------------
 
-	fit_bTheta_GEI = fit[0:n_elements(dBMag)-1]  
-	fit_bPhi_GEI   = fit[n_elements(dBMag):*] 
+	fit_bTheta_GEI = fit[0:n_elements(dBMag)-1]
+	fit_bPhi_GEI   = fit[n_elements(dBMag):*]
 
 
 	; Calc rms error for these
@@ -282,7 +280,7 @@ pro amp_fit, sHr, eHr, south, $
 	                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
 
 
-	; Generate basis fns at regular grid 
+	; Generate basis fns at regular grid
 	; ----------------------------------
 
 	print,'Generating Basis Set over Uniform Grid....'
@@ -299,7 +297,7 @@ pro amp_fit, sHr, eHr, south, $
 			kArr = outKValues_grid, /bc2
 
 	Print,'Calculating FAC over Uniform Grid....'
-	
+
     bFuncs_grid  = temporary($
                     [[dYkmDThBfns_grid, -dYkmDPhBfns_grid ], $
                      [dYkmDPhBfns_grid,  dYkmDthBfns_grid ]])
@@ -326,9 +324,9 @@ pro amp_fit, sHr, eHr, south, $
 		winNo = -1
 		winNo++
 		window, winNo, xSize = 600, ySize = 600
-		!p.multi = [0,2,2]	
+		!p.multi = [0,2,2]
 		!p.charSize = 1.0
-	
+
 		plot_fac, jPar, pole, capLimit, $
 				data.gei_coLat_deg, data.gei_lon_deg, $
 				title = 'jPar [GEI]', $
@@ -365,41 +363,39 @@ pro amp_fit, sHr, eHr, south, $
 	; THIS SHOULD ALSO BE A SUBROUTINE
 	; --------------------------------
 
-	if shiftGEI then begin
-
-		rev_rot_mat = transpose(rot_mat)       
-		
-		; conv dB to XYZ comp
-
-    	geopack_bspcar,geiGrid_coLat_rad, geiGrid_lon_rad, $     
-    	       dBR_geiGrid, dBTheta_geiGrid, dBPhi_geiGrid ,$
-    	       vx_a,vy_a,vz_a
-
-   ;	 AAARRRGGGHH!!!! USE USEFUL VARIABLE NAMES!!!
-
-		for ii=Long(0),n_elements(dBTheta_geiGrid_sh)-1 do begin
-
-    		dBx=vx_a[ii]*rev_rot_mat[0,0] + $
-    		    vy_a[ii]*rev_rot_mat[1,0] + $
-    		    vz_a[ii]*rev_rot_mat[2,0]
-    		dBy=vx_a[ii]*rev_rot_mat[0,1] + $
-    		    vy_a[ii]*rev_rot_mat[1,1] + $
-    		    vz_a[ii]*rev_rot_mat[2,1]
-    		dBz=vx_a[ii]*rev_rot_mat[0,2] + $
-    		    vy_a[ii]*rev_rot_mat[1,2] + $
-    		    vz_a[ii]*rev_rot_mat[2,2]
-
-			; convert to spherical
-
-    		geopack_bcarsp, geiGridX[ii], geiGridY[ii], geiGridZ[ii], $
-    		      dbx, dBy, dBz, vbr,vbth,vbph
-
-    		dBTheta_geiGrid[ii]	= vbth
-    		dBPhi_geiGrid[ii]		= vbph
-
-		endfor
-
-	endif
+;	if shiftGEI then begin
+;
+;		rev_rot_mat = transpose(rot_mat)
+;
+;		; conv dB to XYZ comp
+;
+;    	geopack_bspcar,geiGrid_coLat_rad, geiGrid_lon_rad, $
+;    	       dBR_geiGrid, dBTheta_geiGrid, dBPhi_geiGrid ,$
+;    	       vx_a,vy_a,vz_a
+;
+;		for ii=Long(0),n_elements(dBTheta_geiGrid_sh)-1 do begin
+;
+;    		dBx=vx_a[ii]*rev_rot_mat[0,0] + $
+;    		    vy_a[ii]*rev_rot_mat[1,0] + $
+;    		    vz_a[ii]*rev_rot_mat[2,0]
+;    		dBy=vx_a[ii]*rev_rot_mat[0,1] + $
+;    		    vy_a[ii]*rev_rot_mat[1,1] + $
+;    		    vz_a[ii]*rev_rot_mat[2,1]
+;    		dBz=vx_a[ii]*rev_rot_mat[0,2] + $
+;    		    vy_a[ii]*rev_rot_mat[1,2] + $
+;    		    vz_a[ii]*rev_rot_mat[2,2]
+;
+;			; convert to spherical
+;
+;    		geopack_bcarsp, geiGridX[ii], geiGridY[ii], geiGridZ[ii], $
+;    		      dbx, dBy, dBz, vbr,vbth,vbph
+;
+;    		dBTheta_geiGrid[ii]	= vbth
+;    		dBPhi_geiGrid[ii]		= vbph
+;
+;		endfor
+;
+;	endif
 
 
 	; Rotate fitted, raw and shifted (or not) dB vectors to AACGM

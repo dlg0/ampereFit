@@ -1,20 +1,38 @@
 module constants
-  implicit none
 
-  integer, parameter :: SGL = selected_real_kind ( p = 6, r = 37 )
-  integer, parameter :: DBL = selected_real_kind ( p = 13, r = 200 )
+    implicit none
 
-  real(kind=DBL), parameter :: rE = 6356.75e3
-  real(kind=DBL), parameter :: rI = 1.02
-  real(kind=DBL), parameter :: pi = 3.141593
-  real(kind=DBL), parameter :: degToRad = pi / 180.0
-  real(kind=DBL), parameter :: radToDeg = 180.0 / pi
-  real(kind=DBL), parameter :: u0_ = 1.2566e-6;
-  real(kind=DBL), parameter :: e0_ = 8.8541878e-12;
-  real(kind=DBL), parameter :: c_  = 3e8;
-  real(kind=DBL), parameter :: u0  = u0_ / rE;
-  real(kind=DBL), parameter :: e0  = e0_ * rE ** 3;
-  real(kind=DBL), parameter :: c = c_ / rE;
+    integer, parameter :: SGL = selected_real_kind ( p = 6, r = 37 )
+    integer, parameter :: DBL = selected_real_kind ( p = 13, r = 200 )
+
+    real(kind=DBL), parameter :: rE = 6356.75e3
+    real(kind=DBL), parameter :: rI = 1.02
+    real(kind=DBL), parameter :: pi = 3.141593
+    real(kind=DBL), parameter :: degToRad = pi / 180.0
+    real(kind=DBL), parameter :: radToDeg = 180.0 / pi
+    real(kind=DBL), parameter :: u0_ = 1.2566e-6;
+    real(kind=DBL), parameter :: e0_ = 8.8541878e-12;
+    real(kind=DBL), parameter :: c_  = 3e8;
+    real(kind=DBL), parameter :: u0  = u0_ / rE;
+    real(kind=DBL), parameter :: e0  = e0_ * rE ** 3;
+    real(kind=DBL), parameter :: c = c_ / rE;
+
+
+    type :: ampData
+
+        real(kind=DBL) :: utc           ! UT time in dec hours
+        integer :: isat                 ! coded SV number (for Haje)
+        integer :: iPln                 ! orbit track number (0->5)
+        real :: qual                    ! data quality from Lars
+        integer :: splice               ! flag for spliced data - where missing data estimated
+        integer :: typ                  ! data type (for CLW)
+        real(kind=DBL) :: px, py, pz
+        real(kind=DBL) :: dbx, dby, dbz
+        real(kind=DBL) :: GEI_R_km, GEI_coLat_deg, GEI_lon_deg, &
+            GEI_coLat_rad, GEI_lon_rad, &
+            br_GEI, bTheta_GEI, bPhi_GEI 
+
+    end type ampData
 
 end module constants
 

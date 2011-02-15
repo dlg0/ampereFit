@@ -1,4 +1,5 @@
 module spherHarmFns
+
     use constants
 
     implicit none
@@ -8,14 +9,14 @@ contains
     subroutine genLegendreFns ( nPts, theta_, m, nBFns, &
         lowEndBC_, highEndBC_, nVals_, &
         legendreFns, dLegendreFns, kVals_, minTheta, maxTheta )
-        use evcrg_int
-        use epirg_int
-        use umach_int
-        use wrcrn_int
-        use sort_real_int
-        use imsl_libraries
-        use dislin
-        use read_nameList
+        !use evcrg_int
+        !use epirg_int
+        !use umach_int
+        !use wrcrn_int
+        !use sort_real_int
+        !use imsl_libraries
+        !use dislin
+        use ampFit_nameList
 
         implicit none
 
@@ -251,8 +252,11 @@ contains
         !eigenValues = 0.
         !eigenVectors    = 0.0
 
-        call evcrg ( transpose ( coeffMatrix ), &
-            eigenValuesComplex, eigenVectorsComplex, 2, nTh, nTh )
+        write(*,*) '*****************'
+        write(*,*) 'ERROR: Removed the evcrg from IMSL and need to replace with LAPACK'
+
+        !call evcrg ( transpose ( coeffMatrix ), &
+        !    eigenValuesComplex, eigenVectorsComplex, 2, nTh, nTh )
 
         eigenValues = real ( eigenValuesComplex )
         eigenVectors    = real ( eigenVectorsComplex )
@@ -308,7 +312,10 @@ contains
         !   Sort to ascending order
 
         iiNVals = (/ ( i, i = 1, nTh ) /)
-        call sort_real ( nVals, nValsTmp, iPerm = iiNVals )
+
+        write(*,*) '***************************'
+        write(*,*) 'ERROR: Need to replace IMSL sort routine'
+        !call sort_real ( nVals, nValsTmp, iPerm = iiNVals )
         
         nVals   = nValsTmp
         eigenVectors    = eigenVectors(:,iiNVals)
@@ -419,7 +426,9 @@ contains
             do j = 1, nTh
 
                 !   qdder is an IMSL library function to estimate the derivative
-                dEigenVectors_(j,i) = qdder ( 1, theta(j), theta, eigenVectors_(:,i) )
+                write(*,*) '************************'
+                write(*,*) 'ERROR: Need to replace IMSL derivative routines'
+                !dEigenVectors_(j,i) = qdder ( 1, theta(j), theta, eigenVectors_(:,i) )
 
             end do
         end do
@@ -430,11 +439,14 @@ contains
         do i = 1, nBFns
             do j = 1, nPts
 
-                if ( present ( legendreFns ) ) &        
-                    legendreFns(j,i)    = qdval ( theta_(j), theta, eigenVectors_(:,i) )
 
-                if ( present ( dLegendreFns ) ) &
-                    dLegendreFns(j,i)   = qdval ( theta_(j), theta, dEigenVectors_(:,i) )
+                write(*,*) '***********************'
+                write(*,*) 'ERROR: Need to replace IMSL interpolation routines'
+                !if ( present ( legendreFns ) ) &        
+                !    legendreFns(j,i)    = qdval ( theta_(j), theta, eigenVectors_(:,i) )
+
+                !if ( present ( dLegendreFns ) ) &
+                !    dLegendreFns(j,i)   = qdval ( theta_(j), theta, dEigenVectors_(:,i) )
 
             end do
         end do
@@ -495,7 +507,7 @@ contains
 
     integer function numberBFns ( )
 
-        use read_nameList
+        use ampFit_nameList
         implicit none
         integer :: m, k
 
@@ -526,7 +538,7 @@ contains
         brBFnArr, bThBFnArr, bPhBFnArr, YBFnArr, &
         minTheta, maxTheta, dLat, dLon )
 
-        use read_nameList
+        use ampFit_nameList
         implicit none
 
         !   In / Out variable list

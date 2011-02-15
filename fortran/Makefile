@@ -1,34 +1,43 @@
-MACHINE = dlghp
+MACHINE = greendl
 EXEC = xAmpereFit.${MACHINE}
 
-OBJ = obj
-MOD = mod
-SRC = src
+OBJ_DIR = obj
+MOD_DIR = mod
+SRC_DIR = src
 
-F90 = ifort
-FFLAGS	= -openmp -p -g -warn all -module ${MOD} #-check bounds 
-DISLIN = -I${HOME}/dislin/ifc -L${HOME}/dislin -ldislin
-NETCDF = -I ${HOME}/netcdf/netcdf_intel/include -L ${HOME}/netcdf/netcdf_intel/lib -lnetcdf -lnetcdf_c++
+F90 = /opt/local/bin/gfortran-mp-4.4
+FFLAGS	= -J${MOD_DIR} 
+DEBUG_OPTS = -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
+INCLUDES = 
+LINK =
 
-IMSL_DIR = ${HOME}/imsl/imsl/fnl600/lnxin100e64
-IMSL = -L${IMSL_DIR}/lib -Bdynamic -limsl -limslsuperlu -limslscalar -limslblas -limslmpistub -lm -Xlinker -rpath -Xlinker ${IMSL_DIR}/lib -I ${IMSL_DIR}/include
+NETCDF_DIR = /opt/local
+LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
+INCLUDES += -I${NETCDF_DIR}/include
 
-OBJECTS = ${OBJ}/dlg.o ${OBJ}/spherHarmFns.o ${OBJ}/read_nameList.o ${OBJ}/constants.o
+OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 
-ampereFit: ${OBJECTS}
-	${F90} ${FFLAGS} ${SRC}/ampereFit.f90 -o ${EXEC} ${OBJECTS} ${IMSL} ${DISLIN} ${NETCDF}
+${EXEC}: ${OBJECTS}
+	${F90} ${FFLAGS} ${OBJECTS} -o $@ ${LINK} ${DEBUG_OPTS}
 
-${OBJ}/spherHarmFns.o: ${SRC}/spherHarmFns.f90 ${OBJ}/read_nameList.o
-	${F90} ${FFLAGS} -c ${SRC}/spherHarmFns.f90 -o ${OBJ}/spherHarmFns.o ${IMSL} ${DISLIN}
-
-${OBJ}/read_nameList.o: ${SRC}/read_nameList.f90 ${OBJ}/constants.o 
-	${F90} ${FFLAGS} -c ${SRC}/read_nameList.f90 -o ${OBJ}/read_nameList.o 
-
-${OBJ}/constants.o: ${SRC}/constants.f90
-	${F90} ${FFLAGS} -c ${SRC}/constants.f90 -o ${OBJ}/constants.o 
-
-${OBJ}/dlg.o: ${SRC}/dlg.f90
-	${F90} ${FFLAGS} -c ${SRC}/dlg.f90 -o ${OBJ}/dlg.o ${NETCDF}
+${OBJ_DIR}/%.o: ${SRC_DIR}/%.f90
+	${F90} -c ${FFLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS}
 
 clean:
+	@echo ${OBJECTS} 
 	rm obj/*.o mod/*.mod ${EXEC}
+
+
+# Dependencies
+
+${OBJ_DIR}/ampereFit.o: \
+	${OBJ_DIR}/constants.o \
+	${OBJ_DIR}/ampFit_nameList.o \
+	${OBJ_DIR}/ampFit_data.o \
+	${OBJ_DIR}/dlg.o \
+	${OBJ_DIR}/spherHarmFns.o
+
+${OBJ_DIR}/ampFit_data.o: \
+	${OBJ_DIR}/constants.o \
+	${OBJ_DIR}/ampFit_nameList.o \
+	${OBJ_DIR}/dlg.o

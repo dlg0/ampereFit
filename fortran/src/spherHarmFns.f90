@@ -505,34 +505,6 @@ contains
     end subroutine genLegendreFns
 
 
-    integer function numberBFns ( )
-
-        use ampFit_nameList
-        implicit none
-        integer :: m, k
-
-        numberBFns  = 0
-        do m = -maxM, maxM
-            do k = 1, maxK
-
-                if ( mod ( k - abs ( m ), 2 ) == 0  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
-
-                if ( mod ( k - abs ( m ), 2 ) == 1  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
-
-            end do
-        end do
-
-        ! There are m more functions for the specific basis functions we use
-        ! **[NOT]**
-    
-        !numberBFns = numberBFns + maxM 
-
-        return
-
-    end function numberBFns
-
 
     subroutine setupSHFns ( nPts, nBFns, r, coLat, lon, &
         brBFnArr, bThBFnArr, bPhBFnArr, YBFnArr, &

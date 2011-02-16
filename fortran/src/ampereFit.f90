@@ -6,12 +6,13 @@ program ampereFit
     use dlg
     use spherHarmFns
     use ampFit_data
+    use basisFns
 !    use lin_sol_svd_int
 !    use imsl_libraries
 
     implicit none
 
-   real(kind=DBL), allocatable :: brBFnArr(:,:), bThBFnArr(:,:), &
+    real(kind=DBL), allocatable :: brBFnArr(:,:), bThBFnArr(:,:), &
         bPhBFnArr(:,:), YBFnArr(:,:)
 
     real(kind=DBL), parameter :: zero = 1.0d0
@@ -22,12 +23,20 @@ program ampereFit
         coeffs(:,:)
     character(len=100) :: outFileName
 
-
     call init_nameList ()
 
     call ampFit_read_data ()
 
-    call ampFit_fill_structures ( )
+    call ampFit_fill_structures ()
+
+    nBFns = numberBFns ()
+
+    call create_bFns_at_data ( dataOriginal )
+    
+
+    ! *** check for track labelling mistake code ***
+
+    ! *** create shifted data structure *** 
 
 
 !!   Setup the basis functions at the observation locations

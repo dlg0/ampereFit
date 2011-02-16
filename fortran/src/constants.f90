@@ -8,8 +8,8 @@ module constants
     real(kind=DBL), parameter :: rE = 6356.75e3
     real(kind=DBL), parameter :: rI = 1.02
     real(kind=DBL), parameter :: pi = 3.141593
-    real(kind=DBL), parameter :: degToRad = pi / 180.0
-    real(kind=DBL), parameter :: radToDeg = 180.0 / pi
+    real(kind=DBL), parameter :: degToRad = pi / 180d0
+    real(kind=DBL), parameter :: radToDeg = 180d0 / pi
     real(kind=DBL), parameter :: u0_ = 1.2566e-6;
     real(kind=DBL), parameter :: e0_ = 8.8541878e-12;
     real(kind=DBL), parameter :: c_  = 3e8;

@@ -13,7 +13,7 @@ implicit none
 integer :: nc_id, nObs_id, nVec_id, time_id, pseudo_sv_num_id, &
     plane_num_id, pos_eci_id, b_eci_id, pseudo_sv_quality_id, &
     data_splice_id
-integer :: nObs, nVec, nBFns
+integer :: nObs, nVec, nSubSet
 real(kind=DBL), allocatable :: time(:), pseudo_sv_num(:), &
     plane_num(:), pos_eci(:,:), b_eci(:,:), &
     pseudo_sv_quality(:), data_splice(:)
@@ -75,7 +75,7 @@ subroutine ampFit_fill_structures
 
     implicit none
 
-    integer :: nSubSet, i
+    integer :: i, j
     integer, allocatable :: iiSubSet(:)
 
     write(*,*) 'Populating data structures ...'
@@ -93,21 +93,84 @@ subroutine ampFit_fill_structures
     dataOriginal%utc = time(iiSubSet)
     dataOriginal%iSat = pseudo_sv_num(iiSubSet)
     dataOriginal%iPln = plane_num(iiSubSet)
+    dataOriginal%qual = pseudo_sv_quality(iiSubSet)
+    dataOriginal%splice = data_splice(iiSubSet)
 
-  !dataOriginal.utc = x_axis_frac_hour[iiSubSet]
-  !dataOriginal.iSat = pseudoSVNum_total[iiSubSet]
-  !dataOriginal.iPln = plane_number_total[iiSubSet]
-  !dataOriginal.qual = pseudo_sv_quality[iiSubSet]
-  !dataOriginal.splice = data_splice[iiSubSet]
+    dataOriginal%px = pos_ECI(1,iiSubSet)*1d-3
+    dataOriginal%py = pos_ECI(2,iiSubSet)*1d-3
+    dataOriginal%pz = pos_ECI(3,iiSubSet)*1d-3
 
-  !dataOriginal.px = (pos_ECI_total[0,*])[iiSubSet]*1d-3
-  !dataOriginal.py = (pos_ECI_total[1,*])[iiSubSet]*1d-3
-  !dataOriginal.pz = (pos_ECI_total[2,*])[iiSubSet]*1d-3
+    dataOriginal%dbx = b_ECI(1,iiSubSet)
+    dataOriginal%dby = b_ECI(2,iiSubSet)
+    dataOriginal%dbz = b_ECI(3,iiSubSet)
 
-  !dataOriginal.dbx = (B_ECI[0,*])[iiSubSet]
-  !dataOriginal.dby = (B_ECI[1,*])[iiSubSet]
-  !dataOriginal.dbz = (B_ECI[2,*])[iiSubSet]
 
+    ! Get spherical coords of the GEI XYZ locations
+    ! ---------------------------------------------
+
+    write(*,*) '    Calculating GEI SPH coords from XYZ ...'
+
+    j = -1
+
+    coords_GEI_XYZ_to_SPH: &
+    do i=1,nSubSet
+
+        ! Double precision GEOPACK only
+        call sphcar_08 ( &
+                    dataOriginal(i)%GEI_R_km, &
+                    dataOriginal(i)%GEI_coLat_rad, &
+                    dataOriginal(i)%GEI_lon_rad, &
+                    dataOriginal(i)%px, &
+                    dataOriginal(i)%py, &
+                    dataOriginal(i)%pz, &
+                    j )
+
+    end do coords_GEI_XYZ_to_SPH
+
+    dataOriginal%GEI_coLat_deg = dataOriginal%GEI_coLat_rad * radToDeg
+    dataOriginal%GEI_lon_deg = dataOriginal%GEI_lon_rad * radToDeg 
+
+    write(*,*) '    DONE'
+
+    ! Rotate XYZ GEI db to spherical GEI
+    ! ----------------------------------
+
+    write(*,*) '    Rotating GEI b vectors from XYZ to SPH ...'
+
+    vectors_GEI_XYZ_to_SPH: &
+    do i=1,nSubSet
+        
+        ! Double precision GEOPACK only
+        call bcarsp_08 ( &
+                    dataOriginal%px, &
+                    dataOriginal%py, &
+                    dataOriginal%pz, &
+                    dataOriginal%dbx, &
+                    dataOriginal%dby, &
+                    dataOriginal%dbz, &
+                    dataOriginal%br_GEI, &
+                    dataOriginal%bTheta_GEI, &
+                    dataOriginal%bPhi_GEI )
+
+    end do vectors_GEI_XYZ_to_SPH
+
+    write(*,*) '    DONE'
+
+
+    ! Deallocate to full set of data, 
+    ! i.e., keep only the subSet available 
+    ! ------------------------------------
+
+    ! Keep this stuff for debugging right now
+
+    !deallocate ( &
+    !        time, &
+    !        pseudo_sv_num, &
+    !        plane_num, &
+    !        pseudo_sv_quality, &
+    !        data_splice, &
+    !        pos_ECI, &
+    !        b_eCI )
 
     write(*,*) 'DONE'
 

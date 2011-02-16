@@ -11,6 +11,7 @@ module ampFit_nameList
         character(len=100) :: deltab_fileName
         real(kind=DBL) :: sHr = 0.0
         real(kind=DBL) :: eHr = 1.0
+        character(len=4) :: basisType = 'FULL' ! FULL, CAP0, CAP1, CAPBOTH
 
       namelist / ampereFit / &
         maxK, &
@@ -19,7 +20,8 @@ module ampFit_nameList
         maxCoLat, &
         deltab_fileName, &
         sHr, &
-        eHr
+        eHr, &
+        basisType
 
 contains
         subroutine init_nameList

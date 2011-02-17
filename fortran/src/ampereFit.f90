@@ -7,20 +7,10 @@ program ampereFit
     use spherHarmFns
     use ampFit_data
     use basisFns
-!    use lin_sol_svd_int
-!    use imsl_libraries
+    use ampFit_solve
 
     implicit none
 
-    real(kind=DBL), allocatable :: brBFnArr(:,:), bThBFnArr(:,:), &
-        bPhBFnArr(:,:), YBFnArr(:,:)
-
-    real(kind=DBL), parameter :: zero = 1.0d0
-    !type(d_options) :: iOpt_(1) = d_options(0,zero)
-    real(kind=DBL), allocatable :: S_(:)
-    real(kind=DBL), parameter :: small = 1.0d-34
-    real(kind=DBL), allocatable :: alpha(:,:), beta_(:,:), &
-        coeffs(:,:)
     character(len=100) :: outFileName
 
     call init_nameList ()
@@ -32,11 +22,12 @@ program ampereFit
     nBFns = numberBFns ()
 
     call create_bFns_at_data ( dataOriginal )
-    
 
     ! *** check for track labelling mistake code ***
 
     ! *** create shifted data structure *** 
+
+    call ampFit_solve_svd ( la_data_basisArr, dataOriginal )
 
 
 !!   Setup the basis functions at the observation locations

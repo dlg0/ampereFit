@@ -142,17 +142,17 @@ subroutine ampFit_fill_structures
         
         ! Double precision GEOPACK only
         call bcarsp_08 ( &
-                    dataOriginal%px, &
-                    dataOriginal%py, &
-                    dataOriginal%pz, &
-                    dataOriginal%dbx, &
-                    dataOriginal%dby, &
-                    dataOriginal%dbz, &
-                    dataOriginal%br_GEI, &
-                    dataOriginal%bTheta_GEI, &
-                    dataOriginal%bPhi_GEI )
+                    dataOriginal(i)%px, &
+                    dataOriginal(i)%py, &
+                    dataOriginal(i)%pz, &
+                    dataOriginal(i)%dbx, &
+                    dataOriginal(i)%dby, &
+                    dataOriginal(i)%dbz, &
+                    dataOriginal(i)%br_GEI, &
+                    dataOriginal(i)%bTheta_GEI, &
+                    dataOriginal(i)%bPhi_GEI )
 
-    end do vectors_GEI_XYZ_to_SPH
+    enddo vectors_GEI_XYZ_to_SPH
 
     write(*,*) '    DONE'
 

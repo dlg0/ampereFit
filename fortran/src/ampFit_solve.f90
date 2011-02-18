@@ -5,10 +5,11 @@ use f95_lapack, only: la_gelss, la_lange
 use constants
 use basisFns, only: nBFns
 
+real(kind=DBL), allocatable :: fit_bTheta_GEI(:), fit_bPhi_GEI(:)
+
 contains
 
 subroutine ampFit_solve_svd ( la_A, dataIn ) 
-
 
     implicit none
 
@@ -78,7 +79,12 @@ subroutine ampFit_solve_svd ( la_A, dataIn )
 
     write(*,*) fitted_B(1:20)
     write(*,*) tmpB(1:20)
-     
+    
+    allocate ( fit_bTheta_GEI(nObs), fit_bPhi_GEI(nObs) )
+
+    fit_bTheta_GEI  = fitted_B(1:nObs)
+    fit_bPhi_GEI    = fitted_B(nObs+1:nObs*2)
+
     write(*,*) 'DONE' 
 
 end subroutine ampFit_solve_svd

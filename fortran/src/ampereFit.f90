@@ -2,16 +2,16 @@ program ampereFit
 
     use constants
     use ampFit_nameList
-    use netcdf
     use dlg
     use spherHarmFns
-    use ampFit_data
+    use ampFit_data, &
+    only: dataOriginal, nObs=>nSubSet, nVec, &
+        ampFit_read_data, ampFit_fill_structures
     use basisFns
     use ampFit_solve
+    use write_output
 
     implicit none
-
-    character(len=100) :: outFileName
 
     call init_nameList ()
 
@@ -29,6 +29,7 @@ program ampereFit
 
     call ampFit_solve_svd ( la_data_basisArr, dataOriginal )
 
+    call write_FAC ()
 
 !!   Setup the basis functions at the observation locations
 !!   ------------------------------------------------------
@@ -53,40 +54,5 @@ program ampereFit
 !    read(*,*)
 
 
-    write(*,*) '************************'
-    write(*,*) 'ERROR: Need to replace the IMSL svd with LAPACK'
-!!   Do the fit
-!!   ----------
-!
-!    write(*,*) 'Doing the fit ...'
-!    alpha   = matMul ( bPhBFnArr, transpose ( bPhBFnArr ) )
-!    beta_   = transpose ( matMul ( reshape ( bPh, (/1,nObs/) ), transpose ( bPhBFnArr ) ) )
-!
-!    iOpt_(1)    = d_options ( d_lin_sol_svd_set_small, small )
-!
-!    call lin_sol_svd ( alpha, beta_, coeffs, rank = nSingular, S = S_, &
-!        iOpt = iOpt_)
-!    write(*,*) 'DONE'
-
-!   Write the ouput file
-!   --------------------
-
-    write(*,*) 'Writing sh_debug.nc ...'
-    outFileName = 'jParIrid.nc'
-    
-    call dlg_check ( nf90_create ( outFileName, nf90_clobber, nc_id ) )
-    call dlg_check ( nf90_def_dim ( nc_id, 'nObs', nObs, nObs_id ) )
-    call dlg_check ( nf90_def_dim ( nc_id, 'nVec', nVec, nVec_id ) )
-   
-    call dlg_check ( nf90_def_var ( nc_id, 'time', NF90_DOUBLE, (/ nObs_id /), time_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'b_eci', NF90_DOUBLE, (/ nObs_id, nVec_id /), b_eci_id ) )
-   
-    call dlg_check ( nf90_enddef ( nc_id ) )
-    
-    call dlg_check ( nf90_put_var ( nc_id, time_id, time ) )
-    call dlg_check ( nf90_put_var ( nc_id, b_eci_id, b_eci ) )
-
-    call dlg_check ( nf90_close ( nc_id ) )
-    write(*,*) 'DONE'
-      
+     
 end program ampereFit

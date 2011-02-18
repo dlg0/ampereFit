@@ -56,13 +56,18 @@ ${OBJ_DIR}/ampereFit.o: \
 	${OBJ_DIR}/dlg.o \
 	${OBJ_DIR}/spherHarmFns.o \
 	${OBJ_DIR}/basisFns.o \
-	${OBJ_DIR}/ampFit_solve.o
+	${OBJ_DIR}/ampFit_solve.o \
+	${OBJ_DIR}/write_output.o
 
 ${OBJ_DIR}/ampFit_data.o: \
 	${OBJ_DIR}/constants.o \
 	${OBJ_DIR}/ampFit_nameList.o \
 	${OBJ_DIR}/dlg.o \
 	${OBJ_DIR}/geopack.o
+
+${OBJ_DIR}/write_output.o: \
+	${OBJ_DIR}/ampFit_data.o \
+	${OBJ_DIR}/dlg.o
 
 ${OBJ_DIR}/basisFns.o: \
 	${OBJ_DIR}/constants.o \

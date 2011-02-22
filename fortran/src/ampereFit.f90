@@ -5,11 +5,13 @@ program ampereFit
     use dlg
     use spherHarmFns
     use ampFit_data, &
-    only: dataOriginal, nObs=>nSubSet, nVec, &
+    only: dataOriginal, dataShifted, nObs=>nSubSet, nVec, &
         ampFit_read_data, ampFit_fill_structures
     use basisFns
     use ampFit_solve
     use write_output
+    use ampFit_shift
+    use ampFit_rotate
 
     implicit none
 
@@ -21,15 +23,25 @@ program ampereFit
 
     nBFns = numberBFns ()
 
-    call create_bFns_at_data ( dataOriginal )
+    call XYZ_to_SPH ( dataOriginal )
 
     ! *** check for track labelling mistake code ***
 
     ! *** create shifted data structure *** 
 
+    call calculate_intersection_point ( dataOriginal )
+
+    call calculate_shift_rotation_matrix ()
+
+    call create_dataShifted ( dataOriginal, dataShifted )
+
+    call XYZ_to_SPH ( dataShifted )
+
+    call create_bFns_at_data ( dataOriginal )
+
     call ampFit_solve_svd ( la_data_basisArr, dataOriginal )
 
-    call write_FAC ()
+    call write_data ( dataOriginal )
 
 !!   Setup the basis functions at the observation locations
 !!   ------------------------------------------------------
@@ -52,7 +64,5 @@ program ampereFit
 !            minCoLat, maxCoLat ) 
 !    write(*,*) 'DONE'
 !    read(*,*)
-
-
      
 end program ampereFit

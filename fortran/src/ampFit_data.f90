@@ -78,7 +78,7 @@ subroutine ampFit_fill_structures
     integer :: i, j
     integer, allocatable :: iiSubSet(:)
 
-    write(*,*) 'Populating data structures ...'
+    write(*,*) 'Populating dataOriginal structure ...'
 
     nSubSet = count ( time >= sHr .and. time <= eHr )
 
@@ -105,72 +105,18 @@ subroutine ampFit_fill_structures
     dataOriginal%dbz = b_ECI(3,iiSubSet)
 
 
-    ! Get spherical coords of the GEI XYZ locations
-    ! ---------------------------------------------
-
-    write(*,*) '    Calculating GEI SPH coords from XYZ ...'
-
-    j = -1
-
-    coords_GEI_XYZ_to_SPH: &
-    do i=1,nSubSet
-
-        ! Double precision GEOPACK only
-        call sphcar_08 ( &
-                    dataOriginal(i)%GEI_R_km, &
-                    dataOriginal(i)%GEI_coLat_rad, &
-                    dataOriginal(i)%GEI_lon_rad, &
-                    dataOriginal(i)%px, &
-                    dataOriginal(i)%py, &
-                    dataOriginal(i)%pz, &
-                    j )
-
-    end do coords_GEI_XYZ_to_SPH
-
-    dataOriginal%GEI_coLat_deg = dataOriginal%GEI_coLat_rad * radToDeg
-    dataOriginal%GEI_lon_deg = dataOriginal%GEI_lon_rad * radToDeg 
-
-    write(*,*) '    DONE'
-
-    ! Rotate XYZ GEI db to spherical GEI
-    ! ----------------------------------
-
-    write(*,*) '    Rotating GEI b vectors from XYZ to SPH ...'
-
-    vectors_GEI_XYZ_to_SPH: &
-    do i=1,nSubSet
-        
-        ! Double precision GEOPACK only
-        call bcarsp_08 ( &
-                    dataOriginal(i)%px, &
-                    dataOriginal(i)%py, &
-                    dataOriginal(i)%pz, &
-                    dataOriginal(i)%dbx, &
-                    dataOriginal(i)%dby, &
-                    dataOriginal(i)%dbz, &
-                    dataOriginal(i)%br_GEI, &
-                    dataOriginal(i)%bTheta_GEI, &
-                    dataOriginal(i)%bPhi_GEI )
-
-    enddo vectors_GEI_XYZ_to_SPH
-
-    write(*,*) '    DONE'
-
-
     ! Deallocate to full set of data, 
     ! i.e., keep only the subSet available 
     ! ------------------------------------
 
-    ! Keep this stuff for debugging right now
-
-    !deallocate ( &
-    !        time, &
-    !        pseudo_sv_num, &
-    !        plane_num, &
-    !        pseudo_sv_quality, &
-    !        data_splice, &
-    !        pos_ECI, &
-    !        b_eCI )
+    deallocate ( &
+            time, &
+            pseudo_sv_num, &
+            plane_num, &
+            pseudo_sv_quality, &
+            data_splice, &
+            pos_ECI, &
+            b_eCI )
 
     write(*,*) 'DONE'
 

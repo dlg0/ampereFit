@@ -1,9 +1,9 @@
 &ampereFit
-maxK = 40 
+maxK = 20 
 maxM = 4
 minCoLat = 20.0
 maxCoLat = 60.0
 deltab_fileName = '/Users/dg6/ampere/20100824Amp_invert.ncdf'
 sHr = 5.3
-eHr = 5.9
+eHr = 6.32
 /

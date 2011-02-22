@@ -77,8 +77,8 @@ subroutine ampFit_solve_svd ( la_A, dataIn )
 
     fitted_B = matMul ( tmpA, la_B(1:N) )
 
-    write(*,*) fitted_B(1:20)
-    write(*,*) tmpB(1:20)
+    !write(*,*) fitted_B(1:20)
+    !write(*,*) tmpB(1:20)
     
     allocate ( fit_bTheta_GEI(nObs), fit_bPhi_GEI(nObs) )
 

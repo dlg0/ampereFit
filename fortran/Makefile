@@ -86,7 +86,11 @@ ${OBJ_DIR}/ampFit_shift.o: \
 
 ${OBJ_DIR}/ampFit_rotate.o: \
 	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_data.o
+	${OBJ_DIR}/ampFit_data.o \
+	${OBJ_DIR}/dlg.o
+
+${OBJ_DIR}/dlg.o: \
+	${OBJ_DIR}/constants.o
 
 
 

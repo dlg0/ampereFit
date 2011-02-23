@@ -73,14 +73,14 @@ subroutine create_bFns_at_data ( dataIn )
 
     use fgsl
     use ampFit_nameList
-    use ampFit_data, only: nObs=>nSubSet
+    use ampFit_data
 
     implicit none
   
     type(ampData), intent(in) :: dataIn(:)
  
     integer :: k, l, m, n
-    integer :: i, cnt, span
+    integer :: i, cnt, span, nObs
     real(kind=DBL) :: x, lon, coLat, r, rDep, dYdr_rDep
 
     real(kind=DBL), allocatable :: &
@@ -92,6 +92,8 @@ subroutine create_bFns_at_data ( dataIn )
     integer(fgsl_int) :: fgsl_stat
 
     write(*,*) 'Creating basis functions at data locations ...'
+
+    nObs    = size ( dataIn )
 
     allocate ( &
         data_PLMBFnArr(nObs,nBFns), &

@@ -1,6 +1,7 @@
 module ampFit_rotate
 
 use constants
+use dlg
 
 implicit none
 
@@ -11,21 +12,42 @@ subroutine XYZ_to_SPH ( dataIn )
     implicit none
 
     type(ampData), intent(inout) :: dataIn(:)
-    integer :: i,j, nObs
+    integer :: i,j
+
+    ! Rotate XYZ GEI db to spherical GEI
+    ! ----------------------------------
+
+    write(*,*) '    Rotating GEI b vectors from XYZ to SPH ...'
+
+    vectors_GEI_XYZ_to_SPH: &
+    do i=1,size(dataIn)
+        
+        ! Double precision GEOPACK only
+        call bcarsp_08 ( &
+                    dataIn(i)%px, &
+                    dataIn(i)%py, &
+                    dataIn(i)%pz, &
+                    dataIn(i)%dbx, &
+                    dataIn(i)%dby, &
+                    dataIn(i)%dbz, &
+                    dataIn(i)%br_GEI, &
+                    dataIn(i)%bTheta_GEI, &
+                    dataIn(i)%bPhi_GEI )
+
+    enddo vectors_GEI_XYZ_to_SPH
+
+    write(*,*) '    DONE'
+
 
     ! Get spherical coords of the GEI XYZ locations
-    ! ---------------------------------------------
+    ! -----------------------------------------------
 
     write(*,*) '    Calculating GEI SPH coords from XYZ ...'
-
-    nObs    = size ( dataIn )
-    
-    write(*,*) '        for this many pts: ', nObs
 
     j = -1
 
     coords_GEI_XYZ_to_SPH: &
-    do i=1,nObs
+    do i=1,size(dataIn)
 
         ! Double precision GEOPACK only
         call sphcar_08 ( &
@@ -41,30 +63,6 @@ subroutine XYZ_to_SPH ( dataIn )
 
     dataIn%GEI_coLat_deg = dataIn%GEI_coLat_rad * radToDeg
     dataIn%GEI_lon_deg = dataIn%GEI_lon_rad * radToDeg 
-
-    write(*,*) '    DONE'
-
-    ! Rotate XYZ GEI db to spherical GEI
-    ! ----------------------------------
-
-    write(*,*) '    Rotating GEI b vectors from XYZ to SPH ...'
-
-    vectors_GEI_XYZ_to_SPH: &
-    do i=1,nObs
-        
-        ! Double precision GEOPACK only
-        call bcarsp_08 ( &
-                    dataIn(i)%px, &
-                    dataIn(i)%py, &
-                    dataIn(i)%pz, &
-                    dataIn(i)%dbx, &
-                    dataIn(i)%dby, &
-                    dataIn(i)%dbz, &
-                    dataIn(i)%br_GEI, &
-                    dataIn(i)%bTheta_GEI, &
-                    dataIn(i)%bPhi_GEI )
-
-    enddo vectors_GEI_XYZ_to_SPH
 
     write(*,*) '    DONE'
 

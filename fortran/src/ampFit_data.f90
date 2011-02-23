@@ -7,20 +7,13 @@ use dlg
 
 implicit none
 
+! Populate data structure variables
 
-! Read variables
+type(ampData), allocatable :: dataOriginal(:), dataShifted(:), dataHalfSphere(:)
 
-integer :: nc_id, nObs_id, nVec_id, time_id, pseudo_sv_num_id, &
-    plane_num_id, pos_eci_id, b_eci_id, pseudo_sv_quality_id, &
-    data_splice_id
-integer :: nObs, nVec, nSubSet
 real(kind=DBL), allocatable :: time(:), pseudo_sv_num(:), &
     plane_num(:), pos_eci(:,:), b_eci(:,:), &
     pseudo_sv_quality(:), data_splice(:)
-
-! Populate data structure variables
-
-type(ampData), allocatable :: dataOriginal(:), dataShifted(:)
 
 contains
 
@@ -29,6 +22,11 @@ subroutine ampFit_read_data
     implicit none
 
     integer :: nSingular, dim_ids(2)
+    integer :: nVec, nObs
+
+    integer :: nc_id, nObs_id, nVec_id, time_id, pseudo_sv_num_id, &
+        plane_num_id, pos_eci_id, b_eci_id, pseudo_sv_quality_id, &
+        data_splice_id
 
     write(*,*) 'Reading ', trim ( deltab_fileName ), ' ...'
 
@@ -75,7 +73,7 @@ subroutine ampFit_fill_structures
 
     implicit none
 
-    integer :: i, j
+    integer :: i, j, nSubSet
     integer, allocatable :: iiSubSet(:)
 
     write(*,*) 'Populating dataOriginal structure ...'
@@ -121,6 +119,36 @@ subroutine ampFit_fill_structures
     write(*,*) 'DONE'
 
 end subroutine ampFit_fill_structures
+
+subroutine create_dataHalfSphere ( dataIn )
+
+    implicit none
+
+    type(ampData), intent(in) :: dataIn(:)
+
+    integer, allocatable :: iiSubSet(:)
+    integer :: nHalfSphere, i
+    logical, allocatable :: mask(:)
+
+    write(*,*) 'Creating dataHalfSphere ...'
+
+    allocate ( mask(size(dataIn) ) )
+
+    mask    = dataIn%GEI_coLat_rad * radToDeg <= 90
+
+    nHalfSphere = count ( mask )
+
+    write(*,*) '    nHalfSphere: ', nHalfSphere
+
+    allocate ( iiSubSet(nHalfSphere), dataHalfSphere(nHalfSphere) )
+
+    iiSubSet = pack ( (/ (i, i=1, size(dataIn)) /), mask = mask )  
+
+    dataHalfSphere  = dataIn(iiSubSet)
+
+    deallocate ( mask, iiSubSet )
+
+end subroutine create_dataHalfSphere
 
 end module ampFit_data
 

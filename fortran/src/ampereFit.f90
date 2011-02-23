@@ -4,9 +4,7 @@ program ampereFit
     use ampFit_nameList
     use dlg
     use spherHarmFns
-    use ampFit_data, &
-    only: dataOriginal, dataShifted, nObs=>nSubSet, nVec, &
-        ampFit_read_data, ampFit_fill_structures
+    use ampFit_data
     use basisFns
     use ampFit_solve
     use write_output
@@ -37,11 +35,14 @@ program ampereFit
 
     call XYZ_to_SPH ( dataShifted )
 
-    call create_bFns_at_data ( dataOriginal )
+    call create_dataHalfSphere ( dataShifted )
 
-    call ampFit_solve_svd ( la_data_basisArr, dataOriginal )
+    call create_bFns_at_data ( dataHalfSphere )
 
-    call write_data ( dataOriginal )
+    call ampFit_solve_svd ( la_data_basisArr, dataHalfSphere )
+
+    call write_data ( dataOriginal, fileName = 'ampData_original.nc' )
+    call write_data ( dataHalfSphere, fileName = 'ampData_shifted.nc' )
 
 !!   Setup the basis functions at the observation locations
 !!   ------------------------------------------------------

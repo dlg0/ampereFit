@@ -225,10 +225,10 @@ subroutine calculate_shift_rotation_matrix ()
     write(*,*) '        ',  shift_rot_mat(2,:)
     write(*,*) '        ',  shift_rot_mat(3,:)
 
-    shift_rot_mat   = 0
-    shift_rot_mat(1,1)  = 1
-    shift_rot_mat(2,2)  = 1
-    shift_rot_mat(3,3)  = 1
+    !shift_rot_mat   = 0
+    !shift_rot_mat(1,1)  = 1
+    !shift_rot_mat(2,2)  = 1
+    !shift_rot_mat(3,3)  = 1
 
     R => shift_rot_mat
 

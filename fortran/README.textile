@@ -1,0 +1,12 @@
+h1. Installation
+
+There are several libraries that the ampFit fortran library depends on. These are:
+
+*"The GNU Scientific Library":http://www.gnu.org/software/gsl/
+*"FGSL: A Fortran interface to the GNU Scientific Library":http://www.lrz.de/services/software/mathematik/gsl/fortran/
+*"LAPACK":http://www.netlib.org/lapack/
+*Blas, of which I suggest "GotoBLAS2":http://www.tacc.utexas.edu/tacc-projects/gotoblas2/
+*"LAPACK95":http://www.netlib.org/lapack95/
+*"NetCDF":http://www.unidata.ucar.edu/software/netcdf/
+
+

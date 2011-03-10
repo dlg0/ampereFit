@@ -1,5 +1,7 @@
 h1. Installation
 
+h2. Libraries
+
 There are several libraries that the ampFit fortran library depends on. These are:
 
 * "The GNU Scientific Library":http://www.gnu.org/software/gsl/
@@ -11,15 +13,23 @@ There are several libraries that the ampFit fortran library depends on. These ar
 
 You will need to install these and then modify the following lines of "Makefile":
 
-<pre>
-<code>
-NETCDF_DIR = /opt/local
-F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
-LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
-BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
-GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
-FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
-</pre>
-</code>
+<pre><code>
+	NETCDF_DIR = /opt/local
+	F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
+	LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
+	BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
+	GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
+	FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
+</pre></code>
 
+h2. Compiler
+
+At present I have only compiled with gfortran. You will need to specify the location of your gfortran in @Makefile@ at the following locations:
+
+<pre><code>
+	F90 = /opt/local/bin/gfortran-mp-4.4
+	F77 = /opt/local/bin/gfortran-mp-4.4
+</pre></code>
+
+If you want to change to something other than gfortran further modifications will need to be made and you had best let me do it ;) 
 

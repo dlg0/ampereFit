@@ -33,3 +33,8 @@ At present I have only compiled with gfortran. You will need to specify the loca
 
 If you want to change to something other than gfortran further modifications will need to be made and you had best let me do it ;) 
 
+h2. Building
+
+Should be pretty straigh forward:
+
+@make@

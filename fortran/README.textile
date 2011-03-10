@@ -11,12 +11,15 @@ There are several libraries that the ampFit fortran library depends on. These ar
 
 You will need to install these and then modify the following lines of "Makefile":
 
-bc.
+<pre>
+<code>
 NETCDF_DIR = /opt/local
 F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
 LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
 BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
 GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
 FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
+</pre>
+</code>
 
 

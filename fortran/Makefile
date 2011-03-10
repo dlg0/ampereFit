@@ -16,17 +16,17 @@ INCLUDES =
 LINK =
 
 NETCDF_DIR = /opt/local
-LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
-INCLUDES += -I${NETCDF_DIR}/include
-
-GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
-FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
-LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
-INCLUDES += -I${FGSL_DIR}/include/gfortran
-
 F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
 LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
 BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
+GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
+FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
+
+LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
+INCLUDES += -I${NETCDF_DIR}/include
+
+LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
+INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
 LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/lapack_OSX.a ${BLAS_DIR}/libgoto2.a

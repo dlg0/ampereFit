@@ -1,5 +1,7 @@
 h1. Installation
 
+Remember, the FORTRAN version of AmpFit is contained solely within the fortran/ directory, including any IDL rouintes for plotting results, which are in the fortran/idl/ directory.
+
 h2. Downloading
 
 bc. git clone git@github.com:dlg0/ampereFit.git

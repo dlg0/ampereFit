@@ -19,8 +19,6 @@ NETCDF_DIR = /opt/local
 NETCDF_MOD = /usr/lib64/gfortran/modules/
 F95_LAPACK_DIR = /home/davidg/lapack95/LAPACK95
 LAPACK_DIR = /home/davidg/lapack/lapack-3.3.1/lib
-#BLAS_DIR = /home/davidg/blas/GotoBLAS2
-#LAPACK_DIR = /usr/lib64
 BLAS_DIR = /usr/lib64
 GSL_DIR = /home/davidg/gsl
 FGSL_DIR = /home/davidg/fgsl
@@ -33,7 +31,6 @@ INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
 LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
-#LINK += ${F95_LAPACK_DIR}/lapack95.a -L ${LAPACK_DIR} ${BLAS_DIR}/libgoto2.a -l:liblapack.so.3
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 

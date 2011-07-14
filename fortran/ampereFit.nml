@@ -3,7 +3,7 @@ maxK = 40
 maxM = 5
 minCoLat = 20.0
 maxCoLat = 60.0
-deltab_fileName = '/Users/dg6/ampere/20100824Amp_invert.ncdf'
+deltab_fileName = '/data/ampere/2010/20100824Amp_invert.ncdf'
 sHr = 5.3
 eHr = 6.32
 /

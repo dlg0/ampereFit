@@ -1,35 +1,39 @@
-MACHINE = greendl
+MACHINE = ampre
 EXEC = xAmpereFit.${MACHINE}
 
 OBJ_DIR = obj
 MOD_DIR = mod
 SRC_DIR = src
 
-F90 = /opt/local/bin/gfortran-mp-4.4
-F77 = /opt/local/bin/gfortran-mp-4.4
+F90 = gfortran
+F77 = gfortran
 
-F90FLAGS	= -J${MOD_DIR} 
-F77FLAGS	= -J${MOD_DIR} 
+F90FLAGS= -J${MOD_DIR} 
+F77FLAGS= -J${MOD_DIR} 
 
 DEBUG_OPTS = -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
 INCLUDES = 
 LINK =
 
 NETCDF_DIR = /opt/local
-F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
-LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
-BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
-GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
-FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
+NETCDF_MOD = /usr/lib64/gfortran/modules/
+F95_LAPACK_DIR = /home/davidg/lapack95/LAPACK95
+LAPACK_DIR = /home/davidg/lapack/lapack-3.3.1/lib
+#BLAS_DIR = /home/davidg/blas/GotoBLAS2
+#LAPACK_DIR = /usr/lib64
+BLAS_DIR = /usr/lib64
+GSL_DIR = /home/davidg/gsl
+FGSL_DIR = /home/davidg/fgsl
 
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
-INCLUDES += -I${NETCDF_DIR}/include
+INCLUDES += -I${NETCDF_MOD}
 
 LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
 INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
-LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/lapack_OSX.a ${BLAS_DIR}/libgoto2.a
+LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
+#LINK += ${F95_LAPACK_DIR}/lapack95.a -L ${LAPACK_DIR} ${BLAS_DIR}/libgoto2.a -l:liblapack.so.3
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 

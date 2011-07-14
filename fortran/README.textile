@@ -14,6 +14,8 @@ There are several libraries that the ampFit fortran library depends on. These ar
 * "FGSL: A Fortran interface to the GNU Scientific Library":http://www.lrz.de/services/software/mathematik/gsl/fortran/
 * "LAPACK":http://www.netlib.org/lapack/
 * Blas, of which I suggest "GotoBLAS2":http://www.tacc.utexas.edu/tacc-projects/gotoblas2/
+Note: building gotoblas2 on the AMPRE machine requires the TARGET=NEHALEM flag.
+Note: the GotoBLAS2 libary is causing a segfault on the AMPRE machine. Not sure why yet.
 * "LAPACK95":http://www.netlib.org/lapack95/
 * "NetCDF":http://www.unidata.ucar.edu/software/netcdf/
 

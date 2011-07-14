@@ -3,7 +3,7 @@ program ampereFit
     use constants
     use ampFit_nameList
     use dlg
-    use spherHarmFns
+    !use spherHarmFns
     use ampFit_data
     use basisFns
     use ampFit_solve
@@ -23,9 +23,7 @@ program ampereFit
 
     call XYZ_to_SPH ( dataOriginal )
 
-    ! *** check for track labelling mistake code ***
-
-    ! *** create shifted data structure *** 
+    !! *** check for track labelling mistake code ***
 
     call calculate_intersection_point ( dataOriginal )
 

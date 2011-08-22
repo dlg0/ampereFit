@@ -10,8 +10,14 @@ program ampereFit
     use write_output
     use ampFit_shift
     use ampFit_rotate
+    use ISO_C_BINDING
+    use f_aacgm
 
     implicit none
+
+        real(DBL) :: iLat, iLon, hgt
+        real(DBL), target :: oLat, oLon, r
+        integer :: yr, flg, s
 
     call init_nameList ()
 
@@ -42,26 +48,16 @@ program ampereFit
     call write_data ( dataOriginal, fileName = 'ampData_original.nc' )
     call write_data ( dataHalfSphere, fileName = 'ampData_shifted.nc' )
 
-!!   Setup the basis functions at the observation locations
-!!   ------------------------------------------------------
-!
-!    write(*,*) 'Generating basis functions ..'
-!    nBFns   = numberBFns ()
-!
-!    write(*,*) 'nObs: ', nObs, 'nBFns: ', nBFns
-!
-!    allocate ( brBFnArr(nBFns,nObs), &
-!                bThBFnArr(nBFns,nObs), &
-!                bPhBFnArr(nBFns,nObs), &
-!                YBFnArr(nBFns,nObs), &
-!                alpha(nBFns,nBFns), &
-!                beta_(nBFns,nBFns), &
-!                coeffs(nBFns,1) )
-!
-!    call setupSHFns ( nObs, nBFns, rI,  &
-!        coLat, mlt * 15.0, brBFnArr, bThBFnArr, bPhBFnArr, YBFnArr, &
-!            minCoLat, maxCoLat ) 
-!    write(*,*) 'DONE'
-!    read(*,*)
-     
+! Try to call the aacgm C library
+
+        iLat = 85.0
+        iLon = 45.0
+        hgt = 150.0
+
+        flg = 0
+        yr = 1990
+        s = f_AACGMInit(yr)
+
+        s = f_AACGMConvert(iLat, iLon, hgt, C_LOC(oLat), C_LOC(oLon), C_LOC(r), flg)
+
 end program ampereFit

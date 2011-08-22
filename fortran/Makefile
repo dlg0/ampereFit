@@ -8,8 +8,8 @@ SRC_DIR = src
 F90 = gfortran
 F77 = gfortran
 
-F90FLAGS= -J${MOD_DIR} 
-F77FLAGS= -J${MOD_DIR} 
+F90FLAGS= -J${MOD_DIR} #-fno-underscoring
+F77FLAGS= -J${MOD_DIR} #-fno-underscoring
 
 DEBUG_OPTS = -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
 INCLUDES = 
@@ -22,6 +22,7 @@ LAPACK_DIR = /home/davidg/lapack/lapack-3.3.1/lib
 BLAS_DIR = /usr/lib64
 GSL_DIR = /home/davidg/gsl
 FGSL_DIR = /home/davidg/fgsl
+AACGM_DIR:=/home/davidg/rst
 
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
 INCLUDES += -I${NETCDF_MOD}
@@ -31,6 +32,8 @@ INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
 LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
+
+LINK += ${AACGM_DIR}/lib/libaacgm.1.a #-l:libaacgm.1.a
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 
@@ -60,7 +63,8 @@ ${OBJ_DIR}/ampereFit.o: \
 	${OBJ_DIR}/ampFit_solve.o \
 	${OBJ_DIR}/write_output.o \
 	${OBJ_DIR}/ampFit_shift.o \
-	${OBJ_DIR}/ampFit_rotate.o
+	${OBJ_DIR}/ampFit_rotate.o \
+	${OBJ_DIR}/f_aacgm.o
 
 ${OBJ_DIR}/ampFit_data.o: \
 	${OBJ_DIR}/constants.o \

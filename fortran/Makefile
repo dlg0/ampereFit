@@ -33,7 +33,7 @@ INCLUDES += -I${FGSL_DIR}/include/gfortran
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
 LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
 
-LINK += ${AACGM_DIR}/lib/libaacgm.1.a #-l:libaacgm.1.a
+LINK += -L ${AACGM_DIR}/lib -l:libaacgm.1.a -l:libmlt.1.a -l:libastalg.1.a -l:librtime.1.a
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 

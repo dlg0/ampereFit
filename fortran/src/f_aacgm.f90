@@ -1,8 +1,16 @@
 module f_aacgm
 
-use ISO_C_BINDING, only : C_INT
+use ISO_C_BINDING, only : C_INT, C_DOUBLE
 
 interface
+
+        real(C_DOUBLE) function f_mltconvertyrsec (yr, yrsec, mlon) bind(C, name='MLTConvertYrsec')
+                use ISO_C_BINDING, only : C_INT, C_DOUBLE, C_PTR
+                implicit none
+                integer(C_INT), value, intent(IN) :: yr, yrsec
+                real(C_DOUBLE), value :: mlon
+        end function f_mltconvertyrsec
+
 
         integer(C_INT) function f_aacgmconvert (iLat,iLon,hgt,oLat,oLon,r,flg) bind(C, name='AACGMConvert')
                 use ISO_C_BINDING, only : C_INT, C_DOUBLE, C_PTR

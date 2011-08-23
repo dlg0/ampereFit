@@ -17,7 +17,8 @@ program ampereFit
 
         real(DBL) :: iLat, iLon, hgt
         real(DBL), target :: oLat, oLon, r
-        integer :: yr, flg, s
+        integer :: yr, flg, s, yrsec
+        real(DBL) :: mlon, mlt
 
     call init_nameList ()
 
@@ -56,8 +57,21 @@ program ampereFit
 
         flg = 0
         yr = 1990
-        s = f_AACGMInit(yr)
 
+        s = f_AACGMInit(yr)
         s = f_AACGMConvert(iLat, iLon, hgt, C_LOC(oLat), C_LOC(oLon), C_LOC(r), flg)
+
+        yrsec = 3*24*3600
+        mlon = 45.0
+
+        mlt = f_MLTConvertYrsec(yr, yrsec, mlon)
+
+        if(s/=0) then
+                write(*,*) 'Error in f_AACGMConvert'
+        else
+                write(*,*) 'Input: ', iLat, iLon, hgt
+                write(*,*) 'Output: ', oLat, oLon
+                write(*,*) 'mlon, mlt: ', mlon, mlt
+        endif
 
 end program ampereFit

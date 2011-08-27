@@ -18,6 +18,8 @@ Note: building gotoblas2 on the AMPRE machine requires the TARGET=NEHALEM flag.
 Note: the GotoBLAS2 libary is causing a segfault on the AMPRE machine. Not sure why yet.
 * "LAPACK95":http://www.netlib.org/lapack95/
 * "NetCDF":http://www.unidata.ucar.edu/software/netcdf/
+* "RST (SuperDarn - for AACGM)":http://superdarn.jhuapl.edu/cgi-bin/validate.cgi
+Note: At present we link against the full RST lib, but in future (when the new AACGM lib is out) we will link against the stand alone AACGM lib.
 
 You will need to install these and then modify the following lines of "Makefile":
 

@@ -27,8 +27,9 @@ subroutine calculate_intersection_point ( dataIn )
     real(kind=DBL), allocatable :: parabola_coeffs(:,:)
     integer :: la_rank, la_info
     real(kind=DBL) :: AA, BB, CC, x1, x2, y1, y2
-    real(kind=DBL) :: x_intersection_points(0:5,5), y_intersection_points(0:5,5), &
-        distance1, distance2
+!    real(kind=DBL) :: x_intersection_points(0:5,5), y_intersection_points(0:5,5), &
+    real(kind=DBL) :: x_intersection_points(15), y_intersection_points(15), &
+        distance1, distance2, r_intersect
     integer :: nCloseDataPts
 
     write(*,*) 'Calculating intersection point ...'
@@ -74,16 +75,19 @@ subroutine calculate_intersection_point ( dataIn )
 
     enddo fit_2d_poly_to_track
 
-
+    cnt=1
     find_intersection_points: &
-    do p=0,5
-!
+    do p=0,4
 
-        cnt = 1
+!        cnt = 1
         all_other_tracks: &
-        do pp=0,5
+        do pp=p+1,5
 
-            if ( p /= pp ) then
+!             if ( p /= pp ) then
+!             if (pp .gt. p) then
+
+!    For each track pair (15 of them) solve the track parabola eqns as simul.
+!    eqns
 
                 AA  = parabola_coeffs(p,1) - parabola_coeffs(pp,1)
                 BB  = parabola_coeffs(p,2) - parabola_coeffs(pp,2)
@@ -105,27 +109,33 @@ subroutine calculate_intersection_point ( dataIn )
  
                 if (distance1<distance2) then 
 
-                    x_intersection_points(p,cnt) = x1
-                    y_intersection_points(p,cnt) = y1
+!                    x_intersection_points(p,cnt) = x1
+!                    y_intersection_points(p,cnt) = y1
+                    x_intersection_points(cnt) = x1
+                    y_intersection_points(cnt) = y1
 
                 else
 
-                    x_intersection_points(p,cnt) = x2
-                    y_intersection_points(p,cnt) = y2
+!                    x_intersection_points(p,cnt) = x2
+!                    y_intersection_points(p,cnt) = y2
+                    x_intersection_points(cnt) = x2
+                    y_intersection_points(cnt) = y2
 
                 endif
 
                 cnt = cnt + 1
  
-            endif
+!            endif
 
         enddo all_other_tracks
 
     enddo find_intersection_points
 
-    x_intersection  = sum ( x_intersection_points ) / 30d0
-    y_intersection  = sum ( y_intersection_points ) / 30d0
-
+!    x_intersection  = sum ( x_intersection_points ) / 30d0
+!    y_intersection  = sum ( y_intersection_points ) / 30d0
+    x_intersection  = sum ( x_intersection_points ) / 15d0
+    y_intersection  = sum ( y_intersection_points ) / 15d0
+!    print*,'cnt,xint,yint=',cnt,x_intersection,y_intersection
 
     nCloseDataPts = 0
     cnt = 0
@@ -135,7 +145,6 @@ subroutine calculate_intersection_point ( dataIn )
                     .and. dataIn%GEI_coLat_deg < 35
         nCloseDataPts   = count ( mask )
 
-        !write(*,*) '    nCloseDataPts: ', nCloseDataPts
         cnt = cnt + 1 
 
     enddo
@@ -143,7 +152,10 @@ subroutine calculate_intersection_point ( dataIn )
     allocate ( iiSubSet(nCloseDataPts) )
     iiSubSet    = pack ( (/ (i, i=1, size(dataIn)) /), mask = mask )  
 
-    z_intersection  = sum ( dataIn(iiSubSet)%pz ) / nCloseDataPts
+    r_intersect=sum (dataIn(iiSubSet)%GEI_R_km ) / nCloseDataPts
+    z_intersection = sqrt(r_intersect**2 - x_intersection**2-y_intersection**2)
+! Set for Nth hemis (+z) at the moment)
+!    z_intersection  = sum ( dataIn(iiSubSet)%pz ) / nCloseDataPts
 
     j = -1
 
@@ -192,6 +204,7 @@ subroutine calculate_shift_rotation_matrix ()
     ! i.e., the cross product of those two vectors gives the 
     ! axis of rotation (u_x,u_y,u_z) ...
 
+! cross product (0,0,r) x (x, y, z)
     u_x = 0 * z_intersection - 1 * y_intersection
     u_y = -1 * ( 0 * z_intersection - 1 * x_intersection )
     u_z = 0 * y_intersection - 0 * x_intersection
@@ -234,14 +247,14 @@ subroutine calculate_shift_rotation_matrix ()
 
     ! Check determinant == 1
 
-    detR    = R(1,1)*R(2,2)*R(3,3) &
-        + R(1,2)*R(2,3)*R(3,1) &
-        + R(1,3)*R(2,1)*R(3,2) &
-        - R(1,1)*R(2,3)*R(3,2) &
-        - R(1,2)*R(2,1)*R(3,3) &
-        - R(1,3)*R(2,2)*R(3,1)
+!    detR    = R(1,1)*R(2,2)*R(3,3) &
+!        + R(1,2)*R(2,3)*R(3,1) &
+!        + R(1,3)*R(2,1)*R(3,2) &
+!        - R(1,1)*R(2,3)*R(3,2) &
+!        - R(1,2)*R(2,1)*R(3,3) &
+!        - R(1,3)*R(2,2)*R(3,1)
 
-    write(*,*) '    Det of rotation matrix: ', detR
+!    write(*,*) '    Det of rotation matrix: ', detR
 
     write(*,*) 'DONE'
 

@@ -6,8 +6,9 @@ module constants
     integer, parameter :: DBL = selected_real_kind ( p = 13, r = 200 )
 
     real(kind=DBL), parameter :: rE = 6356.75e3
+    real(kind=DBL), parameter :: rsat = 780.0e3
     real(kind=DBL), parameter :: rI = 1.02
-    real(kind=DBL), parameter :: pi = 3.141593
+    real(kind=DBL), parameter :: pi = 3.1415926535897932384626
     real(kind=DBL), parameter :: degToRad = pi / 180d0
     real(kind=DBL), parameter :: radToDeg = 180d0 / pi
     real(kind=DBL), parameter :: u0_ = 1.2566e-6;

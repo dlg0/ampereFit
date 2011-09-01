@@ -5,6 +5,7 @@ program ampereFit
     use dlg
     !use spherHarmFns
     use ampFit_data
+    use ampFit_sort
     use basisFns
     use ampFit_solve
     use write_output

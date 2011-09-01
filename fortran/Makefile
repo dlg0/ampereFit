@@ -64,7 +64,8 @@ ${OBJ_DIR}/ampereFit.o: \
 	${OBJ_DIR}/write_output.o \
 	${OBJ_DIR}/ampFit_shift.o \
 	${OBJ_DIR}/ampFit_rotate.o \
-	${OBJ_DIR}/f_aacgm.o
+	${OBJ_DIR}/f_aacgm.o \
+        $(OBJ_DIR)/ampFit_sort.o
 
 ${OBJ_DIR}/ampFit_data.o: \
 	${OBJ_DIR}/constants.o \

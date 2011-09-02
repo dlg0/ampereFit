@@ -32,7 +32,7 @@ FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
 
 h2. Compiler
 
-At present I have only compiled with gfortran. You will need to specify the location of your gfortran in @Makefile@ at the following locations:
+At present I have only compiled with gfortran. You will need to specify the location of your gfortran in @Makefile@ at the following locations (although at present F77 is not used):
 
 bc. F90 = /opt/local/bin/gfortran-mp-4.4
 F77 = /opt/local/bin/gfortran-mp-4.4

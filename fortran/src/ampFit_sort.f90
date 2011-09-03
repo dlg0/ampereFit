@@ -1,11 +1,19 @@
 module ampFit_sort
-! Merge Sort algorithm for AmpFit
-! CLW - Aug 2011
-! Adapted from the Wiki page on merge Sort - I added the index sort capability
+! This nodule contains:
+! 1. do_merge -> subroutine for merge_sort
+! 2. merge_sort -> sort routine adapted from Wiki page on merge sort
+!                  This routine has the sorted data plus the indexes
+! 3. cross_p -> vector cross product
+! 4. norm_vec -> normailise 3D vectors
+! 5. gcirc_dist -> great circle distance (over a sphere) routine
+! 6. my_where -> similar to IDL where function for 1D arrays
+! 7. sort_struc -> sorts satelliet track data points by great circle distance
+! 8. tag_lon_strays -> finds stray satellites (off longitude track)
+! 9. ampFit_ghost -> adds ghost data near poles
 !
-
+! CLW - Aug 2011
+!
   use constants
-!  integer, parameter :: DBL = selected_real_kind ( p=13, r=200)
 
   contains
 
@@ -22,23 +30,14 @@ module ampFit_sort
     integer :: ii
 
     i=1; j=1; k=1;
-!print*,'In do_merge'
-!print*,'A ', (A(ii),ii=1,na)
-!print*,'Ai ', (Ai(ii),ii=1,na)
-!print*,'B ', (B(ii),ii=1,nb)
-!print*,'Bi ', (Bi(ii),ii=1,nb)
-!print*,'C ', (C(ii),ii=1,nc)
-!print*,'Ci ', (Ci(ii),ii=1,nc)
     do while (i <= na .and. j <= nb)
       if (A(i) <= B(j)) then
         C(k)=A(i)
         Ci(k)=Ai(i)
-!print*,i,k,A(i),B(j)
         i=i+1
       else
         C(k)=B(j)
         Ci(k)=Bi(j)
-!print*,j,k,B(j)
         j=j+1
       end if
       k=k+1
@@ -46,19 +45,19 @@ module ampFit_sort
     do while (i <= na)
       C(k)=A(i)
       Ci(k)=Ai(i)
-!print*,i,k,A(i)
       k=k+1
       i=i+1
     enddo
-!print*,'end do_merge***'
     return
   end subroutine do_merge
 
 !------------------------------------------------------------------
   
   recursive subroutine merge_sort(A,N,T,Ai,Ti)
-! merge sort with recursive call - CLW 22 Aug 2011
-! The arrays A and Ai are replaced by t6he sorted results
+! merge sort with recursive call
+! calls do_merge subroutine
+!   CLW:  22 Aug 2011
+! The arrays A and Ai are replaced by the sorted results
 ! A : the input array of real numbers
 ! N : number of elements
 ! T : temp array for the sort
@@ -100,12 +99,6 @@ module ampFit_sort
       Ti(1:na)=Ai(1:na)
 
       call do_merge(T,na,A(na+1),nb,A,N,Ti,Ai(na+1),Ai)
-!print*,'after do_merge'
-!print*,'n,na,nb=',n,na,nb
-!print*,'A ', (A(ii),ii=1,n)
-!print*,'Ai ', (Ai(ii),ii=1,N)
-!print*,'T ', (T(ii),ii=1,(n+1)/2)
-!print*,'Ti ', (Ti(ii),ii=1,(n+1)/2)
     endif
     return
 
@@ -114,7 +107,9 @@ module ampFit_sort
 !--------------------------------------------------------------
 
   function cross_p(vec1, vec2)
+! calc the cross product of two 3D vectors
     implicit none
+
     real(kind=DBL), dimension(3) :: cross_p
     real(kind=DBL), dimension(3), intent(in) :: vec1, vec2
 
@@ -127,7 +122,9 @@ module ampFit_sort
 !--------------------------------------------------------------
 
   function norm_vec(vecin)
+! normalise a 3D vector: division by its magnitude
     implicit none
+
     real(kind=DBL), dimension(3) :: norm_vec
     real(kind=DBL), dimension(3), intent(in) :: vecin
     real(kind=DBL) :: vecmag
@@ -141,8 +138,15 @@ module ampFit_sort
 
   subroutine gcirc_dist(lat_s, lat_f, lon_s, lon_f, &
                         np, gcirc_res)
-!    real(kind=DBL) :: gcirc_dist
-! calc great circle distance given coords as lat,lom
+! Calc great circle distance over a sphere given:
+! lat_s -> start latitude (deg)
+! lon_s -> start longitude (deg)
+! lat_f -> array of latitudes to calc distances
+! lon_f -> array of corresponding longitudes
+! np -> number of points in arrays: lat_f, lon_f
+! gcirc_res -> results array of great circle distances (km) 
+! uses rsat and rE in constants.f90
+!
 ! CLW - Aug 2011
 
     implicit none
@@ -155,8 +159,6 @@ module ampFit_sort
     real(kind=DBL), dimension(np), intent(out) :: gcirc_res
     real(kind=DBL), dimension(np) :: d_lmda, tp, bt
 
-!    integer :: i   ! for testing
-
     phi_s = lat_s*pi/180.0
     phi_f = lat_f*pi/180.0
     lmda_s= lon_s*pi/180.0
@@ -166,22 +168,23 @@ module ampFit_sort
     tp = sqrt( ( cos(phi_f)*sin(d_lmda) )**2 + &
         ( cos(phi_s)*sin(phi_f) - sin(phi_s)*cos(phi_f)*cos(d_lmda))**2)
     bt = sin(phi_s)*sin(phi_f) + cos(phi_s)*cos(phi_f)*cos(d_lmda)
-!print*,'In gcirc_dist'
     gcirc_res = (rE + rsat)/1000.0 * atan2(tp,bt) 
-!print*,'gcirc_res=', (gcirc_res(i), i=1,20)
-!stop
   end subroutine gcirc_dist
 
 !---------------------------------------------------------------
 
   subroutine my_where(logic_arr, np, idx_arr, ntrue)
+! Subroutine to find 1D array indexes similar to IDL 'where' function
 ! inputs are 
-!   logic_arr :   array of T or F
+!   logic_arr :   array of T or F for given logic statement
 !   np :  size of logic_array
 !
 ! output is index array of all the T and how many (ntrue)
-! CLW Aug 24 2011
+!
+! CLW:  Aug, 2011
+
     implicit none
+
     integer, intent(in) :: np
     integer :: i
     logical, dimension(np), intent(in) :: logic_arr
@@ -194,23 +197,34 @@ module ampFit_sort
     enddo
     ntrue = count (logic_arr)
     idx_arr = pack ( (/ (idx_tmp(i), i=1,np) /), mask = logic_arr)
+
   end subroutine my_where
 
 ! --------------------------------------------------------------
 
   subroutine sort_struc(struc_data, trk_order)
 ! Given the shiftedData structure, this routine:
-! (i)   Cycle through each Track Number/hemis
+! (i)   Cycles through each Track Number/hemisphere
 ! (ii)  Identify and label any strays (off longitude)
 ! (iii) Sort by great circle distance from an equator point
+!  (iv) ensures the tracks are sequential in longitude
+!
 ! Each hemisphere is sorted separately.
 ! Output is the modified shiftedData structure that has
-! - Strays tagged in the typ property
-! - Tr0(Nth,Sth), Tr1(Nth,Sth) etc sequence sorted
-!  and track order by longitude (for ghost calc)
+! - Strays tagged in the typ property, where
+!    data%typ = 0 -> normal data
+!    data%typ = 1 -> stray data off longitude
+!    data%typ = 2 -> ghost data points near the poles
+!    data%typ = 3 -> additional ghosts where longitude separation is > 120 deg
+!
+! The resulting data structure (sorted): 
+! Tr0(Nth,Sth), Tr1(Nth,Sth) etc. sequence
+!  and track order by longitude, ready for ghost data calc
+!
 ! CLW - Aug 2011
 !
     implicit none
+
     type(ampData), intent(inout) :: struc_data(:)
     integer, intent(inout) :: trk_order(6)
 
@@ -225,18 +239,17 @@ module ampFit_sort
     real(kind=DBL), dimension(6) :: strt_lona
     real(kind=DBL), dimension(3) :: uvec, vvec, nvec, ncuvec
     integer, dimension(1) :: iiSt_n
-! for sort routine
+! temp arrays for sort routine
     real(kind=DBL), dimension(:), allocatable :: T
     integer, dimension(:), allocatable :: Ti
 
     np = size(struc_data)
     cnt = 1
-print*,'Sorting data'
+
+print*,'Sorting each data track...'
 
     sort_track_loop: &
     do Tr_num = 0,5
-! mask for correct Tr_num and Nth hemis
-!print*,'Track Num=',Tr_num
 
 ! Get indexes where data has correct TrackNum and Bth hemisphere
       tmplogic_arr = .false.          ! initialise logic array
@@ -244,7 +257,6 @@ print*,'Sorting data'
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_n)
       allocate(idx_n(iiTrack_n))      ! get mem for these data
       idx_n = tmp_idx(1:iiTrack_n)    ! indexes for these vals
-!print*,'idx_n=', (idx_n(i), i=1,iiTrack_n)
 
 ! Get indexes for (i) Track (ii) Nth hemis (iii) < 180 in lon 
       tmplogic_arr = .false.
@@ -253,24 +265,19 @@ print*,'Sorting data'
       allocate(idx_nlon(iiTrack_nlon))    ! get mem for these data
       idx_nlon = tmp_idx(1:iiTrack_nlon)  ! indexes for these vals
 ! These are the indexes of struc for Nth, correct Tr_num and lon <= 180
-!print*,'idx_nlon=', (idx_nlon(i), i=1,iiTrack_nlon)
 
       iiSt_n = maxloc(struc_data(idx_n(idx_nlon))%GEI_coLat_deg)  ! index of equator point
-!print*,'iiSt_n=',iiSt_n
       i = idx_n(idx_nlon(iiSt_n(1)))
       st_lat = 90.0 - struc_data(i)%GEI_coLat_deg  ! Lat of this point
       st_lon  = struc_data(i)%GEI_lon_deg          ! Lon of this point
 ! st_Lat,st_Lon is the coord of the great circle dist reference point
-!print*,'st_lat, st_lon=',st_lat,st_lon
 
       strt_lona(Tr_num+1) = st_lon         ! store start longitude
       trk_order(Tr_num+1) = Tr_num
       allocate(gcDist_n(iiTrack_n))        ! iiTrack_n is the size of idx_n
       call gcirc_dist(st_lat, 90.0-struc_data(idx_n)%GEI_coLat_deg, &
              st_lon, struc_data(idx_n)%GEI_lon_deg, iiTrack_n, gcDist_n)
-print*,'iiTrack_n = ',iiTrack_n
-!print*,'gcirc_d=', (gcDist_n(i), i=1,iiTrack_n)
-!stop
+
 ! sort the distances, returns idx of sorted array
       allocate(T((iiTrack_n+1)/2))
       allocate(Ti((iiTrack_n+1)/2))
@@ -282,8 +289,6 @@ print*,'iiTrack_n = ',iiTrack_n
       deallocate(gcDist_n)
 
       sortII(cnt:cnt+iiTrack_n-1) = idx_nsrt  ! save sorted indexes
-!print*,'cnt,iiTrack_n,np ',cnt,iiTrack_n,np
-!print*,'cnt:cnt+iiTrack_n-1 ',cnt,cnt+iiTrack_n-1
       cnt = cnt + iiTrack_n
  
       deallocate(idx_nlon)
@@ -297,12 +302,11 @@ print*,'iiTrack_n = ',iiTrack_n
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_s)
       allocate(idx_s(iiTrack_s))      ! get mem for these data
       idx_s = tmp_idx(1:iiTrack_s)    ! indexes for these vals
-!print*,'idx_s=', (idx_s(i), i=1,iiTrack_s)
 
       allocate(gcDist_s(iiTrack_s))           ! iiTrack_s is the size of idx_s
       call gcirc_dist(st_lat, 90.0-struc_data(idx_s)%GEI_coLat_deg, &
              st_lon, struc_data(idx_s)%GEI_lon_deg, iiTrack_s, gcDist_s)
-!print*,'gcirc_d=', (gcDist_s(i), i=1,iiTrack_s)
+
 ! sort the distances, returns idx of sorted array
       allocate(T((iiTrack_s+1)/2))
       allocate(Ti((iiTrack_s+1)/2))
@@ -314,9 +318,6 @@ print*,'iiTrack_n = ',iiTrack_n
       deallocate(gcDist_s)
 
       sortII(cnt:cnt+iiTrack_s-1) = idx_ssrt  ! save sorted indexes
-!print*,'cnt,iiTrack_s,np ',cnt,iiTrack_s,np
-!print*,'cnt:cnt+iiTrack_s-1 ',cnt,cnt+iiTrack_s-1
-
       cnt = cnt + iiTrack_s
 
       deallocate(idx_s)
@@ -331,14 +332,12 @@ print*,'iiTrack_n = ',iiTrack_n
 ! sort the track order, returns trk_order
     allocate(T(6))
     allocate(Ti(6))
-!print*,'strt_lona = ',strt_lona
     call merge_sort(strt_lona, 6, T, trk_order, Ti)
     deallocate(Ti)
     deallocate(T)
 
 !print*,'Track_order = ',trk_order
-!print*,'DONE_sort'
-!stop
+print*,'DONE_sort'
   end subroutine sort_struc
 
 ! ----------------------------------------------------------------
@@ -367,9 +366,8 @@ print*,'iiTrack_n = ',iiTrack_n
     real(kind=DBL), dimension(:), allocatable :: rVarr, LatVarr, LonVarr
     real(kind=DBL) :: dp, lon_diff
 
+    print*,'Tagging longitude strays...'
     np = size(struc_data)
-
-print*,'Tagging strays, south = ',south
 
     track_cyc_loop: &
     do Tr_num = 0,5
@@ -385,25 +383,13 @@ print*,'Tagging strays, south = ',south
       allocate(idx_n(iiTrack))      ! get mem for these data
       idx_n = tmp_idx(1:iiTrack)    ! indexes for these vals
       struc_data(idx_n)%typ = 0     ! initialise type as normal
-print*,'Track Num = ',Tr_num
-print*,'iiTrack = ',iiTrack
-! do i=1,iiTrack
-! do i=1,20
-!   print*,i, idx_n(i)
-!   print*,struc_data(idx_n(i))%px, &
-!          struc_data(idx_n(i))%py, &
-!          struc_data(idx_n(i))%pz
-!   print*,struc_data(idx_n(i))%GEI_coLat_deg, &
-!          struc_data(idx_n(i))%GEI_lon_deg
-! enddo
+
 ! 1st point is on the equator - assumes data are sorted
       uvec(1) = struc_data(idx_n(1))%px
       uvec(2) = struc_data(idx_n(1))%py
       uvec(3) = struc_data(idx_n(1))%pz
-!print*,'uvec:',uvec
       uvec = norm_vec(uvec)
 
-!stop
 ! Get data subset 1/2 about between pole and equator for 2nd point
       tmplogic_arr = .false.
       if (south .eq. 1) then
@@ -424,14 +410,13 @@ print*,'iiTrack = ',iiTrack
       vvec(1) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%px
       vvec(2) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%py
       vvec(3) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%pz
-!print*,'vvec:',vvec
       vvec = norm_vec(vvec)
 
       deallocate(idx_sel_lat)
 ! normal vector to uvec and vvec
       nvec = cross_p(uvec, vvec)
-!print*,'nvec:',nvec
       nvec = norm_vec(nvec)
+
 ! normal vector cross uvec
       ncuvec = cross_p(nvec, uvec)
       
@@ -448,8 +433,6 @@ print*,'iiTrack = ',iiTrack
         tarr(i) = acos(dp/rarr(i))
       enddo
 
-!print*,'tarr=', (tarr(i), i=1,20)
-
 ! get eqn of great circle curve in x,y,z
       allocate(xarr(iiTrack))
       allocate(yarr(iiTrack))
@@ -462,21 +445,21 @@ print*,'iiTrack = ',iiTrack
       allocate(rVarr(iiTrack))
       allocate(LatVarr(iiTrack))
       allocate(LonVarr(iiTrack))
+
 ! Convert x,y,z to r,the,ph coords
       do i=1,iiTrack
         call sphcar_08 (rVarr(i), LatVarr(i), LonVarr(i), & 
                         xarr(i), yarr(i), zarr(i), -1)
       enddo
       LonVarr = LonVarr*180.0d0/pi ! conv to degrees
-!print*,'LonVarr=', (LonVarr(i), i=1,20)
-      deallocate(LatVarr)  ! used to get LonVarr
-      deallocate(rVarr)    ! used to get LonVarr
+      deallocate(LatVarr)
+      deallocate(rVarr)
       deallocate(zarr)
       deallocate(yarr)
       deallocate(xarr)
       deallocate(tarr)
       deallocate(rarr)
-!stop
+
 ! ------ Check Lon of great circle eqn with the data for strays -----
 
 ! check for lon (from eqn) - lon (from data) is > 180 (across 360 deg)
@@ -488,12 +471,10 @@ print*,'iiTrack = ',iiTrack
           if (((360.0 - lon_diff) > 15.0 ) .or. &
              ( lon_diff > 15.0 )) then
             struc_data(idx_n(i))%typ = 1
-!print*,'lon_diff=',lon_diff
           endif
         else
           if ( lon_diff > 15.0 ) then
             struc_data(idx_n(i))%typ = 1
-!print*,'lon_diff=',lon_diff
           endif
         endif
       enddo     ! search track data points
@@ -502,6 +483,7 @@ print*,'iiTrack = ',iiTrack
       deallocate(idx_n)
 
     enddo track_cyc_loop
+    print*,'DONE'
 
   end subroutine tag_lon_strays
 !
@@ -512,10 +494,13 @@ print*,'iiTrack = ',iiTrack
 !   shiftedData structure,
 !   clat_lim, the pole limit for ghosting
 !   trk_order (integer arry of 6 of the track order)
-! this routine:
-! (i)   Cycles through adjacent pair tracks
-! (ii)  Identify  coLat limit and add data between lon
-! Assumes the data for each track has been sorted by sort_struc
+! This routine:
+!  (i) Cycles through adjacent data track pairs
+! (ii) Identify coLat limit and add data between longitudes
+!(iii) Check if 2 ghosts are required. This is usually the case
+!      in track the intesection area near the poles
+!
+! Assumes the data for each track have been sorted by sort_struc
 ! - Tr0(Nth,Sth), Tr1(Nth,Sth) etc sequence sorted
 !
 ! CLW - Aug 2011
@@ -544,10 +529,8 @@ print*,'iiTrack = ',iiTrack
 
     integer :: i       ! for testing
 
+    print*,'Adding ghost data for CoLat: ',clat_lim
     np = size(struc_data)
-
-print*,'In ampFit_ghost, np=',np
-print*,'clat_lim=',clat_lim
     iiex_gh = 0
     cnt = 1
     gh_fname='ex_ghosts.dat'
@@ -564,8 +547,6 @@ print*,'clat_lim=',clat_lim
     endif
     call my_where(tmplogic_arr, np, tmp_idx, iighost)
     allocate(gh_data(iighost)) ! get mem for ghost_data struc
-
-print*,'iighost=',iighost
 
     track_pair_loop: &
     do Tr_num = 0,5
@@ -584,9 +565,6 @@ print*,'iighost=',iighost
       call my_where(tmplogic_arr, np, tmp_idx, iiTrk_1)
       allocate(idx_Trk1(iiTrk_1))   ! get mem for indexes for Trk_1
       idx_Trk1 = tmp_idx(1:iiTrk_1) ! indexes for these vals
-
-print*,'Track Num:',Tr_num
-print*,'iiTrk_1=',iiTrk_1
 
 ! if iiTrk1 = 0 then no data for ghosts - error
 
@@ -610,8 +588,6 @@ print*,'iiTrk_1=',iiTrk_1
       call my_where(tmplogic_arr, np, tmp_idx, iiTrk_2)
       allocate(idx_Trk2(iiTrk_2))   ! get mem for indexes for Trk_2 data
       idx_Trk2 = tmp_idx(1:iiTrk_2) ! indexes for these vals
-print*,'iiTrk_2 = ',iiTrk_2
-
       allocate(gcDist(iiTrk_2))     ! mem for great circ dist values
 ! if iiTrk2 = 0 then no data for ghost - error
 
@@ -625,7 +601,6 @@ print*,'iiTrk_2 = ',iiTrk_2
 ! iimn is the index of idx_Trk2 which has min dist
 !  between Trk2 and the jj point of Trk1
         iimn = minloc(gcDist)        ! index of idx_Trk2 of min_dist
-!print*,'iimn = ',iimn
         
         if (clat_lim .gt. 90.0) then ! Sth hemis data
           st_lat=180.0-st_lat
@@ -645,7 +620,7 @@ print*,'iiTrk_2 = ',iiTrk_2
           Nyq_Ok = 0
           iiex_gh = iiex_gh + 1
           if (tmp_open .eq. 0) then   ! 1st extra ghost
-! open the extra ghist temp data file here
+! open the extra ghost temp data file here
             open(unit=1,file=gh_fname,status='replace', &
                  action='write')
             tmp_open = 1   ! set file open switch
@@ -824,8 +799,6 @@ print*,'iiTrk_2 = ',iiTrk_2
       deallocate(gcDist)
       deallocate(idx_Trk2)
       deallocate(idx_Trk1)
-!print*,'gh_lon data=',(gh_data(i)%GEI_lon_deg, i=1,cnt-1)
-!stop
     enddo track_pair_loop
 
     if (tmp_open .eq. 1) then
@@ -852,6 +825,8 @@ print*,'iiTrk_2 = ',iiTrk_2
       enddo
       close(unit=1)
     endif     ! if we have extra ghosts
+
+    print*,'DONE_ghosts'
 
   end subroutine ampFit_ghost
 

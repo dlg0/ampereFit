@@ -16,6 +16,12 @@ program ampereFit
 
     implicit none
 
+    integer :: south
+    integer :: trk_order(6)
+! structure to hold modified (ghost added) data
+    type(ampData), allocatable :: all_data(:)
+    real(kind=DBL) :: clat_lim
+
         real(DBL) :: iLat, iLon, hgt
         real(DBL), target :: oLat, oLon, r
         integer :: yr, flg, s, yrsec
@@ -31,8 +37,6 @@ program ampereFit
 
     call XYZ_to_SPH ( dataOriginal )
 
-    !! *** check for track labelling mistake code ***
-
     call calculate_intersection_point ( dataOriginal )
 
     call calculate_shift_rotation_matrix ()
@@ -41,11 +45,24 @@ program ampereFit
 
     call XYZ_to_SPH ( dataShifted )
 
+    call sort_struc ( dataShifted, trk_order )
+
+    south = 0
+    call tag_lon_strays ( dataShifted, south )
+
+!   south = 1
+!   call tag_lon_strays ( dataShifted, south )
+
     call create_dataHalfSphere ( dataShifted )
 
-    call create_bFns_at_data ( dataHalfSphere )
+    clat_lim = 25.0
+    call ampFit_ghost ( dataHalfSphere, all_data, clat_lim, trk_order )
 
-    call ampFit_solve_svd ( la_data_basisArr, dataHalfSphere )
+!    call create_bFns_at_data ( dataHalfSphere )
+    call create_bFns_at_data ( all_data )
+
+!    call ampFit_solve_svd ( la_data_basisArr, dataHalfSphere )
+    call ampFit_solve_svd ( la_data_basisArr, all_data )
 
     call write_data ( dataOriginal, fileName = 'ampData_original.nc' )
     call write_data ( dataHalfSphere, fileName = 'ampData_shifted.nc' )

@@ -18,15 +18,20 @@ module constants
     real(kind=DBL), parameter :: e0  = e0_ * rE ** 3;
     real(kind=DBL), parameter :: c = c_ / rE;
 
+    type :: basis
+
+        real(DBL) :: PLM, dPLM
+        real(DBL) :: Y, br, bTh, bPh
+
+    end type basis
 
     type :: ampData
-
         real(kind=DBL) :: utc           ! UT time in dec hours
         integer :: isat                 ! coded SV number (for Haje)
         integer :: iPln                 ! orbit track number (0->5)
         real :: qual                    ! data quality from Lars
         integer :: splice               ! flag for spliced data - where missing data estimated
-        integer :: typ                  ! data type (for CLW)
+        integer :: typ                  ! data type (for CLW) - This is NOT a helpful description !!
         real(kind=DBL) :: px, py, pz
         real(kind=DBL) :: dbx, dby, dbz
         real(kind=DBL) :: GEI_R_km, GEI_coLat_deg, GEI_lon_deg, &

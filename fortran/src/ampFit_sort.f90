@@ -507,7 +507,7 @@ print*,'DONE_sort'
 !
     implicit none
 
-    type(ampData), intent(in out) :: struc_data(:)
+    type(ampData), intent(in) :: struc_data(:)
     type(ampData), allocatable, intent(out) :: comb_data(:)
     real(kind=DBL), intent(in) :: clat_lim
     integer, dimension(6), intent(in) :: trk_order

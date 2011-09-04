@@ -8,11 +8,14 @@ use la_precision, only: WP=>DP
 implicit none
 
 real(kind=DBL), allocatable :: &
-    data_brBFnArr(:,:), &
-    data_bThBFnArr(:,:), &
-    data_bPhBFnArr(:,:), &
-    data_YBFnArr(:,:), &
+!    data_brBFnArr(:,:), &
+!    data_bThBFnArr(:,:), &
+!    data_bPhBFnArr(:,:), &
+!    data_YBFnArr(:,:), &
     nArr(:)
+
+type(basis), allocatable :: dataBFn(:,:), gridBFn(:,:)
+
 integer, allocatable :: mArr(:), kArr(:)
 real(kind=WP), allocatable :: la_data_basisArr(:,:)
 integer :: nBFns
@@ -69,7 +72,7 @@ integer function numberBFns ()
 end function numberBFns
 
 
-subroutine create_bFns_at_data ( dataIn )
+subroutine create_bFns_at_data ( dataIn, basisOut )
 
     use fgsl
     use ampFit_nameList
@@ -78,32 +81,36 @@ subroutine create_bFns_at_data ( dataIn )
     implicit none
   
     type(ampData), intent(in) :: dataIn(:)
+    type(basis), allocatable, intent (in out) :: basisOut(:,:)
  
     integer :: k, l, m, n
     integer :: i, cnt, span, nObs
     real(kind=DBL) :: x, lon, coLat, r, rDep, dYdr_rDep
 
-    real(kind=DBL), allocatable :: &
-        data_PLMBFnArr(:,:), &
-        data_dPLMBFnArr(:,:)
+    !real(kind=DBL), allocatable :: &
+    !    data_PLMBFnArr(:,:), &
+    !    data_dPLMBFnArr(:,:)
  
     ! FGSL 
 
     integer(fgsl_int) :: fgsl_stat
 
-    write(*,*) 'Creating basis functions at data locations ...'
+    !write(*,*) 'Creating basis functions at data locations ...'
 
     nObs    = size ( dataIn )
 
-    allocate ( &
-        data_PLMBFnArr(nObs,nBFns), &
-        data_dPLMBfnArr(nObs,nBFns), &
-        data_YBfnArr(nObs,nBFns), &
-        data_brBfnArr(nObs,nBFns), &
-        data_bThBfnArr(nObs,nBFns), &
-        data_bPhBfnArr(nObs,nBFns) )
+    !allocate ( &
+    !    data_PLMBFnArr(nObs,nBFns), &
+    !    data_dPLMBfnArr(nObs,nBFns), &
+    !    data_YBfnArr(nObs,nBFns), &
+    !    data_brBfnArr(nObs,nBFns), &
+    !    data_bThBfnArr(nObs,nBFns), &
+    !    data_bPhBfnArr(nObs,nBFns) )
 
-    allocate ( mArr(nBFns), nArr(nBfns), kArr(nBfns) )
+    allocate ( basisOut(nObs,nBFns) )
+    if (.not. allocated ( mArr )) then 
+        allocate ( mArr(nBFns), nArr(nBfns), kArr(nBfns) )
+    endif
 
     r = rE
 
@@ -119,6 +126,8 @@ subroutine create_bFns_at_data ( dataIn )
             lon = dataIn(i)%GEI_lon_rad
             x = cos(coLat)
 
+            write(*,*) coLat, lon, x
+
             !write(*,*) maxK, m, x, cnt, span, i 
 
             ! The GSL routines assume you want the l=0,m=0 term, so
@@ -128,17 +137,17 @@ subroutine create_bFns_at_data ( dataIn )
 
             fgsl_stat = fgsl_sf_legendre_sphplm_deriv_array ( &
                     maxK, abs(m), x, &
-                    data_PLMBFnArr(i,cnt:cnt+span-1), & 
-                    data_dPLMBFnArr(i,cnt:cnt+span-1) )
+                    basisOut(i,cnt:cnt+span-1)%PLM, & 
+                    basisOut(i,cnt:cnt+span-1)%dPLM )
 
             rDep = 1d0
             dYdR_rDep = 1d0
 
-            data_YBFnArr(i,cnt:cnt+span-1) = rDep * data_PLMBFnArr(i,cnt:cnt+span-1) * cos ( abs(m) * lon )
-            data_brBFnArr(i,cnt:cnt+span-1) = dYdr_rDep * data_PLMBFnArr(i,cnt:cnt+span-1) * cos (abs(m) * lon )
-            data_bThBFnArr(i,cnt:cnt+span-1) = 1d0 / r * rDep * data_dPLMBFnArr(i,cnt:cnt+span-1) * cos ( abs(m) * lon )
-            data_bPhBFnArr(i,cnt:cnt+span-1) = -m * rDep / ( r * sin ( coLat ) ) &
-                * data_PLMBFnArr(i,cnt:cnt+span-1) * sin ( m * lon )
+            basisOut(i,cnt:cnt+span-1)%Y = rDep * basisOut(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
+            basisOut(i,cnt:cnt+span-1)%br = dYdr_rDep * basisOut(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
+            basisOut(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basisOut(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
+            basisOut(i,cnt:cnt+span-1)%bPh = -m * rDep / ( r * sin ( coLat ) ) &
+                * basisOut(i,cnt:cnt+span-1)%PLM * sin ( m * lon )
 
             mArr(cnt:cnt+span-1) = m
             nArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
@@ -150,21 +159,23 @@ subroutine create_bFns_at_data ( dataIn )
 
     enddo
 
-    deallocate ( data_PLMBFnArr, data_dPLMBFnArr )
+    !deallocate ( data_PLMBFnArr, data_dPLMBFnArr )
 
-    allocate ( la_data_basisArr(nObs*2,nBFns*2) )
+    if(.not. allocated(la_data_basisArr)) then 
+        allocate ( la_data_basisArr(nObs*2,nBFns*2) )
 
-    la_data_basisArr(1:nObs,1:nBFns) = data_bThBFnArr
-    la_data_basisArr(nObs+1:2*nObs,nBFns+1:2*nBFns) = data_bThBFnArr
-    la_data_basisArr(1:nObs,nBFns+1:2*nBFns) = -data_bPhBFnArr
-    la_data_basisArr(nObs+1:2*nObs,1:nBFns) = data_bPhBFnArr
+        la_data_basisArr(1:nObs,1:nBFns) = basisOut%bTh
+        la_data_basisArr(nObs+1:2*nObs,nBFns+1:2*nBFns) = basisOut%bTh
+        la_data_basisArr(1:nObs,nBFns+1:2*nBFns) = -basisOut%bPh
+        la_data_basisArr(nObs+1:2*nObs,1:nBFns) = basisOut%bPh
 
-    !write(*,*) '    mArr: ', mArr
-    !write(*,*) '    kArr: ', kArr
+        !write(*,*) '    mArr: ', mArr
+        !write(*,*) '    kArr: ', kArr
 
-    write(*,*) '    Size of basis array: ', nBFns*2d0*nObs*2d0*16/(1024d0**2), 'MB'
+        write(*,*) '    Size of basis array: ', nBFns*2d0*nObs*2d0*16/(1024d0**2), 'MB'
 
-    write(*,*) 'DONE'
+        write(*,*) 'DONE'
+    endif
 
 end subroutine create_bFns_at_data
 

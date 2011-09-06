@@ -126,8 +126,7 @@ subroutine create_bFns_at_data ( dataIn, basisOut )
             lon = dataIn(i)%GEI_lon_rad
             x = cos(coLat)
 
-            write(*,*) coLat, lon, x
-
+            !write(*,*) coLat, lon, x
             !write(*,*) maxK, m, x, cnt, span, i 
 
             ! The GSL routines assume you want the l=0,m=0 term, so

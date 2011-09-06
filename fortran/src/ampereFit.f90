@@ -30,7 +30,7 @@ program ampereFit
                 geogLat_deg(:,:), &
                 geogLon_deg(:,:), &
                 geogHgt_km(:,:) 
-        type(ampData), allocatable :: dataGrid(:)
+        type(ampData), allocatable :: dataGrid(:), dataGridShifted(:)
 
         real :: gridCoLat_deg, gridHgt_km, latStep, lonStep
         integer :: i, j, idx
@@ -127,7 +127,7 @@ program ampereFit
                         endif
 
                         idx = (i-1)*nLonGrid+j
-                        write(*,*) 'idx: ', idx
+                        !write(*,*) 'idx: ', idx
                         dataGrid(idx)%GEI_coLat_deg = 90.0-geogLat_deg(i,j)
                         dataGrid(idx)%GEI_lon_deg = geogLon_deg(i,j)
 
@@ -136,17 +136,24 @@ program ampereFit
 
                         dataGrid(idx)%GEI_R_km = aacgmHgtGrid_km(i,j)
 
-                        write(*,*) dataGrid(idx)%GEI_coLat_rad, &
-                                dataGrid(idx)%GEI_lon_rad, &
-                                dataGrid(idx)%GEI_coLat_deg, &
-                                dataGrid(idx)%GEI_lon_deg, &
-                                dataGrid(idx)%GEI_R_km
+                        dataGrid(idx)%dbx = 0.0
+                        dataGrid(idx)%dby = 0.0
+                        dataGrid(idx)%dbz = 0.0
+
+                        !write(*,*) dataGrid(idx)%GEI_coLat_rad, &
+                        !        dataGrid(idx)%GEI_lon_rad, &
+                        !        dataGrid(idx)%GEI_coLat_deg, &
+                        !        dataGrid(idx)%GEI_lon_deg, &
+                        !        dataGrid(idx)%GEI_R_km
 
 
                 enddo
         enddo
 
-        call create_bFns_at_data ( dataGrid, gridBFn )
+        call XYZ_from_SPH ( dataGrid )
+        allocate ( dataGridShifted (size(dataGrid)) )
+        call create_dataShifted ( dataGrid, dataGridShifted )
+        call create_bFns_at_data ( dataGridShifted, gridBFn )
 
         iLat = 85.0
         iLon = 45.0

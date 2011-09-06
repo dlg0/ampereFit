@@ -7,6 +7,36 @@ implicit none
 
 contains
 
+subroutine XYZ_from_SPH ( dataIn )
+
+    implicit none
+    type(ampData), intent(inout) :: dataIn(:)
+    
+    integer :: j, i
+
+    write(*,*) 'Generating XYZ coords from SPH coords ...'
+
+    j = 1
+
+    coords_XYZ_from_SPH: &
+    do i=1,size(dataIn)
+
+        ! Double precision GEOPACK only
+        call sphcar_08 ( &
+                    dataIn(i)%GEI_R_km, &
+                    dataIn(i)%GEI_coLat_rad, &
+                    dataIn(i)%GEI_lon_rad, &
+                    dataIn(i)%px, &
+                    dataIn(i)%py, &
+                    dataIn(i)%pz, &
+                    j )
+
+    enddo coords_XYZ_from_SPH
+
+    write(*,*) 'DONE'
+
+end subroutine XYZ_from_SPH
+
 subroutine XYZ_to_SPH ( dataIn )
 
     implicit none

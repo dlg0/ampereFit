@@ -43,6 +43,9 @@ ${EXEC}: ${OBJECTS}
 ${OBJ_DIR}/%.o: ${SRC_DIR}/%.f90
 	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS}
 
+${OBJ_DIR}/%.o: ${SRC_DIR}/%.F90
+	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS}
+
 ${OBJ_DIR}/geopack.o: ${SRC_DIR}/geopack/geopack-2008_dp.f
 	${F77} -c ${F70FLAGS} $< -o $@ ${DEBUG_OPTS}
 

@@ -40,7 +40,7 @@ subroutine calculate_intersection_point ( dataIn )
     fit_2d_poly_to_track: &
     do p=0,5
 
-        mask    = dataIn%iPln==p .and. dataIn%GEI_coLat_deg < 35
+        mask    = dataIn%iPln==p .and. dataIn%T*radToDeg < 35
         nTrackPts    = count ( mask )
         M = nTrackPts 
         N = 3
@@ -54,11 +54,11 @@ subroutine calculate_intersection_point ( dataIn )
 
         ! y = Ax^2 + Bx + C
 
-        la_A(:,1)   = dataIn(iiSubSet)%px**2
-        la_A(:,2)   = dataIn(iiSubSet)%px
+        la_A(:,1)   = dataIn(iiSubSet)%x**2
+        la_A(:,2)   = dataIn(iiSubSet)%x
         la_A(:,3)   = 1
 
-        la_B    = dataIn(iiSubSet)%py
+        la_B    = dataIn(iiSubSet)%y
 
         !write(*,*) '    Calling la_gelss ...'
         call la_gelss ( la_A, la_B, la_rank, la_S, info = la_info ) 
@@ -141,8 +141,8 @@ subroutine calculate_intersection_point ( dataIn )
     cnt = 0
     do while ( nCloseDataPts < 20 ) 
 
-        mask    = sqrt((x_intersection-dataIn%px)**2+(y_intersection-dataIn%px)**2) < (10 + cnt * 10) &
-                    .and. dataIn%GEI_coLat_deg < 35
+        mask    = sqrt((x_intersection-dataIn%x)**2+(y_intersection-dataIn%x)**2) < (10 + cnt * 10) &
+                    .and. dataIn%T*radToDeg < 35
         nCloseDataPts   = count ( mask )
 
         cnt = cnt + 1 
@@ -152,7 +152,7 @@ subroutine calculate_intersection_point ( dataIn )
     allocate ( iiSubSet(nCloseDataPts) )
     iiSubSet    = pack ( (/ (i, i=1, size(dataIn)) /), mask = mask )  
 
-    r_intersect=sum (dataIn(iiSubSet)%GEI_R_km ) / nCloseDataPts
+    r_intersect=sum (dataIn(iiSubSet)%R ) / nCloseDataPts
     z_intersection = sqrt(r_intersect**2 - x_intersection**2-y_intersection**2)
 ! Set for Nth hemis (+z) at the moment)
 !    z_intersection  = sum ( dataIn(iiSubSet)%pz ) / nCloseDataPts
@@ -280,24 +280,24 @@ subroutine create_dataShifted ( dataIn, dataOut )
     shift_coordinates_and_vectors: &
     do i=1,size(dataIn)
 
-        pos_vec(1)  = dataIn(i)%px
-        pos_vec(2)  = dataIn(i)%py
-        pos_vec(3)  = dataIn(i)%pz
+        pos_vec(1)  = dataIn(i)%x
+        pos_vec(2)  = dataIn(i)%y
+        pos_vec(3)  = dataIn(i)%z
 
-        b_vec(1)  = dataIn(i)%dbx
-        b_vec(2)  = dataIn(i)%dby
-        b_vec(3)  = dataIn(i)%dbz
+        b_vec(1)  = dataIn(i)%bx
+        b_vec(2)  = dataIn(i)%by
+        b_vec(3)  = dataIn(i)%bz
 
         shifted_pos_vec = matMul ( shift_rot_mat, pos_vec )
         shifted_b_vec = matMul ( shift_rot_mat, b_vec )
 
-        dataOut(i)%px  = shifted_pos_vec(1)
-        dataOut(i)%py  = shifted_pos_vec(2)
-        dataOut(i)%pz  = shifted_pos_vec(3)
+        dataOut(i)%x  = shifted_pos_vec(1)
+        dataOut(i)%y  = shifted_pos_vec(2)
+        dataOut(i)%z  = shifted_pos_vec(3)
 
-        dataOut(i)%dbx  = shifted_b_vec(1)
-        dataOut(i)%dby  = shifted_b_vec(2)
-        dataOut(i)%dbz  = shifted_b_vec(3)
+        dataOut(i)%bx  = shifted_b_vec(1)
+        dataOut(i)%by  = shifted_b_vec(2)
+        dataOut(i)%bz  = shifted_b_vec(3)
 
     enddo shift_coordinates_and_vectors
 

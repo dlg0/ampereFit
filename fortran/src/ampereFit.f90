@@ -18,7 +18,10 @@ program ampereFit
 
     integer :: trk_order(6)
 ! structure to hold modified (ghost added) data
-    type(ampData), allocatable :: dataHalfSphere_ghosted(:)
+    type(ampData), allocatable :: &
+        dataHalfSphere_ghosted(:), &
+        dataHalfSphere_ghosted_fit(:)
+
     real(kind=DBL) :: clat_lim
 
         ! AACGM Grid vars
@@ -39,6 +42,8 @@ program ampereFit
         real(DBL), target :: oLat, oLon, r
         integer :: yr, flg, s, yrsec
         real(DBL) :: mlon, mlt
+
+        real(DBL), allocatable :: coeffs(:)
 
     call init_nameList ()
 
@@ -62,22 +67,24 @@ program ampereFit
 
     call tag_lon_strays ( dataShifted, south )
 
-!   call tag_lon_strays ( dataShifted, south )
-
     call create_dataHalfSphere ( dataShifted )
 
     clat_lim = 25.0
     call ampFit_ghost ( dataHalfSphere, dataHalfSphere_ghosted, clat_lim, trk_order )
 
-!    call create_bFns_at_data ( dataHalfSphere )
     call create_bFns_at_data ( dataHalfSphere_ghosted, dataBFn )
 
-!    call ampFit_solve_svd ( la_data_basisArr, dataHalfSphere )
-    call ampFit_solve_svd ( la_data_basisArr, dataHalfSphere_ghosted )
+    allocate(coeffs(nBFns*2))
+    coeffs = ampFit_solve_svd ( dataBFn, dataHalfSphere_ghosted )
 
-    call write_data ( dataOriginal, fileName = 'ampData_original.nc' )
-    call write_data ( dataHalfSphere, fileName = 'ampData_shifted.nc' )
-    call write_data ( dataHalfSphere_ghosted, fileName = 'ampData_ghosted.nc' )
+    allocate(dataHalfSphere_ghosted_fit(size(dataHalfSphere_ghosted)))
+    dataHalfSphere_ghosted_fit = dataHalfSphere_ghosted 
+    call ampFit_sumBasis ( dataBFn, dataHalfSphere_ghosted, coeffs )
+
+    call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
+    call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
+    call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
+    call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
 
 ! Try to call the aacgm C library
 
@@ -127,18 +134,15 @@ program ampereFit
                         endif
 
                         idx = (i-1)*nLonGrid+j
-                        !write(*,*) 'idx: ', idx
-                        dataGrid(idx)%GEI_coLat_deg = 90.0-geogLat_deg(i,j)
-                        dataGrid(idx)%GEI_lon_deg = geogLon_deg(i,j)
 
-                        dataGrid(idx)%GEI_coLat_rad = (90.0-geogLat_deg(i,j))* degToRad
-                        dataGrid(idx)%GEI_lon_rad = (geogLon_deg(i,j)) * degToRad
+                        dataGrid(idx)%T = (90.0-geogLat_deg(i,j))* degToRad
+                        dataGrid(idx)%P = (geogLon_deg(i,j)) * degToRad
 
-                        dataGrid(idx)%GEI_R_km = aacgmHgtGrid_km(i,j)
+                        dataGrid(idx)%R = aacgmHgtGrid_km(i,j)
 
-                        dataGrid(idx)%dbx = 0.0
-                        dataGrid(idx)%dby = 0.0
-                        dataGrid(idx)%dbz = 0.0
+                        dataGrid(idx)%bX = 0.0
+                        dataGrid(idx)%bY = 0.0
+                        dataGrid(idx)%bZ = 0.0
 
                         !write(*,*) dataGrid(idx)%GEI_coLat_rad, &
                         !        dataGrid(idx)%GEI_lon_rad, &

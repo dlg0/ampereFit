@@ -94,13 +94,13 @@ subroutine ampFit_fill_structures
     dataOriginal%qual = pseudo_sv_quality(iiSubSet)
     dataOriginal%splice = data_splice(iiSubSet)
 
-    dataOriginal%px = pos_ECI(1,iiSubSet)*1d-3
-    dataOriginal%py = pos_ECI(2,iiSubSet)*1d-3
-    dataOriginal%pz = pos_ECI(3,iiSubSet)*1d-3
+    dataOriginal%x = pos_ECI(1,iiSubSet)*1d-3
+    dataOriginal%y = pos_ECI(2,iiSubSet)*1d-3
+    dataOriginal%z = pos_ECI(3,iiSubSet)*1d-3
 
-    dataOriginal%dbx = b_ECI(1,iiSubSet)
-    dataOriginal%dby = b_ECI(2,iiSubSet)
-    dataOriginal%dbz = b_ECI(3,iiSubSet)
+    dataOriginal%bx = b_ECI(1,iiSubSet)
+    dataOriginal%by = b_ECI(2,iiSubSet)
+    dataOriginal%bz = b_ECI(3,iiSubSet)
 
 
     ! Deallocate to full set of data, 
@@ -134,7 +134,7 @@ subroutine create_dataHalfSphere ( dataIn )
 
     allocate ( mask(size(dataIn) ) )
 
-    mask    = dataIn%GEI_coLat_rad * radToDeg <= 90
+    mask    = dataIn%T * radToDeg <= 90
 
     nHalfSphere = count ( mask )
 

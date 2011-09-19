@@ -23,12 +23,12 @@ subroutine XYZ_from_SPH ( dataIn )
 
         ! Double precision GEOPACK only
         call sphcar_08 ( &
-                    dataIn(i)%GEI_R_km, &
-                    dataIn(i)%GEI_coLat_rad, &
-                    dataIn(i)%GEI_lon_rad, &
-                    dataIn(i)%px, &
-                    dataIn(i)%py, &
-                    dataIn(i)%pz, &
+                    dataIn(i)%R, &
+                    dataIn(i)%T, &
+                    dataIn(i)%P, &
+                    dataIn(i)%x, &
+                    dataIn(i)%y, &
+                    dataIn(i)%z, &
                     j )
 
     enddo coords_XYZ_from_SPH
@@ -54,15 +54,15 @@ subroutine XYZ_to_SPH ( dataIn )
         
         ! Double precision GEOPACK only
         call bcarsp_08 ( &
-                    dataIn(i)%px, &
-                    dataIn(i)%py, &
-                    dataIn(i)%pz, &
-                    dataIn(i)%dbx, &
-                    dataIn(i)%dby, &
-                    dataIn(i)%dbz, &
-                    dataIn(i)%br_GEI, &
-                    dataIn(i)%bTheta_GEI, &
-                    dataIn(i)%bPhi_GEI )
+                    dataIn(i)%x, &
+                    dataIn(i)%y, &
+                    dataIn(i)%z, &
+                    dataIn(i)%bx, &
+                    dataIn(i)%by, &
+                    dataIn(i)%bz, &
+                    dataIn(i)%bR, &
+                    dataIn(i)%bT, &
+                    dataIn(i)%bP )
 
     enddo vectors_GEI_XYZ_to_SPH
 
@@ -81,18 +81,15 @@ subroutine XYZ_to_SPH ( dataIn )
 
         ! Double precision GEOPACK only
         call sphcar_08 ( &
-                    dataIn(i)%GEI_R_km, &
-                    dataIn(i)%GEI_coLat_rad, &
-                    dataIn(i)%GEI_lon_rad, &
-                    dataIn(i)%px, &
-                    dataIn(i)%py, &
-                    dataIn(i)%pz, &
+                    dataIn(i)%R, &
+                    dataIn(i)%T, &
+                    dataIn(i)%P, &
+                    dataIn(i)%x, &
+                    dataIn(i)%y, &
+                    dataIn(i)%z, &
                     j )
 
     end do coords_GEI_XYZ_to_SPH
-
-    dataIn%GEI_coLat_deg = dataIn%GEI_coLat_rad * radToDeg
-    dataIn%GEI_lon_deg = dataIn%GEI_lon_rad * radToDeg 
 
     write(*,*) '    DONE'
 

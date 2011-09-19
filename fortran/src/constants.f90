@@ -18,12 +18,12 @@ module constants
     real(kind=DBL), parameter :: e0  = e0_ * rE ** 3;
     real(kind=DBL), parameter :: c = c_ / rE;
 
-    type :: basis
+    type :: ampBasis
 
         real(DBL) :: PLM, dPLM
         real(DBL) :: Y, br, bTh, bPh
 
-    end type basis
+    end type ampBasis
 
     type :: ampData
         real(kind=DBL) :: utc           ! UT time in dec hours
@@ -32,11 +32,13 @@ module constants
         real :: qual                    ! data quality from Lars
         integer :: splice               ! flag for spliced data - where missing data estimated
         integer :: typ                  ! data type (for CLW) - This is NOT a helpful description !!
-        real(kind=DBL) :: px, py, pz
-        real(kind=DBL) :: dbx, dby, dbz
-        real(kind=DBL) :: GEI_R_km, GEI_coLat_deg, GEI_lon_deg, &
-            GEI_coLat_rad, GEI_lon_rad, &
-            br_GEI, bTheta_GEI, bPhi_GEI 
+        real(kind=DBL) :: x, y, z
+        real(kind=DBL) :: bX, bY, bZ
+        real(kind=DBL) :: &
+            R, & ! [km]
+            T, & ! [coLat, rad]
+            P, & ! [lon, rad]
+            bR, bT, bP
 
     end type ampData
 

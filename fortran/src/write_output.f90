@@ -16,12 +16,11 @@ subroutine write_data ( dataIn, fileName )
     character(len=*), intent(in), optional :: fileName
     character(len=100)  :: useFileName
 
-    integer :: utc_id, bR_GEI_id, bT_GEI_id, bP_GEI_id, &
+    integer :: utc_id, bR_id, bT_id, bP_id, &
         nObs_id, nc_id, &
-        fit_bT_GEI_id, fit_bP_GEI_id, &
-        data_GEI_coLat_rad_id, data_GEI_lon_rad_id, data_GEI_R_km_id, &
-        bx_GEI_id, by_GEI_id, bz_GEI_id, &
-        data_GEI_px_id, data_GEI_py_id, data_GEI_pz_id
+        T_id, P_id, R_id, &
+        bX_id, bY_id, bZ_id, &
+        X_id, Y_id, Z_id
 
     integer :: nObs 
 
@@ -40,50 +39,41 @@ subroutine write_data ( dataIn, fileName )
    
     call dlg_check ( nf90_def_var ( nc_id, 'utc', NF90_DOUBLE, (/ nObs_id /), utc_id ) )
 
-    call dlg_check ( nf90_def_var ( nc_id, 'data_bR_GEI', NF90_DOUBLE, (/ nObs_id /), bR_GEI_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_bT_GEI', NF90_DOUBLE, (/ nObs_id /), bT_GEI_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_bP_GEI', NF90_DOUBLE, (/ nObs_id /), bP_GEI_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bR', NF90_DOUBLE, (/ nObs_id /), bR_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bT', NF90_DOUBLE, (/ nObs_id /), bT_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bP', NF90_DOUBLE, (/ nObs_id /), bP_id ) )
 
-    call dlg_check ( nf90_def_var ( nc_id, 'data_bx_GEI', NF90_DOUBLE, (/ nObs_id /), bx_GEI_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_by_GEI', NF90_DOUBLE, (/ nObs_id /), by_GEI_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_bz_GEI', NF90_DOUBLE, (/ nObs_id /), bz_GEI_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bX', NF90_DOUBLE, (/ nObs_id /), bx_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bY', NF90_DOUBLE, (/ nObs_id /), by_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'bZ', NF90_DOUBLE, (/ nObs_id /), bz_id ) )
 
-!    call dlg_check ( nf90_def_var ( nc_id, 'fit_bT_GEI', NF90_DOUBLE, (/ nObs_id /), fit_bT_GEI_id ) )
-!    call dlg_check ( nf90_def_var ( nc_id, 'fit_bP_GEI', NF90_DOUBLE, (/ nObs_id /), fit_bP_GEI_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'T', NF90_DOUBLE, (/ nObs_id /), T_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'P', NF90_DOUBLE, (/ nObs_id /), P_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'R', NF90_DOUBLE, (/ nObs_id /), R_id ) )
 
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_coLat_rad', &
-            NF90_DOUBLE, (/ nObs_id /), data_GEI_coLat_rad_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_lon_rad', &
-            NF90_DOUBLE, (/ nObs_id /), data_GEI_lon_rad_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_R_km', &
-            NF90_DOUBLE, (/ nObs_id /), data_GEI_R_km_id ) )
-
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_px', NF90_DOUBLE, (/ nObs_id /), data_GEI_px_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_py', NF90_DOUBLE, (/ nObs_id /), data_GEI_py_id ) )
-    call dlg_check ( nf90_def_var ( nc_id, 'data_GEI_pz', NF90_DOUBLE, (/ nObs_id /), data_GEI_pz_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'X', NF90_DOUBLE, (/ nObs_id /), X_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'Y', NF90_DOUBLE, (/ nObs_id /), Y_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'Z', NF90_DOUBLE, (/ nObs_id /), Z_id ) )
   
     call dlg_check ( nf90_enddef ( nc_id ) )
     
     call dlg_check ( nf90_put_var ( nc_id, utc_id, dataIn%utc ) )
 
-    call dlg_check ( nf90_put_var ( nc_id, bR_GEI_id, dataIn%bR_GEI ) )
-    call dlg_check ( nf90_put_var ( nc_id, bT_GEI_id, dataIn%bTheta_GEI ) )
-    call dlg_check ( nf90_put_var ( nc_id, bP_GEI_id, dataIn%bPhi_GEI ) )
+    call dlg_check ( nf90_put_var ( nc_id, bR_id, dataIn%bR) )
+    call dlg_check ( nf90_put_var ( nc_id, bT_id, dataIn%bT) )
+    call dlg_check ( nf90_put_var ( nc_id, bP_id, dataIn%bP) )
 
-    call dlg_check ( nf90_put_var ( nc_id, bx_GEI_id, dataIn%dbx ) )
-    call dlg_check ( nf90_put_var ( nc_id, by_GEI_id, dataIn%dby ) )
-    call dlg_check ( nf90_put_var ( nc_id, bz_GEI_id, dataIn%dbz ) )
+    call dlg_check ( nf90_put_var ( nc_id, bx_id, dataIn%bX ) )
+    call dlg_check ( nf90_put_var ( nc_id, by_id, dataIn%bY ) )
+    call dlg_check ( nf90_put_var ( nc_id, bz_id, dataIn%bZ ) )
 
-!    call dlg_check ( nf90_put_var ( nc_id, fit_bT_GEI_id, fit_bTheta_GEI ) )
-!    call dlg_check ( nf90_put_var ( nc_id, fit_bP_GEI_id, fit_bPhi_GEI ) )
+    call dlg_check ( nf90_put_var ( nc_id, T_id, dataIn%T ) )
+    call dlg_check ( nf90_put_var ( nc_id, P_id, dataIn%P ) )
+    call dlg_check ( nf90_put_var ( nc_id, R_id, dataIn%R ) )
 
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_coLat_rad_id, dataIn%GEI_coLat_rad ) )
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_lon_rad_id, dataIn%GEI_lon_rad ) )
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_R_km_id, dataIn%GEI_R_km ) )
-
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_px_id, dataIn%px ) )
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_py_id, dataIn%py ) )
-    call dlg_check ( nf90_put_var ( nc_id, data_GEI_pz_id, dataIn%pz ) )
+    call dlg_check ( nf90_put_var ( nc_id, X_id, dataIn%x ) )
+    call dlg_check ( nf90_put_var ( nc_id, Y_id, dataIn%y ) )
+    call dlg_check ( nf90_put_var ( nc_id, Z_id, dataIn%z ) )
 
     call dlg_check ( nf90_close ( nc_id ) )
 

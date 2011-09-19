@@ -253,30 +253,30 @@ print*,'Sorting each data track...'
 
 ! Get indexes where data has correct TrackNum and Bth hemisphere
       tmplogic_arr = .false.          ! initialise logic array
-      tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%GEI_coLat_deg <= 90.0
+      tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%T*radToDeg <= 90.0
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_n)
       allocate(idx_n(iiTrack_n))      ! get mem for these data
       idx_n = tmp_idx(1:iiTrack_n)    ! indexes for these vals
 
 ! Get indexes for (i) Track (ii) Nth hemis (iii) < 180 in lon 
       tmplogic_arr = .false.
-      tmplogic_arr=struc_data(idx_n)%GEI_lon_deg <= 180.0
+      tmplogic_arr=struc_data(idx_n)%P*radToDeg <= 180.0
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_nlon)
       allocate(idx_nlon(iiTrack_nlon))    ! get mem for these data
       idx_nlon = tmp_idx(1:iiTrack_nlon)  ! indexes for these vals
 ! These are the indexes of struc for Nth, correct Tr_num and lon <= 180
 
-      iiSt_n = maxloc(struc_data(idx_n(idx_nlon))%GEI_coLat_deg)  ! index of equator point
+      iiSt_n = maxloc(struc_data(idx_n(idx_nlon))%T*radToDeg)  ! index of equator point
       i = idx_n(idx_nlon(iiSt_n(1)))
-      st_lat = 90.0 - struc_data(i)%GEI_coLat_deg  ! Lat of this point
-      st_lon  = struc_data(i)%GEI_lon_deg          ! Lon of this point
+      st_lat = 90.0 - struc_data(i)%T*radToDeg  ! Lat of this point
+      st_lon  = struc_data(i)%P*radToDeg          ! Lon of this point
 ! st_Lat,st_Lon is the coord of the great circle dist reference point
 
       strt_lona(Tr_num+1) = st_lon         ! store start longitude
       trk_order(Tr_num+1) = Tr_num
       allocate(gcDist_n(iiTrack_n))        ! iiTrack_n is the size of idx_n
-      call gcirc_dist(st_lat, 90.0-struc_data(idx_n)%GEI_coLat_deg, &
-             st_lon, struc_data(idx_n)%GEI_lon_deg, iiTrack_n, gcDist_n)
+      call gcirc_dist(st_lat, 90.0-struc_data(idx_n)%T*radToDeg, &
+             st_lon, struc_data(idx_n)%P*radToDeg, iiTrack_n, gcDist_n)
 
 ! sort the distances, returns idx of sorted array
       allocate(T((iiTrack_n+1)/2))
@@ -298,14 +298,14 @@ print*,'Sorting each data track...'
 ! ------  do Sth hemisphere ------
 
       tmplogic_arr = .false.          ! initialise logic array
-      tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%GEI_coLat_deg > 90.0
+      tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%T*radToDeg > 90.0
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_s)
       allocate(idx_s(iiTrack_s))      ! get mem for these data
       idx_s = tmp_idx(1:iiTrack_s)    ! indexes for these vals
 
       allocate(gcDist_s(iiTrack_s))           ! iiTrack_s is the size of idx_s
-      call gcirc_dist(st_lat, 90.0-struc_data(idx_s)%GEI_coLat_deg, &
-             st_lon, struc_data(idx_s)%GEI_lon_deg, iiTrack_s, gcDist_s)
+      call gcirc_dist(st_lat, 90.0-struc_data(idx_s)%T*radToDeg, &
+             st_lon, struc_data(idx_s)%P*radToDeg, iiTrack_s, gcDist_s)
 
 ! sort the distances, returns idx of sorted array
       allocate(T((iiTrack_s+1)/2))
@@ -326,7 +326,7 @@ print*,'Sorting each data track...'
     enddo sort_track_loop
     struc_data = struc_data( sortII )   ! sort the structure
 !do i=1,50
-! print*,struc_data(i)%GEI_coLat_deg,struc_data(i)%GEI_lon_deg
+! print*,struc_data(i)%T*radToDeg,struc_data(i)%P*radToDeg
 !enddo
 
 ! sort the track order, returns trk_order
@@ -375,9 +375,9 @@ print*,'DONE_sort'
 ! select data from correct track and Nth hemis
       tmplogic_arr = .false.          ! initialise logic array
       if (south .eq. 1) then
-        tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%GEI_coLat_deg >= 90.0
+        tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%T*radToDeg >= 90.0
       else
-        tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%GEI_coLat_deg <= 90.0
+        tmplogic_arr=struc_data%ipln==Tr_num .and. struc_data%T*radToDeg <= 90.0
       endif
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack)
       allocate(idx_n(iiTrack))      ! get mem for these data
@@ -385,31 +385,31 @@ print*,'DONE_sort'
       struc_data(idx_n)%typ = 0     ! initialise type as normal
 
 ! 1st point is on the equator - assumes data are sorted
-      uvec(1) = struc_data(idx_n(1))%px
-      uvec(2) = struc_data(idx_n(1))%py
-      uvec(3) = struc_data(idx_n(1))%pz
+      uvec(1) = struc_data(idx_n(1))%X
+      uvec(2) = struc_data(idx_n(1))%Y
+      uvec(3) = struc_data(idx_n(1))%Z
       uvec = norm_vec(uvec)
 
 ! Get data subset 1/2 about between pole and equator for 2nd point
       tmplogic_arr = .false.
       if (south .eq. 1) then
-        tmplogic_arr=struc_data(idx_n)%GEI_coLat_deg > 130.0 &
-               .and. struc_data(idx_n)%GEI_coLat_deg < 140.0
+        tmplogic_arr=struc_data(idx_n)%T*radToDeg > 130.0 &
+               .and. struc_data(idx_n)%T*radToDeg < 140.0
       else
-        tmplogic_arr=struc_data(idx_n)%GEI_coLat_deg > 40.0 &
-               .and. struc_data(idx_n)%GEI_coLat_deg < 50.0
+        tmplogic_arr=struc_data(idx_n)%T*radToDeg > 40.0 &
+               .and. struc_data(idx_n)%T*radToDeg < 50.0
       endif
       call my_where(tmplogic_arr, np, tmp_idx, iiSel_lat)
       allocate(idx_sel_lat(iiSel_lat))    ! get mem for these data
       idx_sel_lat = tmp_idx(1:iiSel_lat)  ! indexes for these vals
 
       iiMin_loc = minloc ( &
-                  abs( struc_data(idx_n(idx_sel_lat))%GEI_lon_deg &
-                    -  struc_data(idx_n(1))%GEI_lon_deg ) )
+                  abs( struc_data(idx_n(idx_sel_lat))%P*radToDeg &
+                    -  struc_data(idx_n(1))%P*radToDeg ) )
 ! point 2 for great circle eqn
-      vvec(1) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%px
-      vvec(2) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%py
-      vvec(3) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%pz
+      vvec(1) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%X
+      vvec(2) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%Y
+      vvec(3) = struc_data(idx_n(idx_sel_lat(iiMin_loc(1))))%Z
       vvec = norm_vec(vvec)
 
       deallocate(idx_sel_lat)
@@ -421,15 +421,15 @@ print*,'DONE_sort'
       ncuvec = cross_p(nvec, uvec)
       
       allocate(rarr(iiTrack))
-      rarr = sqrt(struc_data(idx_n)%px**2 + &
-                  struc_data(idx_n)%py**2 + &
-                  struc_data(idx_n)%pz**2)
+      rarr = sqrt(struc_data(idx_n)%X**2 + &
+                  struc_data(idx_n)%Y**2 + &
+                  struc_data(idx_n)%Z**2)
       allocate(tarr(iiTrack))
       tarr(1)=0.0d0
       do i=2,iiTrack
-        dp = uvec(1)*struc_data(idx_n(i))%px + &
-             uvec(2)*struc_data(idx_n(i))%py + &
-             uvec(3)*struc_data(idx_n(i))%pz
+        dp = uvec(1)*struc_data(idx_n(i))%X + &
+             uvec(2)*struc_data(idx_n(i))%Y + &
+             uvec(3)*struc_data(idx_n(i))%Z
         tarr(i) = acos(dp/rarr(i))
       enddo
 
@@ -465,7 +465,7 @@ print*,'DONE_sort'
 ! check for lon (from eqn) - lon (from data) is > 180 (across 360 deg)
 ! can't compare arrays with different indexes, so loop'
       do i=1,iiTrack
-        lon_diff = abs(LonVarr(i) - struc_data(idx_n(i))%GEI_Lon_deg)
+        lon_diff = abs(LonVarr(i) - struc_data(idx_n(i))%P*radToDeg)
         if (lon_diff > 180.0) then
 ! if we have lon diff > 180, need to subtract off 360
           if (((360.0 - lon_diff) > 15.0 ) .or. &
@@ -539,10 +539,10 @@ print*,'DONE_sort'
 ! Calc min number of ghost points (excludes extra ghosts)
     tmplogic_arr = .false.        ! initialise logic array
     if (clat_lim .lt. 90.0) then  ! Nth hemis data
-      tmplogic_arr = struc_data%GEI_coLat_deg <= clat_lim .and. &
+      tmplogic_arr = struc_data%T*radToDeg <= clat_lim .and. &
                      struc_data%typ==0
     else                          ! Sth hemis data
-      tmplogic_arr = struc_data%GEI_coLat_deg >= clat_lim .and. &
+      tmplogic_arr = struc_data%T*radToDeg >= clat_lim .and. &
                      struc_data%typ==0
     endif
     call my_where(tmplogic_arr, np, tmp_idx, iighost)
@@ -555,11 +555,11 @@ print*,'DONE_sort'
       tmplogic_arr = .false.        ! initialise logic array
       if (clat_lim .lt. 90.0) then  ! Nth hemis data
         tmplogic_arr = struc_data%ipln==trk_order(Tr_num+1) .and. &
-                       struc_data%GEI_coLat_deg <= clat_lim .and. &
+                       struc_data%T*radToDeg <= clat_lim .and. &
                        struc_data%typ==0
       else                          ! Sth hemis data
         tmplogic_arr = struc_data%ipln==trk_order(Tr_num+1) .and. &
-                       struc_data%GEI_coLat_deg >= clat_lim .and. &
+                       struc_data%T*radToDeg >= clat_lim .and. &
                        struc_data%typ==0
       endif
       call my_where(tmplogic_arr, np, tmp_idx, iiTrk_1)
@@ -578,11 +578,11 @@ print*,'DONE_sort'
       if (clat_lim .lt. 90.0) then  ! Nth hemis data
 ! Get data for adjacent satellite track -> Trk_2
         tmplogic_arr = struc_data%ipln==trk_order(nxt_trk) .and. &
-                       struc_data%GEI_coLat_deg <= clat_lim .and. &
+                       struc_data%T*radToDeg <= clat_lim .and. &
                        struc_data%typ==0
       else                          ! Sth hemis data
         tmplogic_arr = struc_data%ipln==trk_order(nxt_trk) .and. &
-                       struc_data%GEI_coLat_deg >= clat_lim .and. &
+                       struc_data%T*radToDeg >= clat_lim .and. &
                        struc_data%typ==0
       endif
       call my_where(tmplogic_arr, np, tmp_idx, iiTrk_2)
@@ -593,10 +593,10 @@ print*,'DONE_sort'
 
       point_ex_loop: &
       do jj=1,iiTrk_1                ! loop thru all points on Trk_1
-        st_lat = struc_data(idx_Trk1(jj))%GEI_coLat_deg
-        st_lon = struc_data(idx_Trk1(jj))%GEI_lon_deg
-        call gcirc_dist(90.0-st_lat, 90.0-struc_data(idx_Trk2)%GEI_coLat_deg, &
-             st_lon, struc_data(idx_Trk2)%GEI_lon_deg, iiTrk_2, gcDist)
+        st_lat = struc_data(idx_Trk1(jj))%T*radToDeg
+        st_lon = struc_data(idx_Trk1(jj))%P*radToDeg
+        call gcirc_dist(90.0-st_lat, 90.0-struc_data(idx_Trk2)%T*radToDeg, &
+             st_lon, struc_data(idx_Trk2)%P*radToDeg, iiTrk_2, gcDist)
 
 ! iimn is the index of idx_Trk2 which has min dist
 !  between Trk2 and the jj point of Trk1
@@ -607,11 +607,11 @@ print*,'DONE_sort'
         endif
         xs = st_lat*cos(st_lon*pi/180.0)
         ys = st_lat*sin(st_lon*pi/180.0)
-        e_lat=struc_data(idx_Trk2(iimn(1)))%GEI_coLat_deg
+        e_lat=struc_data(idx_Trk2(iimn(1)))%T*radToDeg
         if (clat_lim .gt. 90.0) then
           e_lat=180.0-e_lat
         endif
-        e_lon=struc_data(idx_Trk2(iimn(1)))%GEI_lon_deg
+        e_lon=struc_data(idx_Trk2(iimn(1)))%P*radToDeg
         Nyq_Ok = 1
 
 ! Check if we need extra ghosts -> need to add 2 ghost points
@@ -661,78 +661,76 @@ print*,'DONE_sort'
           gh_data(cnt)%typ = 3
           exgh_data%typ = 3
           
-          gh_data(cnt)%GEI_R_km = 2.0/3.0*struc_data(idx1)%GEI_R_km + &
-                                1.0/3.0*struc_data(idx2)%GEI_R_km
-          exgh_data%GEI_R_km = 1.0/3.0*struc_data(idx1)%GEI_R_km + &
-                                2.0/3.0*struc_data(idx2)%GEI_R_km
+          gh_data(cnt)%R = 2.0/3.0*struc_data(idx1)%R + &
+                                1.0/3.0*struc_data(idx2)%R
+          exgh_data%R = 1.0/3.0*struc_data(idx1)%R + &
+                                2.0/3.0*struc_data(idx2)%R
 
           if (clat_lim .gt. 90.0) then   ! south hemis
-            gh_data(cnt)%GEI_coLat_deg = 180.0 - sqrt(xg1**2 + yg1**2)
-            exgh_data%GEI_coLat_deg = 180.0 - sqrt(xg2**2 + yg2**2)
+            gh_data(cnt)%T = (180.0 - sqrt(xg1**2 + yg1**2))*degToRad
+            exgh_data%T = (180.0 - sqrt(xg2**2 + yg2**2))*degToRad
           else                           ! North hemisphere
-            gh_data(cnt)%GEI_coLat_deg = sqrt(xg1**2 + yg1**2)
-            exgh_data%GEI_coLat_deg = sqrt(xg2**2 + yg2**2)
+            gh_data(cnt)%T = (sqrt(xg1**2 + yg1**2))*degToRad
+            exgh_data%T = (sqrt(xg2**2 + yg2**2))*degToRad
           endif
 
-          gh_data(cnt)%GEI_coLat_rad = gh_data(cnt)%GEI_coLat_deg*pi/180.0
-          exgh_data%GEI_coLat_rad = exgh_data%GEI_coLat_deg*pi/180.0
+          gh_data(cnt)%T = gh_data(cnt)%T*radToDeg*pi/180.0
+          exgh_data%T = exgh_data%T*radToDeg*pi/180.0
 
-          gh_data(cnt)%GEI_lon_rad = atan2(yg1,xg1)
-          exgh_data%GEI_lon_rad = atan2(yg2,xg2)
-          gh_data(cnt)%GEI_lon_deg = atan2(yg1,xg1)*180.0/pi
-          exgh_data%GEI_lon_deg = atan2(yg2,xg2)*180.0/pi
+          gh_data(cnt)%P = atan2(yg1,xg1)
+          exgh_data%P = atan2(yg2,xg2)
 ! Convert spherical coords to x,y,z
-          call sphcar_08(gh_data(cnt)%GEI_R_km, &
-                         gh_data(cnt)%GEI_coLat_rad, &
-                         gh_data(cnt)%GEI_lon_rad, &
+          call sphcar_08(gh_data(cnt)%R, &
+                         gh_data(cnt)%T, &
+                         gh_data(cnt)%P, &
                          xv, yv, zv, 1)
-          gh_data(cnt)%px = xv
-          gh_data(cnt)%py = yv
-          gh_data(cnt)%pz = zv
-          call sphcar_08(exgh_data%GEI_R_km, &
-                         exgh_data%GEI_coLat_rad, &
-                         exgh_data%GEI_lon_rad, &
+          gh_data(cnt)%X = xv
+          gh_data(cnt)%Y = yv
+          gh_data(cnt)%Z = zv
+          call sphcar_08(exgh_data%R, &
+                         exgh_data%T, &
+                         exgh_data%P, &
                          xv, yv, zv, 1)
-          exgh_data%px = xv
-          exgh_data%py = yv
-          exgh_data%pz = zv
+          exgh_data%X = xv
+          exgh_data%Y = yv
+          exgh_data%Z = zv
 
-          gh_data(cnt)%br_GEI = 2.0/3.0*struc_data(idx1)%br_GEI + &
-                                1.0/3.0*struc_data(idx2)%br_GEI
-          exgh_data%br_GEI = 1.0/3.0*struc_data(idx1)%br_GEI + &
-                                2.0/3.0*struc_data(idx2)%br_GEI
+          gh_data(cnt)%bR = 2.0/3.0*struc_data(idx1)%bR + &
+                                1.0/3.0*struc_data(idx2)%bR
+          exgh_data%bR = 1.0/3.0*struc_data(idx1)%bR + &
+                                2.0/3.0*struc_data(idx2)%bR
 
-          gh_data(cnt)%btheta_GEI = 2.0/3.0*struc_data(idx1)%btheta_GEI + &
-                                1.0/3.0*struc_data(idx2)%btheta_GEI
-          exgh_data%btheta_GEI = 1.0/3.0*struc_data(idx1)%btheta_GEI + &
-                                2.0/3.0*struc_data(idx2)%btheta_GEI
+          gh_data(cnt)%bT = 2.0/3.0*struc_data(idx1)%bT + &
+                                1.0/3.0*struc_data(idx2)%bT
+          exgh_data%bT = 1.0/3.0*struc_data(idx1)%bT + &
+                                2.0/3.0*struc_data(idx2)%bT
 
-          gh_data(cnt)%bphi_GEI = 2.0/3.0*struc_data(idx1)%bphi_GEI + &
-                                1.0/3.0*struc_data(idx2)%bphi_GEI
-          exgh_data%bphi_GEI = 1.0/3.0*struc_data(idx1)%bphi_GEI + &
-                                2.0/3.0*struc_data(idx2)%bphi_GEI
+          gh_data(cnt)%bP = 2.0/3.0*struc_data(idx1)%bP + &
+                                1.0/3.0*struc_data(idx2)%bP
+          exgh_data%bP = 1.0/3.0*struc_data(idx1)%bP + &
+                                2.0/3.0*struc_data(idx2)%bP
 ! Convert spherical dB vector to x,y,z
-          call bspcar_08(gh_data(cnt)%GEI_coLat_rad, &
-                         gh_data(cnt)%GEI_lon_rad, &
-                         gh_data(cnt)%br_GEI, &
-                         gh_data(cnt)%btheta_GEI, &
-                         gh_data(cnt)%bphi_GEI, &
+          call bspcar_08(gh_data(cnt)%T, &
+                         gh_data(cnt)%P, &
+                         gh_data(cnt)%bR, &
+                         gh_data(cnt)%bT, &
+                         gh_data(cnt)%bP, &
                          xv, yv, zv)
-          gh_data(cnt)%dbx = xv
-          gh_data(cnt)%dby = yv
-          gh_data(cnt)%dbz = zv
-          call bspcar_08(exgh_data%GEI_coLat_rad, &
-                         exgh_data%GEI_lon_rad, &
-                         exgh_data%br_GEI, &
-                         exgh_data%btheta_GEI, &
-                         exgh_data%bphi_GEI, &
+          gh_data(cnt)%bX = xv
+          gh_data(cnt)%bY = yv
+          gh_data(cnt)%bZ = zv
+          call bspcar_08(exgh_data%T, &
+                         exgh_data%P, &
+                         exgh_data%bR, &
+                         exgh_data%bT, &
+                         exgh_data%bP, &
                          xv, yv, zv)
-          exgh_data%dbx = xv
-          exgh_data%dby = yv
-          exgh_data%dbz = zv
+          exgh_data%bX = xv
+          exgh_data%bY = yv
+          exgh_data%bZ = zv
 ! write exgh_data to temp file
-          if (exgh_data%GEI_coLat_deg > 1.0 .and. &
-              exgh_data%GEI_coLat_deg < 179.0) then
+          if (exgh_data%T*radToDeg > 1.0 .and. &
+              exgh_data%T*radToDeg < 179.0) then
             write(1,*) exgh_data
           else
             iiex_gh = iiex_gh - 1   ! don't count this exghost
@@ -746,51 +744,50 @@ print*,'DONE_sort'
                                struc_data(idx2)%qual)/2.0
           gh_data(cnt)%typ = 2
           
-          gh_data(cnt)%GEI_R_km = (struc_data(idx1)%GEI_R_km + &
-                                   struc_data(idx2)%GEI_R_km)/2.0
+          gh_data(cnt)%R = (struc_data(idx1)%R + &
+                                   struc_data(idx2)%R)/2.0
 
           if (clat_lim .gt. 90.0) then   ! south hemis
-            gh_data(cnt)%GEI_coLat_deg = 180.0 - sqrt(xg**2 + yg**2)
+            gh_data(cnt)%T = (180.0 - sqrt(xg**2 + yg**2))*degToRad
           else                           ! North hemisphere
-            gh_data(cnt)%GEI_coLat_deg = sqrt(xg**2 + yg**2)
+            gh_data(cnt)%T = (sqrt(xg**2 + yg**2))*degToRad
           endif
 
-          gh_data(cnt)%GEI_coLat_rad = gh_data(cnt)%GEI_coLat_deg*pi/180.0
+          gh_data(cnt)%T = gh_data(cnt)%T*radToDeg*pi/180.0
 
-          gh_data(cnt)%GEI_lon_rad = atan2(yg,xg)
-          gh_data(cnt)%GEI_lon_deg = atan2(yg,xg)*180.0/pi
+          gh_data(cnt)%P = atan2(yg,xg)
 
-          call sphcar_08(gh_data(cnt)%GEI_R_km, &
-                         gh_data(cnt)%GEI_coLat_rad, &
-                         gh_data(cnt)%GEI_lon_rad, &
+          call sphcar_08(gh_data(cnt)%R, &
+                         gh_data(cnt)%T, &
+                         gh_data(cnt)%P, &
                          xv, yv, zv, 1)
-          gh_data(cnt)%px = xv
-          gh_data(cnt)%py = yv
-          gh_data(cnt)%pz = zv
+          gh_data(cnt)%X = xv
+          gh_data(cnt)%Y = yv
+          gh_data(cnt)%Z = zv
 
-          gh_data(cnt)%br_GEI = struc_data(idx1)%br_GEI + &
-                                struc_data(idx2)%br_GEI
+          gh_data(cnt)%bR = struc_data(idx1)%bR + &
+                                struc_data(idx2)%bR
 
-          gh_data(cnt)%btheta_GEI = (struc_data(idx1)%btheta_GEI + &
-                                     struc_data(idx2)%btheta_GEI)/2.0
+          gh_data(cnt)%bT = (struc_data(idx1)%bT + &
+                                     struc_data(idx2)%bT)/2.0
 
-          gh_data(cnt)%bphi_GEI = (struc_data(idx1)%bphi_GEI + &
-                                   struc_data(idx2)%bphi_GEI)/2.0
+          gh_data(cnt)%bP = (struc_data(idx1)%bP + &
+                                   struc_data(idx2)%bP)/2.0
 
-          call bspcar_08(gh_data(cnt)%GEI_coLat_rad, &
-                         gh_data(cnt)%GEI_lon_rad, &
-                         gh_data(cnt)%br_GEI, &
-                         gh_data(cnt)%btheta_GEI, &
-                         gh_data(cnt)%bphi_GEI, &
+          call bspcar_08(gh_data(cnt)%T, &
+                         gh_data(cnt)%P, &
+                         gh_data(cnt)%bR, &
+                         gh_data(cnt)%bT, &
+                         gh_data(cnt)%bP, &
                          xv, yv, zv)
-          gh_data(cnt)%dbx = xv
-          gh_data(cnt)%dby = yv
-          gh_data(cnt)%dbz = zv
+          gh_data(cnt)%bX = xv
+          gh_data(cnt)%bY = yv
+          gh_data(cnt)%bZ = zv
 
         endif    ! one ghost point
 
-        if (gh_data(cnt)%GEI_coLat_deg > 1.0 .and. &
-            gh_data(cnt)%GEI_coLat_deg < 179.0) then
+        if (gh_data(cnt)%T*radToDeg > 1.0 .and. &
+            gh_data(cnt)%T*radToDeg < 179.0) then
           cnt = cnt + 1
         endif
 

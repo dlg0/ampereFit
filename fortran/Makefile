@@ -1,5 +1,4 @@
-MACHINE = ampre
-EXEC = xAmpereFit.${MACHINE}
+EXEC = xAmpereFit
 
 OBJ_DIR = obj
 MOD_DIR = mod
@@ -72,7 +71,7 @@ clean:
 
 # Dependencies
 
-${OBJ_DIR}/ampereFit.o: \
+${OBJ_DIR}/ampFit.o: \
 	${OBJ_DIR}/constants.o \
 	${OBJ_DIR}/ampFit_nameList.o \
 	${OBJ_DIR}/ampFit_data.o \

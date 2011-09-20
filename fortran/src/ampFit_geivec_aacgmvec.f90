@@ -1,4 +1,4 @@
-module geivec_aacgmvec
+module ampFit_geivec_aacgmvec
 
  use ISO_C_BINDING
  use f_aacgm
@@ -208,4 +208,4 @@ subroutine geisph_to_aacgmvec (r_km, thet_rad, phi_rad, &
 
   end subroutine geisph_to_aacgmvec
 
-end module geivec_aacgmvec
+end module ampFit_geivec_aacgmvec

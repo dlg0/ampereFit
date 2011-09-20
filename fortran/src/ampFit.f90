@@ -18,11 +18,13 @@ program ampereFit
 
     integer :: trk_order(6)
 
-    ! Structure to hold modified (ghost added) data
     type(ampData), allocatable :: &
         dataHalfSphere(:), &
         dataHalfSphere_ghosted(:), &
         dataHalfSphere_ghosted_fit(:)
+
+    type(ampBasis), allocatable :: &
+        dataBFn(:,:), gridBFn(:,:)
 
     real(kind=DBL) :: clat_lim
 
@@ -76,12 +78,16 @@ program ampereFit
 
     call create_bFns_at_data ( dataHalfSphere_ghosted, dataBFn )
 
-    allocate(coeffs(nBFns*2))
-    coeffs = ampFit_solve_svd ( dataBFn, dataHalfSphere_ghosted )
+    call ampFit_solve_svd ( dataBFn, dataHalfSphere_ghosted, coeffs )
 
     allocate(dataHalfSphere_ghosted_fit(size(dataHalfSphere_ghosted)))
     dataHalfSphere_ghosted_fit = dataHalfSphere_ghosted 
     call ampFit_sumBasis ( dataBFn, dataHalfSphere_ghosted_fit, coeffs )
+
+    call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
+    call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
+    call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
+    call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
 
     ! Try to call the aacgm C library
 
@@ -105,7 +111,7 @@ program ampereFit
     gridColat_deg = 70.0
     latStep = gridCoLat_deg / (nLatGrid+1)
     lonStep = 360.0 / (nLonGrid)
-    gridHgt_km = 780.0
+    gridHgt_km = (rE + rSat) * 1e-3
 
     flg = 0 ! 0 -> to aacgm, 1 -> geographic
     yr = 1990
@@ -174,10 +180,7 @@ program ampereFit
             write(*,*) 'mlon, mlt: ', mlon, mlt
     endif
 
-    call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
-    call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
-    call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
-    call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
+
     call write_data ( dataGridShifted, fileName = 'output/ampData_grid_shifted.nc' )
 
 end program ampereFit

@@ -9,13 +9,13 @@ use basisFns, only: nBFns
 
 contains
 
-function ampFit_solve_svd ( basis, dataIn ) 
+subroutine ampFit_solve_svd ( basis, dataIn, coeffs ) 
 
     implicit none
 
     type(ampData), intent(in) :: dataIn(:)
     type(ampBasis), intent(in) :: basis(:,:)
-    real(kind=WP) ampFit_solve_svd(nBFns*2)
+    real(DBL), allocatable, intent(inout) ::  coeffs(:)
 
     real(kind=WP), allocatable :: la_A(:,:)
     real(kind=WP), allocatable :: la_B(:), la_s(:)
@@ -89,7 +89,8 @@ function ampFit_solve_svd ( basis, dataIn )
     write(*,*) '    Rank: ', la_rank
     write(*,*) '    Info: ', la_info
 
-    ampFit_solve_svd  = la_B(1:N)
+    allocate(coeffs(N))
+    coeffs  = la_B(1:N)
 
     !allocate ( fitted_B(M) )
 
@@ -102,12 +103,12 @@ function ampFit_solve_svd ( basis, dataIn )
 
     write(*,*) 'DONE' 
 
-end function ampFit_solve_svd
+end subroutine ampFit_solve_svd
 
 
 subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
 
-    type(ampBasis), intent (in) :: basis(:,:)
+    type(ampBasis), intent(in) :: basis(:,:)
     type(ampData), intent(inout) :: dataIn(:)
     real(DBL), intent(in) :: coeffs(:)
 
@@ -120,6 +121,16 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
     if(nObs /= size(dataIn)) then
 
         write(*,*) __FILE__, __LINE__
+        stop
+
+    endif
+
+    if(size(coeffs) /= size(basis,2)*2) then
+
+        write(*,*) __FILE__, __LINE__
+        write(*,*) "ERROR:"
+        write(*,*) "    size(coeffs): ", size(coeffs)
+        write(*,*) "    size(basis,2): ", size(basis,2)
         stop
 
     endif

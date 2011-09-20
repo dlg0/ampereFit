@@ -7,17 +7,8 @@ use la_precision, only: WP=>DP
 
 implicit none
 
-real(kind=DBL), allocatable :: &
-!    data_brBFnArr(:,:), &
-!    data_bThBFnArr(:,:), &
-!    data_bPhBFnArr(:,:), &
-!    data_YBFnArr(:,:), &
-    nArr(:)
-
-type(ampBasis), allocatable :: dataBFn(:,:), gridBFn(:,:)
-
+real(kind=DBL), allocatable :: nArr(:)
 integer, allocatable :: mArr(:), kArr(:)
-real(kind=WP), allocatable :: la_data_basisArr(:,:)
 integer :: nBFns
 
 contains
@@ -87,10 +78,6 @@ subroutine create_bFns_at_data ( dataIn, basis )
     integer :: i, cnt, span, nObs
     real(kind=DBL) :: x, lon, coLat, r, rDep, dYdr_rDep
 
-    !real(kind=DBL), allocatable :: &
-    !    dataIn_PLMBFnArr(:,:), &
-    !    dataIn_dPLMBFnArr(:,:)
- 
     ! FGSL 
 
     integer(fgsl_int) :: fgsl_stat
@@ -98,14 +85,6 @@ subroutine create_bFns_at_data ( dataIn, basis )
     !write(*,*) 'Creating basis functions at dataIn locations ...'
 
     nObs    = size ( dataIn )
-
-    !allocate ( &
-    !    dataIn_PLMBFnArr(nObs,nBFns), &
-    !    dataIn_dPLMBfnArr(nObs,nBFns), &
-    !    dataIn_YBfnArr(nObs,nBFns), &
-    !    dataIn_brBfnArr(nObs,nBFns), &
-    !    dataIn_bThBfnArr(nObs,nBFns), &
-    !    dataIn_bPhBfnArr(nObs,nBFns) )
 
     allocate ( basis(nObs,nBFns) )
     if (.not. allocated ( mArr )) then 
@@ -139,11 +118,19 @@ subroutine create_bFns_at_data ( dataIn, basis )
             rDep = 1d0
             dYdR_rDep = 1d0
 
-            basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
-            basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
-            basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
-            basis(i,cnt:cnt+span-1)%bPh = -m * rDep / ( r * sin ( coLat ) ) &
-                * basis(i,cnt:cnt+span-1)%PLM * sin ( m * lon )
+            if(m>=0) then
+                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%bPh = -m * rDep / ( r * sin ( coLat ) ) &
+                    * basis(i,cnt:cnt+span-1)%PLM * sin ( m * lon )
+            else
+                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * sin (abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * sin ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%bPh = m * rDep / ( r * sin ( coLat ) ) &
+                    * basis(i,cnt:cnt+span-1)%PLM * cos ( m * lon )
+            endif
 
             mArr(cnt:cnt+span-1) = m
             nArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 

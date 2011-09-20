@@ -1,7 +1,6 @@
 module write_output
 
 use netcdf
-!use ampFit_solve
 use dlg
 use constants
  

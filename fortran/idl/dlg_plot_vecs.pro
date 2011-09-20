@@ -1,4 +1,4 @@
-pro dlg_plot_vecs, r, th, ph, bTh, bPh
+pro dlg_plot_vecs, r, th, ph, bTh, bPh, title = title
 
     xVec    = fltArr ( n_elements(bTh) )
     yVec    = fltArr ( n_elements(bTh) )
@@ -40,7 +40,7 @@ pro dlg_plot_vecs, r, th, ph, bTh, bPh
             head_size = 0.3, $
             data_location = 0, $
             aspect_ratio = 1, $
-            xRange = [-meanr,meanr], yRange = [-meanr,meanr] ) 
+            xRange = [-meanr,meanr], yRange = [-meanr,meanr], title = title ) 
 
     for i=0,n_elements(coLatLines)-1 do begin
 

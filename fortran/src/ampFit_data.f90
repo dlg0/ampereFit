@@ -9,7 +9,7 @@ implicit none
 
 ! Populate data structure variables
 
-type(ampData), allocatable :: dataOriginal(:), dataShifted(:), dataHalfSphere(:)
+type(ampData), allocatable :: dataOriginal(:), dataShifted(:)
 
 real(kind=DBL), allocatable :: time(:), pseudo_sv_num(:), &
     plane_num(:), pos_eci(:,:), b_eci(:,:), &
@@ -120,11 +120,12 @@ subroutine ampFit_fill_structures
 
 end subroutine ampFit_fill_structures
 
-subroutine create_dataHalfSphere ( dataIn )
+subroutine create_dataHalfSphere ( dataIn, dataHalf )
 
     implicit none
 
     type(ampData), intent(in) :: dataIn(:)
+    type(ampData), allocatable, intent(inout) :: dataHalf(:)
 
     integer, allocatable :: iiSubSet(:)
     integer :: nHalfSphere, i
@@ -140,11 +141,11 @@ subroutine create_dataHalfSphere ( dataIn )
 
     write(*,*) '    nHalfSphere: ', nHalfSphere
 
-    allocate ( iiSubSet(nHalfSphere), dataHalfSphere(nHalfSphere) )
+    allocate ( iiSubSet(nHalfSphere), dataHalf(nHalfSphere) )
 
     iiSubSet = pack ( (/ (i, i=1, size(dataIn)) /), mask = mask )  
 
-    dataHalfSphere  = dataIn(iiSubSet)
+    dataHalf  = dataIn(iiSubSet)
 
     deallocate ( mask, iiSubSet )
 

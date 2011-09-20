@@ -20,7 +20,7 @@ subroutine write_data ( dataIn, fileName )
         nObs_id, nc_id, &
         T_id, P_id, R_id, &
         bX_id, bY_id, bZ_id, &
-        X_id, Y_id, Z_id
+        X_id, Y_id, Z_id, sv_id
 
     integer :: nObs 
 
@@ -38,6 +38,7 @@ subroutine write_data ( dataIn, fileName )
     call dlg_check ( nf90_def_dim ( nc_id, 'nObs', nObs, nObs_id ) )
    
     call dlg_check ( nf90_def_var ( nc_id, 'utc', NF90_DOUBLE, (/ nObs_id /), utc_id ) )
+    call dlg_check ( nf90_def_var ( nc_id, 'sv_number', NF90_DOUBLE, (/ nObs_id /), sv_id ) )
 
     call dlg_check ( nf90_def_var ( nc_id, 'bR', NF90_DOUBLE, (/ nObs_id /), bR_id ) )
     call dlg_check ( nf90_def_var ( nc_id, 'bT', NF90_DOUBLE, (/ nObs_id /), bT_id ) )
@@ -58,6 +59,7 @@ subroutine write_data ( dataIn, fileName )
     call dlg_check ( nf90_enddef ( nc_id ) )
     
     call dlg_check ( nf90_put_var ( nc_id, utc_id, dataIn%utc ) )
+    call dlg_check ( nf90_put_var ( nc_id, sv_id, dataIn%isat ) )
 
     call dlg_check ( nf90_put_var ( nc_id, bR_id, dataIn%bR) )
     call dlg_check ( nf90_put_var ( nc_id, bT_id, dataIn%bT) )

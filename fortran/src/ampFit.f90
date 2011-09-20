@@ -20,6 +20,7 @@ program ampereFit
 
     ! Structure to hold modified (ghost added) data
     type(ampData), allocatable :: &
+        dataHalfSphere(:), &
         dataHalfSphere_ghosted(:), &
         dataHalfSphere_ghosted_fit(:)
 
@@ -68,9 +69,9 @@ program ampereFit
 
     call tag_lon_strays ( dataShifted, south )
 
-    call create_dataHalfSphere ( dataShifted )
+    call create_dataHalfSphere ( dataShifted, dataHalfSphere )
 
-    clat_lim = 25.0
+    clat_lim = 45.0
     call ampFit_ghost ( dataHalfSphere, dataHalfSphere_ghosted, clat_lim, trk_order )
 
     call create_bFns_at_data ( dataHalfSphere_ghosted, dataBFn )
@@ -82,17 +83,12 @@ program ampereFit
     dataHalfSphere_ghosted_fit = dataHalfSphere_ghosted 
     call ampFit_sumBasis ( dataBFn, dataHalfSphere_ghosted_fit, coeffs )
 
-    call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
-    call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
-    call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
-    call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
-
     ! Try to call the aacgm C library
 
     write(*,*) 'Creating AACGM Grid ...'
 
-    nLatGrid = 10
-    nLonGrid = 6
+    nLatGrid = 40
+    nLonGrid = 24
 
     allocate ( aacgmCoLatGrid_deg(nLatGrid,nLonGrid), &
             aacgmLonGrid_deg(nLatGrid,nLonGrid), &
@@ -106,7 +102,7 @@ program ampereFit
 
     write(*,*) 'nGrid: ', nLatGrid*nLonGrid
 
-    gridColat_deg = 40.0
+    gridColat_deg = 70.0
     latStep = gridCoLat_deg / (nLatGrid+1)
     lonStep = 360.0 / (nLonGrid)
     gridHgt_km = 780.0
@@ -159,6 +155,7 @@ program ampereFit
     allocate ( dataGridShifted (size(dataGrid)) )
     call create_dataShifted ( dataGrid, dataGridShifted )
     call create_bFns_at_data ( dataGridShifted, gridBFn )
+    call ampFit_sumBasis ( gridBFn, dataGridShifted, coeffs )
 
     iLat = 85.0
     iLon = 45.0
@@ -176,5 +173,11 @@ program ampereFit
             write(*,*) 'Output: ', oLat, oLon
             write(*,*) 'mlon, mlt: ', mlon, mlt
     endif
+
+    call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
+    call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
+    call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
+    call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
+    call write_data ( dataGridShifted, fileName = 'output/ampData_grid_shifted.nc' )
 
 end program ampereFit

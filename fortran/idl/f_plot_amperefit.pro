@@ -1,8 +1,8 @@
 pro f_plot_amperefit
 
     iFName = '/data/ampere/2010/20100824Amp_invert.ncdf'
-    oFName = 'ampData_original.nc'
-    sFName = 'ampData_shifted.nc'
+    oFName = 'output/ampData_original.nc'
+    sFName = 'output/ampData_shifted.nc'
 
     cdfId = ncdf_open ( iFName, /noWrite ) 
 

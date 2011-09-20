@@ -24,6 +24,19 @@ GSL_DIR = /home/davidg/gsl
 FGSL_DIR = /home/davidg/fgsl
 AACGM_DIR:=/home/davidg/rst
 
+ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
+F90 = /home/dg6/code/gcc/gcc-4.4.5/bin/gfortran
+F77 = $(F90)
+NETCDF_DIR = /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64
+NETCDF_MOD = /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64/include
+F95_LAPACK_DIR = /home/dg6/code/lapack95/LAPACK95
+LAPACK_DIR = /home/dg6/code/lapack/lapack-3.1.1/lib
+BLAS_DIR = /home/dg6/code/goto_blas/GotoBLAS2
+GSL_DIR = /home/dg6/code/gsl
+FGSL_DIR = /home/dg6/code/fgsl
+AACGM_DIR:=/home/dg6/code/rst/rst
+endif
+
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
 INCLUDES += -I${NETCDF_MOD}
 
@@ -31,8 +44,11 @@ LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
 INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
-LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
-
+ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
+	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -lgoto2
+else
+	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
+endif
 LINK += -L ${AACGM_DIR}/lib -l:libaacgm.1.a -l:libmlt.1.a -l:libastalg.1.a -l:librtime.1.a
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))

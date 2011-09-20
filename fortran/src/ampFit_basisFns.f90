@@ -122,14 +122,14 @@ subroutine create_bFns_at_data ( dataIn, basis )
                 basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
                 basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
                 basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bPh = -m * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * sin ( m * lon )
+                basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
+                    * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
             else
                 basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
                 basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * sin (abs(m) * lon )
                 basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * sin ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bPh = m * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * cos ( m * lon )
+                basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
+                    * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
             endif
 
             mArr(cnt:cnt+span-1) = m

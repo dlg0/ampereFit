@@ -1,4 +1,4 @@
-pro dlg_plot_vecs, r, th, ph, bTh, bPh, title = title
+pro ampfit_plotvecs, r, th, ph, bTh, bPh, title = title
 
     xVec    = fltArr ( n_elements(bTh) )
     yVec    = fltArr ( n_elements(bTh) )
@@ -30,13 +30,14 @@ pro dlg_plot_vecs, r, th, ph, bTh, bPh, title = title
     nPtsLat = 360
     nPtsLon = 20
     meanr   = mean ( r )
+	print, 'Mean(r): ', mean(r)
 
     myVec = vector ( xVec, yVec, $
             xPos, yPos, $
             grid_units = 'degrees', $
             auto_color = 1, $
             rgb_table = 1, $
-            length = 2, $
+            length = 2.0, $
             head_size = 0.3, $
             data_location = 0, $
             aspect_ratio = 1, $

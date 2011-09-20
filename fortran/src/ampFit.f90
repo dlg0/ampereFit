@@ -93,8 +93,8 @@ program ampereFit
 
     write(*,*) 'Creating AACGM Grid ...'
 
-    nLatGrid = 40
-    nLonGrid = 24
+    nLatGrid = 70
+    nLonGrid = 12
 
     allocate ( aacgmCoLatGrid_deg(nLatGrid,nLonGrid), &
             aacgmLonGrid_deg(nLatGrid,nLonGrid), &
@@ -108,7 +108,7 @@ program ampereFit
 
     write(*,*) 'nGrid: ', nLatGrid*nLonGrid
 
-    gridColat_deg = 70.0
+    gridColat_deg = 90.0
     latStep = gridCoLat_deg / (nLatGrid+1)
     lonStep = 360.0 / (nLonGrid)
     gridHgt_km = (rE + rSat) * 1e-3

@@ -118,23 +118,23 @@ pro ampfit_plotdata
 	ncdf_close, cdfId
 
     iiNorth = where ( T_raw_GEI*!radeg gt 0 and Z_raw_GEI gt 0 )
-    dlg_plot_vecs, R_raw_GEI[iiNorth], T_raw_GEI[iiNorth], P_raw_GEI[iiNorth], $
+    ampfit_plotvecs, R_raw_GEI[iiNorth], T_raw_GEI[iiNorth], P_raw_GEI[iiNorth], $
         bT_raw_GEI[iiNorth], bP_raw_GEI[iiNorth], title = 'Raw'
 
     iiNorth = where ( Z_shifted_GEI gt 0 )
-    dlg_plot_vecs, R_shifted_GEI[iiNorth], T_shifted_GEI[iiNorth], P_shifted_GEI[iiNorth], $
+    ampfit_plotvecs, R_shifted_GEI[iiNorth], T_shifted_GEI[iiNorth], P_shifted_GEI[iiNorth], $
         bT_shifted_GEI[iiNorth], bP_shifted_GEI[iiNorth], title = 'Shifted'
 
     iiNorth = where ( Z_ghosted_GEI gt 0 )
-    dlg_plot_vecs, R_ghosted_GEI[iiNorth], T_ghosted_GEI[iiNorth], P_ghosted_GEI[iiNorth], $
+    ampfit_plotvecs, R_ghosted_GEI[iiNorth], T_ghosted_GEI[iiNorth], P_ghosted_GEI[iiNorth], $
         bT_ghosted_GEI[iiNorth], bP_ghosted_GEI[iiNorth], title = 'Ghosted'
 
     iiNorth = where ( Z_ghostedFit_GEI gt 0 )
-    dlg_plot_vecs, R_ghostedFit_GEI[iiNorth], T_ghostedFit_GEI[iiNorth], P_ghostedFit_GEI[iiNorth], $
+    ampfit_plotvecs, R_ghostedFit_GEI[iiNorth], T_ghostedFit_GEI[iiNorth], P_ghostedFit_GEI[iiNorth], $
         bT_ghostedFit_GEI[iiNorth], bP_ghostedFit_GEI[iiNorth], title = 'Ghosted Fit'
 
     iiNorth = where ( Z_gridShifted_GEI gt 0 )
-    dlg_plot_vecs, R_gridShifted_GEI[iiNorth], T_gridShifted_GEI[iiNorth], P_gridShifted_GEI[iiNorth], $
+    ampfit_plotvecs, R_gridShifted_GEI[iiNorth], T_gridShifted_GEI[iiNorth], P_gridShifted_GEI[iiNorth], $
         bT_gridShifted_GEI[iiNorth], bP_gridShifted_GEI[iiNorth], title = 'Grid Shifted Fit'
 
 	;; Track by track comparison of the fit

@@ -11,7 +11,6 @@ interface
                 real(C_DOUBLE), value :: mlon
         end function f_mltconvertyrsec
 
-
         integer(C_INT) function f_aacgmconvert (iLat,iLon,hgt,oLat,oLon,r,flg) bind(C, name='AACGMConvert')
                 use ISO_C_BINDING, only : C_INT, C_DOUBLE, C_PTR
                 implicit none

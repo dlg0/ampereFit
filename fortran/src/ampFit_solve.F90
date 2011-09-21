@@ -4,6 +4,7 @@ use la_precision, only: WP=>DP
 use f95_lapack, only: la_gelss, la_lange
 use constants
 use basisFns, only: nBFns
+use ampFit_rotate
 
 !real(kind=DBL), allocatable :: fit_bTheta_GEI(:), fit_bPhi_GEI(:)
 
@@ -150,6 +151,10 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
 
     dataIn%bT  = fitted_B(1:nObs)
     dataIn%bP  = fitted_B(nObs+1:nObs*2)
+
+    ! Update the cartesian components from these new spherical ones
+
+    call SPH_to_XYZ ( dataIn )
 
 end subroutine ampFit_sumBasis
 

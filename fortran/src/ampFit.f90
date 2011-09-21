@@ -13,6 +13,7 @@ program ampereFit
     use ampFit_rotate
     use ISO_C_BINDING
     use f_aacgm
+    use ampFit_geivec_aacgmvec
 
     implicit none
 
@@ -21,7 +22,8 @@ program ampereFit
     type(ampData), allocatable :: &
         dataHalfSphere(:), &
         dataHalfSphere_ghosted(:), &
-        dataHalfSphere_ghosted_fit(:)
+        dataHalfSphere_ghosted_fit(:), &
+        dataHalfSphere_unshifted_fit(:)
 
     type(ampBasis), allocatable :: &
         dataBFn(:,:), gridBFn(:,:)
@@ -37,7 +39,10 @@ program ampereFit
             geogLat_deg(:,:), &
             geogLon_deg(:,:), &
             geogHgt_km(:,:) 
-    type(ampData), allocatable :: dataGrid(:), dataGridShifted(:)
+    type(ampData), allocatable :: &
+            gridAACGM(:), &
+            gridGEI(:), &
+            gridShiftedGEI(:)
 
     real :: gridCoLat_deg, gridHgt_km, latStep, lonStep
     integer :: i, j, idx
@@ -63,9 +68,7 @@ program ampereFit
 
     call calculate_shift_rotation_matrix ()
 
-    call create_dataShifted ( dataOriginal, dataShifted )
-
-    call XYZ_to_SPH ( dataShifted )
+    call ShiftData ( dataOriginal, dataShifted )
 
     call sort_struc ( dataShifted, trk_order )
 
@@ -84,10 +87,15 @@ program ampereFit
     dataHalfSphere_ghosted_fit = dataHalfSphere_ghosted 
     call ampFit_sumBasis ( dataBFn, dataHalfSphere_ghosted_fit, coeffs )
 
+    allocate(dataHalfSphere_unshifted_fit(size(dataHalfSphere_ghosted_fit)))
+    dataHalfSphere_unshifted_fit = dataHalfSphere_ghosted_fit
+    call UnShiftData ( dataHalfSphere_ghosted_fit, dataHalfSphere_unshifted_fit )
+
     call write_data ( dataOriginal, fileName = 'output/ampData_original.nc' )
     call write_data ( dataHalfSphere, fileName = 'output/ampData_shifted.nc' )
     call write_data ( dataHalfSphere_ghosted, fileName = 'output/ampData_ghosted.nc' )
     call write_data ( dataHalfSphere_ghosted_fit, fileName = 'output/ampData_ghosted_fit.nc' )
+    call write_data ( dataHalfSphere_unshifted_fit, fileName = 'output/ampData_unshifted_fit.nc' )
 
     ! Try to call the aacgm C library
 
@@ -104,16 +112,16 @@ program ampereFit
             geogLon_deg(nLatGrid,nLonGrid), &
             geogHgt_km(nLatGrid,nLonGrid) )
 
-    allocate ( dataGrid(nLatGrid*nLonGrid) )
+    allocate ( gridGEI(nLatGrid*nLonGrid), gridAACGM(nLatGrid*nLonGrid) )
 
     write(*,*) 'nGrid: ', nLatGrid*nLonGrid
 
-    gridColat_deg = 60.0
+    gridColat_deg = 40.0
     latStep = gridCoLat_deg / (nLatGrid+1)
     lonStep = 360.0 / (nLonGrid)
     gridHgt_km = (rE + rSat) * 1e-3
 
-    flg = 0 ! 0 -> to aacgm, 1 -> geographic
+    flg = 1 ! 0 -> to aacgm, 1 -> geographic
     yr = 1990
 
     s = f_AACGMInit(yr)
@@ -134,34 +142,43 @@ program ampereFit
                             write(*,*) 'Error in f_AACGMConvert'
                             write(*,*) 'Input: ', 90.0-aacgmCoLatGrid_deg(i,j), &
                                     aacgmLonGrid_deg(i,j), aacgmHgtGrid_km(i,j), flg
+                            stop
                     endif
 
                     idx = (i-1)*nLonGrid+j
 
-                    dataGrid(idx)%T = (90.0-geogLat_deg(i,j))* degToRad
-                    dataGrid(idx)%P = (geogLon_deg(i,j)) * degToRad
+                    gridAACGM(idx)%bR = 0.0
+                    gridAACGM(idx)%bT = 0.0
+                    gridAACGM(idx)%bP = 0.0
+ 
+                    gridAACGM(idx)%T = aacgmCoLatGrid_deg(i,j)* degToRad
+                    gridAACGM(idx)%P = aacgmLonGrid_deg(i,j) * degToRad
+                    gridAACGM(idx)%R = aacgmHgtGrid_km(i,j)
 
-                    dataGrid(idx)%R = aacgmHgtGrid_km(i,j)
+                    gridGEI(idx)%bR = 0.0
+                    gridGEI(idx)%bT = 0.0
+                    gridGEI(idx)%bP = 0.0
 
-                    dataGrid(idx)%bX = 0.0
-                    dataGrid(idx)%bY = 0.0
-                    dataGrid(idx)%bZ = 0.0
-
-                    !write(*,*) dataGrid(idx)%GEI_coLat_rad, &
-                    !        dataGrid(idx)%GEI_lon_rad, &
-                    !        dataGrid(idx)%GEI_coLat_deg, &
-                    !        dataGrid(idx)%GEI_lon_deg, &
-                    !        dataGrid(idx)%GEI_R_km
-
+                    gridGEI(idx)%T = (90.0-geogLat_deg(i,j))* degToRad
+                    gridGEI(idx)%P = (geogLon_deg(i,j)) * degToRad
+                    gridGEI(idx)%R = aacgmHgtGrid_km(i,j)
 
             enddo
     enddo
 
-    call XYZ_from_SPH ( dataGrid )
-    allocate ( dataGridShifted (size(dataGrid)) )
-    call create_dataShifted ( dataGrid, dataGridShifted )
-    call create_bFns_at_data ( dataGridShifted, gridBFn )
-    call ampFit_sumBasis ( gridBFn, dataGridShifted, coeffs )
+    call SPH_to_XYZ ( gridAACGM )
+    call SPH_to_XYZ ( gridGEI )
+
+    call write_data ( gridAACGM, fileName = 'output/ampData_gridAACGM.nc' )
+    call write_data ( gridGEI, fileName = 'output/ampData_gridGEI.nc' )
+
+    allocate ( gridShiftedGEI (size(gridGEI)) )
+    gridShiftedGEI = gridGEI
+    call ShiftData ( gridGEI, gridShiftedGEI )
+    call create_bFns_at_data ( gridShiftedGEI, gridBFn )
+    call ampFit_sumBasis ( gridBFn, gridShiftedGEI, coeffs )
+    call SPH_to_XYZ ( gridShiftedGEI )
+    call UnShiftData ( gridShiftedGEI, gridGEI )
 
     iLat = 85.0
     iLon = 45.0
@@ -181,6 +198,7 @@ program ampereFit
     endif
 
 
-    call write_data ( dataGridShifted, fileName = 'output/ampData_grid_shifted.nc' )
+    call write_data ( gridGEI, fileName = 'output/ampData_gridUnShiftedGEI.nc' )
+    call write_data ( gridShiftedGEI, fileName = 'output/ampData_gridShiftedGEI.nc' )
 
 end program ampereFit

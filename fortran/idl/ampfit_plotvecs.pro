@@ -45,11 +45,12 @@ pro ampfit_plotvecs, r, th, ph, bTh, bPh, title = title, fileNameIn=fileNameIn
 
 	set_plot, 'ps'
 	device, fileName = fileNameIn, /encaps, xSize = 6, ySize = 6, /color, /inches
-	loadct, 1
+	loadct, 0
 	plot, xPos, yPos, xRange = [-meanr,meanr], yRange = [-meanr,meanr], title = title, $
-			position = [0.1,0.1,0.9,0.9], /norm, /noData, color = 0, xStyle=1, yStyle=1
+			position = [0.1,0.1,0.9,0.9], /norm, color = 0, xStyle=1, yStyle=1, psym = 4, symsize=0.2
 
-	sf = 1
+	loadct, 1
+	sf = 4
 	for i=0,n_elements(xVec)-1 do begin
 			x0 = xPos[i]
 			y0 = yPos[i]

@@ -1,6 +1,7 @@
 module ampFit_shift
 
 use constants
+use ampFit_rotate
 
 real(kind=DBL) :: R_intersection_GEI_km, &
         T_intersection_GEI_coLat_rad, &
@@ -261,7 +262,7 @@ subroutine calculate_shift_rotation_matrix ()
 end subroutine calculate_shift_rotation_matrix
 
 
-subroutine create_dataShifted ( dataIn, dataOut )
+subroutine ShiftData ( dataIn, dataOut )
 
     implicit none
 
@@ -301,8 +302,59 @@ subroutine create_dataShifted ( dataIn, dataOut )
 
     enddo shift_coordinates_and_vectors
 
+    ! Update the spherical coordinates and vectors
+
+    call XYZ_to_SPH ( dataOut ) 
+
     write(*,*) 'DONE'
 
-end subroutine create_dataShifted
+end subroutine ShiftData
+
+subroutine UnShiftData ( dataIn, dataOut )
+
+    implicit none
+
+    type(ampData), intent(in) :: dataIn(:)
+    type(ampData), intent(inout) :: dataOut(:)
+    integer :: i
+    real :: pos_vec(3), shifted_pos_vec(3)
+    real :: b_vec(3), shifted_b_vec(3)
+
+    write(*,*) 'UnShifting data ...'
+
+    dataOut = dataIn
+
+    shift_coordinates_and_vectors: &
+    do i=1,size(dataIn)
+
+        pos_vec(1)  = dataIn(i)%x
+        pos_vec(2)  = dataIn(i)%y
+        pos_vec(3)  = dataIn(i)%z
+
+        b_vec(1)  = dataIn(i)%bx
+        b_vec(2)  = dataIn(i)%by
+        b_vec(3)  = dataIn(i)%bz
+
+        shifted_pos_vec = matMul ( transpose(shift_rot_mat), pos_vec )
+        shifted_b_vec = matMul ( transpose(shift_rot_mat), b_vec )
+
+        dataOut(i)%x  = shifted_pos_vec(1)
+        dataOut(i)%y  = shifted_pos_vec(2)
+        dataOut(i)%z  = shifted_pos_vec(3)
+
+        dataOut(i)%bx  = shifted_b_vec(1)
+        dataOut(i)%by  = shifted_b_vec(2)
+        dataOut(i)%bz  = shifted_b_vec(3)
+
+    enddo shift_coordinates_and_vectors
+    
+    ! Update the spherical coordinates and vectors
+
+    call XYZ_to_SPH ( dataOut ) 
+
+    write(*,*) 'DONE'
+
+end subroutine UnShiftData 
+
 
 end module ampFit_shift

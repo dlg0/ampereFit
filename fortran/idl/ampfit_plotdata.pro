@@ -5,7 +5,11 @@ pro ampfit_plotdata
     shiftedFName = 'output/ampData_shifted.nc'
 	ghostedFName = 'output/ampData_ghosted.nc'
 	ghostedFitFName = 'output/ampData_ghosted_fit.nc'
-	gridShiftedFName = 'output/ampData_grid_shifted.nc'
+	UnShiftedFitFName = 'output/ampData_unshifted_fit.nc'
+	gridAACGMFName = 'output/ampData_gridAACGM.nc'
+	gridGEIFName = 'output/ampData_gridGEI.nc'
+	gridShiftedGEIFName = 'output/ampData_gridShiftedGEI.nc'
+	gridUnShiftedGEIFName = 'output/ampData_gridUnShiftedGEI.nc'
 
     cdfId = ncdf_open ( iFName, /noWrite ) 
 
@@ -97,72 +101,144 @@ pro ampfit_plotdata
 
 	ncdf_close, cdfId
 
-    cdfId = ncdf_open ( gridShiftedFName, /noWrite ) 
+    cdfId = ncdf_open ( UnShiftedFitFName, /noWrite ) 
 
-	    ncdf_varGet, cdfId, 'bR', bR_gridShifted_GEI 
-	    ncdf_varGet, cdfId, 'bT', bT_gridShifted_GEI 
-	    ncdf_varGet, cdfId, 'bP', bP_gridShifted_GEI 
+	    ncdf_varGet, cdfId, 'bR', bR_UnShiftedFit_GEI 
+	    ncdf_varGet, cdfId, 'bT', bT_UnShiftedFit_GEI 
+	    ncdf_varGet, cdfId, 'bP', bP_UnShiftedFit_GEI 
 
-	    ncdf_varGet, cdfId, 'bX', bx_gridShifted_GEI 
-	    ncdf_varGet, cdfId, 'bY', by_gridShifted_GEI 
-	    ncdf_varGet, cdfId, 'bZ', bz_gridShifted_GEI 
+	    ncdf_varGet, cdfId, 'bX', bx_UnShiftedFit_GEI 
+	    ncdf_varGet, cdfId, 'bY', by_UnShiftedFit_GEI 
+	    ncdf_varGet, cdfId, 'bZ', bz_UnShiftedFit_GEI 
 
-	    ncdf_varGet, cdfId, 'T', T_gridShifted_GEI 
-	    ncdf_varGet, cdfId, 'P', P_gridShifted_GEI
-	    ncdf_varGet, cdfId, 'R', R_gridShifted_GEI
+	    ncdf_varGet, cdfId, 'T', T_UnShiftedFit_GEI 
+	    ncdf_varGet, cdfId, 'P', P_UnShiftedFit_GEI
+	    ncdf_varGet, cdfId, 'R', R_UnShiftedFit_GEI
 
-        ncdf_varGet, cdfId, 'X', X_gridShifted_GEI
-        ncdf_varGet, cdfId, 'Y', Y_gridShifted_GEI
-        ncdf_varGet, cdfId, 'Z', Z_gridShifted_GEI
+        ncdf_varGet, cdfId, 'X', X_UnShiftedFit_GEI
+        ncdf_varGet, cdfId, 'Y', Y_UnShiftedFit_GEI
+        ncdf_varGet, cdfId, 'Z', Z_UnShiftedFit_GEI
+
+        ncdf_varGet, cdfId, 'sv_number', sv_UnShiftedFit_GEI
 
 	ncdf_close, cdfId
 
+    cdfId = ncdf_open ( gridAACGMFName, /noWrite ) 
+
+	    ncdf_varGet, cdfId, 'bR', bR_gridAACGM 
+	    ncdf_varGet, cdfId, 'bT', bT_gridAACGM 
+	    ncdf_varGet, cdfId, 'bP', bP_gridAACGM 
+
+	    ncdf_varGet, cdfId, 'bX', bx_gridAACGM 
+	    ncdf_varGet, cdfId, 'bY', by_gridAACGM 
+	    ncdf_varGet, cdfId, 'bZ', bz_gridAACGM 
+
+	    ncdf_varGet, cdfId, 'T', T_gridAACGM 
+	    ncdf_varGet, cdfId, 'P', P_gridAACGM
+	    ncdf_varGet, cdfId, 'R', R_gridAACGM
+
+        ncdf_varGet, cdfId, 'X', X_gridAACGM
+        ncdf_varGet, cdfId, 'Y', Y_gridAACGM
+        ncdf_varGet, cdfId, 'Z', Z_gridAACGM
+
+	ncdf_close, cdfId
+
+
+    cdfId = ncdf_open ( gridGEIFName, /noWrite ) 
+
+	    ncdf_varGet, cdfId, 'bR', bR_gridGEI 
+	    ncdf_varGet, cdfId, 'bT', bT_gridGEI 
+	    ncdf_varGet, cdfId, 'bP', bP_gridGEI 
+
+	    ncdf_varGet, cdfId, 'bX', bx_gridGEI 
+	    ncdf_varGet, cdfId, 'bY', by_gridGEI 
+	    ncdf_varGet, cdfId, 'bZ', bz_gridGEI 
+
+	    ncdf_varGet, cdfId, 'T', T_gridGEI 
+	    ncdf_varGet, cdfId, 'P', P_gridGEI
+	    ncdf_varGet, cdfId, 'R', R_gridGEI
+
+        ncdf_varGet, cdfId, 'X', X_gridGEI
+        ncdf_varGet, cdfId, 'Y', Y_gridGEI
+        ncdf_varGet, cdfId, 'Z', Z_gridGEI
+
+	ncdf_close, cdfId
+
+
+    cdfId = ncdf_open ( gridShiftedGEIFName, /noWrite ) 
+
+	    ncdf_varGet, cdfId, 'bR', bR_gridShiftedGEI 
+	    ncdf_varGet, cdfId, 'bT', bT_gridShiftedGEI 
+	    ncdf_varGet, cdfId, 'bP', bP_gridShiftedGEI 
+
+	    ncdf_varGet, cdfId, 'bX', bx_gridShiftedGEI 
+	    ncdf_varGet, cdfId, 'bY', by_gridShiftedGEI 
+	    ncdf_varGet, cdfId, 'bZ', bz_gridShiftedGEI 
+
+	    ncdf_varGet, cdfId, 'T', T_gridShiftedGEI 
+	    ncdf_varGet, cdfId, 'P', P_gridShiftedGEI
+	    ncdf_varGet, cdfId, 'R', R_gridShiftedGEI
+
+        ncdf_varGet, cdfId, 'X', X_gridShiftedGEI
+        ncdf_varGet, cdfId, 'Y', Y_gridShiftedGEI
+        ncdf_varGet, cdfId, 'Z', Z_gridShiftedGEI
+
+	ncdf_close, cdfId
+
+    cdfId = ncdf_open ( gridUnShiftedGEIFName, /noWrite ) 
+
+	    ncdf_varGet, cdfId, 'bR', bR_gridUnShiftedGEI 
+	    ncdf_varGet, cdfId, 'bT', bT_gridUnShiftedGEI 
+	    ncdf_varGet, cdfId, 'bP', bP_gridUnShiftedGEI 
+
+	    ncdf_varGet, cdfId, 'bX', bx_gridUnShiftedGEI 
+	    ncdf_varGet, cdfId, 'bY', by_gridUnShiftedGEI 
+	    ncdf_varGet, cdfId, 'bZ', bz_gridUnShiftedGEI 
+
+	    ncdf_varGet, cdfId, 'T', T_gridUnShiftedGEI 
+	    ncdf_varGet, cdfId, 'P', P_gridUnShiftedGEI
+	    ncdf_varGet, cdfId, 'R', R_gridUnShiftedGEI
+
+        ncdf_varGet, cdfId, 'X', X_gridUnShiftedGEI
+        ncdf_varGet, cdfId, 'Y', Y_gridUnShiftedGEI
+        ncdf_varGet, cdfId, 'Z', Z_gridUnShiftedGEI
+
+	ncdf_close, cdfId
+
+
     iiNorth = where ( T_raw_GEI*!radeg gt 0 and Z_raw_GEI gt 0 )
     ampfit_plotvecs, R_raw_GEI[iiNorth], T_raw_GEI[iiNorth], P_raw_GEI[iiNorth], $
-        bT_raw_GEI[iiNorth], bP_raw_GEI[iiNorth], title = 'Raw', fileNameIn='output/rawData.eps'
+        bT_raw_GEI[iiNorth], bP_raw_GEI[iiNorth], title = 'dataGEI', fileNameIn='output/rawData.eps'
 
     iiNorth = where ( Z_shifted_GEI gt 0 )
     ampfit_plotvecs, R_shifted_GEI[iiNorth], T_shifted_GEI[iiNorth], P_shifted_GEI[iiNorth], $
-        bT_shifted_GEI[iiNorth], bP_shifted_GEI[iiNorth], title = 'Shifted', fileNameIn='output/shiftedData.eps'
+        bT_shifted_GEI[iiNorth], bP_shifted_GEI[iiNorth], title = 'dataShiftedGEI', fileNameIn='output/shiftedData.eps'
 
     iiNorth = where ( Z_ghosted_GEI gt 0 )
     ampfit_plotvecs, R_ghosted_GEI[iiNorth], T_ghosted_GEI[iiNorth], P_ghosted_GEI[iiNorth], $
-        bT_ghosted_GEI[iiNorth], bP_ghosted_GEI[iiNorth], title = 'Ghosted', fileNameIn='output/ghostedData.eps'
+        bT_ghosted_GEI[iiNorth], bP_ghosted_GEI[iiNorth], title = 'dataGhostedShiftedGEI', fileNameIn='output/ghostedData.eps'
 
     iiNorth = where ( Z_ghostedFit_GEI gt 0 )
     ampfit_plotvecs, R_ghostedFit_GEI[iiNorth], T_ghostedFit_GEI[iiNorth], P_ghostedFit_GEI[iiNorth], $
-        bT_ghostedFit_GEI[iiNorth], bP_ghostedFit_GEI[iiNorth], title = 'Ghosted Fit', fileNameIn='output/ghostedFit.eps'
+        bT_ghostedFit_GEI[iiNorth], bP_ghostedFit_GEI[iiNorth], title = 'dataGhostedShiftedGEI[fit]', fileNameIn='output/ghostedFit.eps'
 
-    iiNorth = where ( Z_gridShifted_GEI gt 0 )
-    ampfit_plotvecs, R_gridShifted_GEI[iiNorth], T_gridShifted_GEI[iiNorth], P_gridShifted_GEI[iiNorth], $
-        bT_gridShifted_GEI[iiNorth], bP_gridShifted_GEI[iiNorth], title = 'Grid Shifted Fit', fileNameIn='output/gridFit.eps'
+    iiNorth = where ( Z_UnShiftedFit_GEI gt 0 )
+    ampfit_plotvecs, R_UnShiftedFit_GEI[iiNorth], T_UnShiftedFit_GEI[iiNorth], P_UnShiftedFit_GEI[iiNorth], $
+        bT_UnShiftedFit_GEI[iiNorth], bP_UnShiftedFit_GEI[iiNorth], title = 'dataGhostedUnShiftedGEI[fit]', fileNameIn='output/UnShiftedFit.eps'
 
-	;; Track by track comparison of the fit
+    iiNorth = where ( Z_gridAACGM gt 0 )
+    ampfit_plotvecs, R_gridAACGM[iiNorth], T_gridAACGM[iiNorth], P_gridAACGM[iiNorth], $
+        bT_gridAACGM[iiNorth], bP_gridAACGM[iiNorth], title = 'gridAACGM', fileNameIn='output/gridAACGM.eps'
 
-	;trackNo = intArr(6)
-	;trackNo[0] = sv_ghosted_GEI[0]
-	;trkCnt = 0
-	;ii = 0
-	;while trkCnt le 5 do begin
-	;	if where(sv_ghosted_GEI[ii] eq trackNo) eq -1 then begin
-	;		trkCnt++
-	;		trackNo[trkCnt] = sv_ghosted_GEI[ii]
-	;	endif
-	;	ii++		
-	;endwhile
-	;stop
-	;trkCnt = 1
-	;Xpt = -10e3
-	;Ypt = 0
-	;while trkCnt le 6 do begin
+    iiNorth = where ( Z_gridGEI gt 0 )
+    ampfit_plotvecs, R_gridGEI[iiNorth], T_gridGEI[iiNorth], P_gridGEI[iiNorth], $
+        bT_gridGEI[iiNorth], bP_gridGEI[iiNorth], title = 'gridGEI', fileNameIn='output/gridGEI.eps'
 
-	;	iiThisTrack = where ( sv_ghosted_GEI eq trackNo )
-	;	distanceFromPt = sqrt ( (X_ghosted_GEI[iiThisTrack]-Xpt)^2+(Y_ghosted_GEI[iiThisTrack]-Ypt)^2 )
-	;	p = plot ( distanceFromPt, bP_ghosted_GEI[iiThisTrack], layout=[2,3,trkCnt] )
-	;	p = plot ( distanceFromPt, bP_ghostedFit_GEI[iiThisTrack], /over, color='red' )
-	;	trkCnt++
-	;endwhile
+    iiNorth = where ( Z_gridShiftedGEI gt 0 )
+    ampfit_plotvecs, R_gridShiftedGEI[iiNorth], T_gridShiftedGEI[iiNorth], P_gridShiftedGEI[iiNorth], $
+        bT_gridShiftedGEI[iiNorth], bP_gridShiftedGEI[iiNorth], title = 'gridShiftedGEI', fileNameIn='output/gridShiftedGEI.eps'
 
-stop
-
+    iiNorth = where ( Z_gridUnShiftedGEI gt 0 )
+    ampfit_plotvecs, R_gridUnShiftedGEI[iiNorth], T_gridUnShiftedGEI[iiNorth], P_gridUnShiftedGEI[iiNorth], $
+        bT_gridUnShiftedGEI[iiNorth], bP_gridUnShiftedGEI[iiNorth], title = 'gridUnShiftedGEI', fileNameIn='output/gridUnShiftedGEI.eps'
 end

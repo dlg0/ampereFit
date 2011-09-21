@@ -108,7 +108,7 @@ program ampereFit
 
     write(*,*) 'nGrid: ', nLatGrid*nLonGrid
 
-    gridColat_deg = 90.0
+    gridColat_deg = 60.0
     latStep = gridCoLat_deg / (nLatGrid+1)
     lonStep = 360.0 / (nLonGrid)
     gridHgt_km = (rE + rSat) * 1e-3

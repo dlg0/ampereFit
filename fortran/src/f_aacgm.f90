@@ -25,6 +25,12 @@ interface
                 integer(C_INT), value :: yr 
         end function f_aacgminit
 
+        integer(C_INT) function f_TimeYMDHMSToYrsec(yr,mo,dy,hr,mt,sc) bind(C, name='TimeYMDHMSToYrsec')
+            use ISO_C_BINDING, only : C_INT, C_DOUBLE, C_PTR
+            implicit none
+            integer(C_INT), value, intent(in) :: yr,mo,dy,hr,mt
+            real(C_DOUBLE), value, intent(in) :: sc
+        end function f_TimeYMDHMSToYrsec
 
 end interface
 

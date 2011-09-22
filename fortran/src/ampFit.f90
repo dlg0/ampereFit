@@ -106,8 +106,8 @@ program ampereFit
 
     write(*,*) 'Creating AACGM Grid ...'
 
-    nLatGrid = 70
-    nLonGrid = 12
+    nLatGrid = 50
+    nLonGrid = 24
 
     allocate ( aacgmCoLatGrid_deg(nLatGrid,nLonGrid), &
             aacgmLonGrid_deg(nLatGrid,nLonGrid), &

@@ -2,7 +2,7 @@ pro ampfit_plotdata
 
     iFName = 'data/20100824Amp_invert.ncdf'
 
-	fileList = file_search ( 'output/ampData_*' )
+	fileList = file_search ( 'output/ampData_*nc' )
 
     cdfId = ncdf_open ( iFName, /noWrite ) 
 

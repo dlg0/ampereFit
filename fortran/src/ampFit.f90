@@ -253,13 +253,14 @@ program ampereFit
                         bT_AACGM_T, bP_AACGM_T, bT_AACGM_P, bP_AACGM_P, &
                         thisT_AACGM_deg, thisP_AACGM_deg )
 
-                write(*,*) 'AACGM coord comparision: ', i, j, idx
-                write(*,*) gridAACGM(idx)%T*radToDeg, gridAACGM(idx)%P*radToDeg
-                write(*,*) 90-thisT_AACGM_deg, thisP_AACGM_deg
-                write(*,*)
+                !write(*,*) 'AACGM coord comparision: ', i, j, idx
+                !write(*,*) gridAACGM(idx)%T*radToDeg, gridAACGM(idx)%P*radToDeg
+                !write(*,*) 90-thisT_AACGM_deg, thisP_AACGM_deg
+                !write(*,*)
 
                 gridAACGM(idx)%bT = bT_AACGM_T
                 gridAACGM(idx)%bP = bP_AACGM_P
+                gridAACGM(idx)%jPar = gridShiftedGEI(idx)%jPar
 
            enddo
     enddo

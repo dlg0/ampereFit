@@ -39,6 +39,7 @@ module constants
             T, & ! [coLat, rad]
             P, & ! [lon, rad]
             bR, bT, bP
+        real(kind=DBL) :: jPar ! [uAm^{-2}]
 
     end type ampData
 

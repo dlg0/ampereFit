@@ -3,7 +3,7 @@ module ampFit_solve
 use la_precision, only: WP=>DP
 use f95_lapack, only: la_gelss, la_lange
 use constants
-use basisFns, only: nBFns
+use basisFns, only: nBFns, nArr
 use ampFit_rotate
 
 !real(kind=DBL), allocatable :: fit_bTheta_GEI(:), fit_bPhi_GEI(:)
@@ -93,15 +93,6 @@ subroutine ampFit_solve_svd ( basis, dataIn, coeffs )
     allocate(coeffs(N))
     coeffs  = la_B(1:N)
 
-    !allocate ( fitted_B(M) )
-
-    !fitted_B = matMul ( tmpA, ampFit_solve_svd ) !la_B(1:N) )
-
-    !allocate ( fit_bTheta_GEI(nObs), fit_bPhi_GEI(nObs) )
-
-    !fit_bTheta_GEI  = fitted_B(1:nObs)
-    !fit_bPhi_GEI    = fitted_B(nObs+1:nObs*2)
-
     write(*,*) 'DONE' 
 
 end subroutine ampFit_solve_svd
@@ -115,7 +106,7 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
 
     real(DBL), allocatable :: tmpA(:,:)
     integer :: nObs, M, N
-    real(kind=DBL), allocatable :: fitted_B(:)
+    real(kind=DBL), allocatable :: fitted_B(:), jPar(:)
 
     nObs = size ( basis, 1 )
 
@@ -148,6 +139,20 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
     
     allocate(fitted_B(M))
     fitted_B = matMul ( tmpA, coeffs )
+
+    allocate(jPar(size(dataIn)))
+    write(*,*) 'shape basis%Y: ', shape(basis%Y)
+    write(*,*) 'shape : coeffs(size(basis,2):)', shape(coeffs(nBFns+1:))
+
+    jPar = matMul ( basis%Y, coeffs(nBFns+1:)*(-nArr*(nArr+1.0)) ) / (u0*(rE+rSat)) * 1d-9*1d6
+    write(*,*) jPar
+
+    dataIn%jPar = jPar
+
+ ! jParAACGM_nth	= (YkmBFns_grid_nth ## $
+ !        (coeffs_[n_elements(YkmBFns_grid_nth[*,0]):*]*(-outNkValues_grid_nth*(outNkValues_grid_nth+1.0)))) $
+ !                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
+
 
     dataIn%bT  = fitted_B(1:nObs)
     dataIn%bP  = fitted_B(nObs+1:nObs*2)

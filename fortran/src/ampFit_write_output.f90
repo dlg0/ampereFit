@@ -19,7 +19,7 @@ subroutine write_data ( dataIn, fileName )
         nObs_id, nc_id, &
         T_id, P_id, R_id, &
         bX_id, bY_id, bZ_id, &
-        X_id, Y_id, Z_id, sv_id
+        X_id, Y_id, Z_id, sv_id, jPar_id
 
     integer :: nObs 
 
@@ -54,6 +54,8 @@ subroutine write_data ( dataIn, fileName )
     call dlg_check ( nf90_def_var ( nc_id, 'X', NF90_DOUBLE, (/ nObs_id /), X_id ) )
     call dlg_check ( nf90_def_var ( nc_id, 'Y', NF90_DOUBLE, (/ nObs_id /), Y_id ) )
     call dlg_check ( nf90_def_var ( nc_id, 'Z', NF90_DOUBLE, (/ nObs_id /), Z_id ) )
+
+    call dlg_check ( nf90_def_var ( nc_id, 'jPar', NF90_DOUBLE, (/ nObs_id /), jPar_id ) )
   
     call dlg_check ( nf90_enddef ( nc_id ) )
     
@@ -75,6 +77,8 @@ subroutine write_data ( dataIn, fileName )
     call dlg_check ( nf90_put_var ( nc_id, X_id, dataIn%x ) )
     call dlg_check ( nf90_put_var ( nc_id, Y_id, dataIn%y ) )
     call dlg_check ( nf90_put_var ( nc_id, Z_id, dataIn%z ) )
+
+    call dlg_check ( nf90_put_var ( nc_id, jPar_id, dataIn%jPar ) )
 
     call dlg_check ( nf90_close ( nc_id ) )
 

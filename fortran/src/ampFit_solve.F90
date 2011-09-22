@@ -144,16 +144,9 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
     write(*,*) 'shape basis%Y: ', shape(basis%Y)
     write(*,*) 'shape : coeffs(size(basis,2):)', shape(coeffs(nBFns+1:))
 
-    jPar = matMul ( basis%Y, coeffs(nBFns+1:)*(-nArr*(nArr+1.0)) ) / (u0*(rE+rSat)) * 1d-9*1d6
-    write(*,*) jPar
+    jPar = matMul ( basis%Y, coeffs(nBFns+1:)*(-nArr*(nArr+1.0)) ) / (u0*(rE+rSat)) * 1e-3
 
     dataIn%jPar = jPar
-
- ! jParAACGM_nth	= (YkmBFns_grid_nth ## $
- !        (coeffs_[n_elements(YkmBFns_grid_nth[*,0]):*]*(-outNkValues_grid_nth*(outNkValues_grid_nth+1.0)))) $
- !                        /(u0*rIrid_m)*1.0d-9*1.0d6        ; uAm^{-2}
-
-
     dataIn%bT  = fitted_B(1:nObs)
     dataIn%bP  = fitted_B(nObs+1:nObs*2)
 

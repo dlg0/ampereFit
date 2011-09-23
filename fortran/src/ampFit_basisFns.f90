@@ -74,9 +74,10 @@ subroutine create_bFns_at_data ( dataIn, basis )
     type(ampData), intent(in) :: dataIn(:)
     type(ampBasis), allocatable, intent (inout) :: basis(:,:)
  
-    integer :: k, l, m, n
+    integer :: k, l, m, n, s
     integer :: i, cnt, span, nObs
-    real(kind=DBL) :: x, lon, coLat, r, rDep, dYdr_rDep
+    real(kind=DBL) :: x, lon, coLat, r, dYdr_rDep
+    real(DBL), allocatable :: rDep(:)
 
     ! FGSL 
 
@@ -91,7 +92,7 @@ subroutine create_bFns_at_data ( dataIn, basis )
         allocate ( mArr(nBFns), nArr(nBfns), kArr(nBfns) )
     endif
 
-    r = rE
+    r = 1.0
 
     do i=1,nObs
 
@@ -115,7 +116,17 @@ subroutine create_bFns_at_data ( dataIn, basis )
                     basis(i,cnt:cnt+span-1)%PLM, & 
                     basis(i,cnt:cnt+span-1)%dPLM )
 
-            rDep = 1d0
+            mArr(cnt:cnt+span-1) = m
+            nArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
+            kArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
+
+            !rDep = 1d0
+            allocate(rDep(span))
+            do s=1,span
+                rDep(s) = r**nArr(cnt+s-1) * ( 1.0 + nArr(cnt+s-1) / ( nArr(cnt+s-1) + 1.0 ) &
+                    * ( 1.0 / r )**( 2.0 * nArr(cnt+s-1) + 1.0 ) )
+            enddo
+
             dYdR_rDep = 1d0
 
             if(m>=0) then
@@ -132,9 +143,7 @@ subroutine create_bFns_at_data ( dataIn, basis )
                     * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
             endif
 
-            mArr(cnt:cnt+span-1) = m
-            nArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
-            kArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
+            deallocate(rDep)
 
             cnt = cnt + span
 

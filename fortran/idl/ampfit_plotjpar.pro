@@ -26,7 +26,7 @@ pro ampfit_plotjpar
 
 		ncdf_close, cdfid
 
-		scale = max(abs(jPar))*0.8
+		scale = 0.5;max(abs(jPar))*0.8
 		print, 'jPar scale: ', scale, ' uAm^-2'
 		nLevs = 11
 		levels = (1+fIndGen(nLevs))/(nLevs)*scale

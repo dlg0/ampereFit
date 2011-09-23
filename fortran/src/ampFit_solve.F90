@@ -144,7 +144,7 @@ subroutine ampFit_sumBasis ( basis, dataIn, coeffs )
     write(*,*) 'shape basis%Y: ', shape(basis%Y)
     write(*,*) 'shape : coeffs(size(basis,2):)', shape(coeffs(nBFns+1:))
 
-    jPar = matMul ( basis%Y, coeffs(nBFns+1:)*(-nArr*(nArr+1.0)) ) / (u0*(rE+rSat)) * 1e-3
+    jPar = matMul ( basis%Y, coeffs(nBFns+1:)*(-nArr*(nArr+1.0)) ) / (u0_*(rE+rSat)) * 1e-9 * 1e6 ! uAm^-2
 
     dataIn%jPar = jPar
     dataIn%bT  = fitted_B(1:nObs)

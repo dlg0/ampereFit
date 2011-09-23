@@ -43,7 +43,8 @@ program ampereFit
             gridAACGM(:), &
             gridGEO(:), &
             gridGEI(:), &
-            gridShiftedGEI(:)
+            gridShiftedGEI(:), &
+            gridCurlAACGM(:)
 
     real :: gridCoLat_deg, gridHgt_km, latStep, lonStep
     integer :: i, j, idx
@@ -58,6 +59,13 @@ program ampereFit
                 thisT_AACGM_deg, thisP_AACGM_deg
 
     real(DBL), allocatable :: coeffs(:)
+
+    ! Curl variables
+    integer :: idx_up, idx_dn, idx_le, idx_ri
+    real :: thisT, thisP, thisR, hT, hP, &
+        aT, aP, aT_le, aT_ri, aP_up, aP_dn, &
+        dAPdT, dATdP
+
 
     call init_nameList ()
 
@@ -265,12 +273,54 @@ program ampereFit
            enddo
     enddo
 
+    ! Try the r dot curl b (i know ... not orthogonal ... blah ... so many other
+    ! errors anyway like it matters)
+
+    allocate ( gridCurlAACGM(size(gridAACGM)) )
+    gridCurlAACGM = gridAACGM
+
+    gridCurlAACGM%jPar = 0
+
+    do i=2,nLatGrid-1
+        do j=2,nLonGrid-1 
+
+            idx = (i-1)*nLonGrid+j
+
+            idx_up = ((i+1)-1)*nLonGrid+j
+            idx_dn = ((i-1)-1)*nLonGrid+j
+            idx_le = (i-1)*nLonGrid+(j-1)
+            idx_ri = (i-1)*nLonGrid+(j+1)
+
+            thisT = gridCurlAACGM(idx)%T
+            thisP = gridCurlAACGM(idx)%P
+            thisR = rE + rSat
+
+            hT = latStep*degToRad
+            hP = lonStep*degToRad
+
+            aT = gridCurlAACGM(idx)%bT
+            aP = gridCurlAACGM(idx)%bP
+
+            aP_up = gridCurlAACGM(idx_up)%bP
+            aP_dn = gridCurlAACGM(idx_dn)%bP
+
+            aT_le = gridCurlAACGM(idx_le)%bT
+            aT_ri = gridCurlAACGM(idx_ri)%bT
+
+            dAPdT = ( -0.5*aP_up + 0.5*aP_dn ) / hT
+            dATdP = ( -0.5*aT_le + 0.5*aT_ri ) / hP
+
+            gridCurlAACGM(idx)%jPar = &
+                1.0/(thisR*sin(thisT)) * ( sin(thisT)*dAPdT + cos(thisT)*aP - dATdP ) / u0_ * 1e-9 * 1d6 ! uAm^-2
+
+        enddo
+    enddo
+
 
     iLat = 85.0
     iLon = 45.0
     hgt = 150.0
 
-    !yrsec = 3*24*3600
     mlon = 45.0
 
     mlt = f_MLTConvertYrsec(year, yearSecond, mlon)
@@ -287,5 +337,6 @@ program ampereFit
     call write_data ( gridGEI, fileName = 'output/ampData_gridFitUnShiftedGEI.nc' )
     call write_data ( gridShiftedGEI, fileName = 'output/ampData_gridFitShiftedGEI.nc' )
     call write_data ( gridAACGM, fileName = 'output/ampData_gridFitAACGM.nc' )
+    call write_data ( gridCurlAACGM, fileName = 'output/ampData_gridFitCurlAACGM.nc' )
 
 end program ampereFit

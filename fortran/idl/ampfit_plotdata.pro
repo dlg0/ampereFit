@@ -37,6 +37,9 @@ pro ampfit_plotdata
     	    bT[iiNorth], bP[iiNorth], title = file_basename(fileList[i],'.nc'), $
 			fileNameIn=strJoin(['output/',file_basename(fileList[i],'.nc'),'.eps'])
 
+		print, fileList[i]
+		print, 'Max dB_P: ', max(abs(bP[iiNorth]))
+
 	endfor
 
 end

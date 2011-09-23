@@ -1,10 +1,10 @@
 pro ampfit_plotjpar
 
-	filelist = ['output/ampData_gridFitAACGM.nc'] 
+	filelist = ['output/ampData_gridFitCurlAACGM.nc','output/ampData_gridFitAACGM.nc'] 
 
-	for i=0,n_elements(filelist)-1 do begin
+	for f=0,n_elements(filelist)-1 do begin
 
-    	cdfid = ncdf_open ( filelist[i], /nowrite ) 
+    	cdfid = ncdf_open ( filelist[f], /nowrite ) 
 
 		    ncdf_varget, cdfid, 'bR', bR 
 		    ncdf_varget, cdfid, 'bT', bT 
@@ -27,12 +27,14 @@ pro ampfit_plotjpar
 		ncdf_close, cdfid
 
 		scale = max(abs(jPar))*0.8
+		print, 'jPar scale: ', scale, ' uAm^-2'
 		nLevs = 11
 		levels = (1+fIndGen(nLevs))/(nLevs)*scale
 		colors = reverse(bytScl ( levels, top = 253 ) + 1)
 
 		set_plot, 'ps'
-		device, fileName = 'output/jParAACGM.eps', /encaps, xSize = 6, ySize = 6, /color, /inches
+		device, fileName = strJoin(['output/jPar_',file_basename(fileList[f],'.nc'),'.eps']), $
+				/encaps, xSize = 6, ySize = 6, /color, /inches
 		loadct, 0
 
     	coLatLines = [10,20,30,40,50,60,70,80,90]
@@ -41,7 +43,7 @@ pro ampfit_plotjpar
     	nPtsLon = 20
     	meanr   = mean ( r )
 		print, 'Mean(r): ', mean(r)
-		title='jParAACGM'
+		title=file_basename(fileList[f],'.nc')
 
 		loadct, 1
 		contour, jPar, x+randomn(1,n_elements(x))*1e-6, y, $

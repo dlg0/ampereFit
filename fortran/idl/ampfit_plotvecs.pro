@@ -30,7 +30,6 @@ pro ampfit_plotvecs, r, th, ph, bTh, bPh, title = title, fileNameIn=fileNameIn
     nPtsLat = 360
     nPtsLon = 20
     meanr   = mean ( r )
-	print, 'Mean(r): ', mean(r)
 
     ;myVec = vector ( xVec, yVec, $
     ;        xPos, yPos, $
@@ -45,11 +44,11 @@ pro ampfit_plotvecs, r, th, ph, bTh, bPh, title = title, fileNameIn=fileNameIn
 
 	set_plot, 'ps'
 	device, fileName = fileNameIn, /encaps, xSize = 6, ySize = 6, /color, /inches
-	loadct, 0
+	loadct, 0, /silent
 	plot, xPos, yPos, xRange = [-meanr,meanr], yRange = [-meanr,meanr], title = title, $
 			position = [0.1,0.1,0.9,0.9], /norm, color = 0, xStyle=1, yStyle=1, psym = 4, symsize=0.2
 
-	loadct, 1
+	loadct, 1, /silent
 	sf = 4
 	for i=0,n_elements(xVec)-1 do begin
 			x0 = xPos[i]

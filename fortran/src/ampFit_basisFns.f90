@@ -76,8 +76,8 @@ subroutine create_bFns_at_data ( dataIn, basis )
  
     integer :: k, l, m, n, s
     integer :: i, cnt, span, nObs
-    real(kind=DBL) :: x, lon, coLat, r, dYdr_rDep
-    real(DBL), allocatable :: rDep(:)
+    real(kind=DBL) :: x, lon, coLat, r, dYdr_rDep, factorial1, factorial2
+    real(DBL), allocatable :: rDep(:), norm(:)
 
     ! FGSL 
 
@@ -111,7 +111,14 @@ subroutine create_bFns_at_data ( dataIn, basis )
             ! in the fit. It could be removed, but right now it should 
             ! be fine as its coefficient will be small.
 
-            fgsl_stat = fgsl_sf_legendre_sphplm_deriv_array ( &
+            !! Normalised
+            !fgsl_stat = fgsl_sf_legendre_sphplm_deriv_array ( &
+            !        maxK, abs(m), x, &
+            !        basis(i,cnt:cnt+span-1)%PLM, & 
+            !        basis(i,cnt:cnt+span-1)%dPLM )
+
+            ! Not normalised
+            fgsl_stat = fgsl_sf_legendre_plm_deriv_array ( &
                     maxK, abs(m), x, &
                     basis(i,cnt:cnt+span-1)%PLM, & 
                     basis(i,cnt:cnt+span-1)%dPLM )
@@ -121,29 +128,35 @@ subroutine create_bFns_at_data ( dataIn, basis )
             kArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
 
             !rDep = 1d0
-            allocate(rDep(span))
-            do s=1,span
-                rDep(s) = r**nArr(cnt+s-1) * ( 1.0 + nArr(cnt+s-1) / ( nArr(cnt+s-1) + 1.0 ) &
-                    * ( 1.0 / r )**( 2.0 * nArr(cnt+s-1) + 1.0 ) )
-            enddo
-
+            allocate(rDep(span),norm(span))
             dYdR_rDep = 1d0
 
+            do s=1,span
+                rDep(s) = 1.0!r**nArr(cnt+s-1) * ( 1.0 + nArr(cnt+s-1) / ( nArr(cnt+s-1) + 1.0 ) &
+                    !* ( 1.0 / r )**( 2.0 * nArr(cnt+s-1) + 1.0 ) )
+                !l = nArr(cnt+s-1)
+                !factorial1 = fgsl_sf_fact ( l-m )
+                !factorial2 = fgsl_sf_fact ( l+m )
+                !norm(s) = sqrt ( (2*l+1)/(4*pi) ) * sqrt ( factorial1/factorial2 )
+                !!write(*,*) l, m, factorial1, factorial2, norm(s), basis(i,cnt+s-1)%Y
+            enddo
+
             if(m>=0) then
-                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )! / norm
+                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )! / norm
+                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )! / norm
                 basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
+                    * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )! / norm
             else
-                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * sin (abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * sin ( abs(m) * lon )
+                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )! / norm
+                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * sin (abs(m) * lon )! / norm
+                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * sin ( abs(m) * lon )! / norm
                 basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
+                    * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )! / norm
             endif
 
-            deallocate(rDep)
+
+            deallocate(rDep,norm)
 
             cnt = cnt + span
 

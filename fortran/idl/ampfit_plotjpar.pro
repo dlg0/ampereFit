@@ -26,9 +26,9 @@ pro ampfit_plotjpar
 
 		ncdf_close, cdfid
 
-		scale = 0.5;max(abs(jPar))*0.8
+		scale = 0.4;max(abs(jPar))*0.8
 		print, 'jPar scale: ', scale, ' uAm^-2'
-		nLevs = 11
+		nLevs = 6
 		levels = (1+fIndGen(nLevs))/(nLevs)*scale
 		colors = reverse(bytScl ( levels, top = 253 ) + 1)
 
@@ -49,19 +49,24 @@ pro ampfit_plotjpar
 		contour, jPar, x+randomn(1,n_elements(x))*1e-6, y, $
 				/irreg, $
 				levels = levels, $
-				/fill, $
 				c_colors = colors, $
 				position = [0.1,0.1,0.9,0.9], /norm, $
 				xStyle = 1, yStyle = 1, $
 				yRange = [-meanr, meanr], xRange=[-meanr,meanr], $
-				title = title
+				c_labels = colors*0+1, $
+				title = title, $
+				c_charSize = 0.3
 		loadct, 3
 		contour, -jPar, x+randomn(1,n_elements(x))*1e-6, y, $
 				/irreg, $
 				levels = levels, $
 				c_colors = colors, $
-				/fill, $
-				/over
+				c_labels = colors*0+1, $
+				/over, $
+				c_charSize = 0.3
+
+		xyouts, 0.7, 0.95, 'Max: '+string(max(jPar)), /norm, charSize = 0.8
+		xyouts, 0.7, 0.92, 'Min: '+string(min(jPar)), /norm, charSize = 0.8
 
     	for i=0,n_elements(coLatLines)-1 do begin
 
@@ -87,7 +92,7 @@ pro ampfit_plotjpar
 
     	endfor
 
-
+		p = plot(jPar[*])
 		device, /close
 
 	endfor

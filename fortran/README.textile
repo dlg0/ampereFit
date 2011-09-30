@@ -24,11 +24,20 @@ Note: At present we link against the full RST lib, but in future (when the new A
 You will need to install these and then modify the following lines of "Makefile":
 
 bc. NETCDF_DIR = /opt/local
-F95_LAPACK_DIR = /Users/dg6/code/lapack95/LAPACK95
-LAPACK_DIR = /Users/dg6/code/lapack/lapack-3.3.0
-BLAS_DIR = /Users/dg6/code/gotoBLAS/GotoBLAS2
-GSL_DIR = /Users/dg6/code/ampereFit/fortran/gsl
-FGSL_DIR = /Users/dg6/code/ampereFit/fortran/fgsl
+ NETCDF_MOD = /usr/lib64/gfortran/modules/
+ F95_LAPACK_DIR = /home/davidg/lapack95/LAPACK95
+ LAPACK_DIR = /home/davidg/lapack/lapack-3.3.1/lib
+ BLAS_DIR = /usr/lib64
+ GSL_DIR = /home/davidg/gsl
+ FGSL_DIR = /home/davidg/fgsl
+ AACGM_DIR:=/home/davidg/rst
+
+h3. Library interdependancies (I'm happy to help set these up)
+
+* LAPACK depends on BLAS (While any BLAS lib will do, I usually use GotoBLAS2 as it is the fastest. However, it did have some problems on the ampre.newcastle.edu.au machine so in that case we are using the system BLAS, i.e., that installed with yum.)
+* F95 LAPACK depends on LAPACK (It's the Fortran 95 wrapper to the LAPACK routines.)
+* FGSL depends on GSL (It's the Fortran wrapper to the GSL routines.)
+* RST depends on a whole bunch of things that you will have to deal with using your package management system.
 
 h2. Compiler
 

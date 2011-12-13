@@ -24,16 +24,16 @@ FGSL_DIR = /home/davidg/fgsl
 AACGM_DIR:=/home/davidg/rst
 
 ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
-F90 = /home/dg6/code/gcc/gcc-4.4.5/bin/gfortran
+F90 = /home/dg6/code/gcc/gcc-4.3.2/bin/gfortran
 F77 = $(F90)
-NETCDF_DIR = /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64
-NETCDF_MOD = /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64/include
-F95_LAPACK_DIR = /home/dg6/code/lapack95/LAPACK95
-LAPACK_DIR = /home/dg6/code/lapack/lapack-3.1.1/lib
-BLAS_DIR = /home/dg6/code/goto_blas/GotoBLAS2
-GSL_DIR = /home/dg6/code/gsl
-FGSL_DIR = /home/dg6/code/fgsl
-AACGM_DIR:=/home/dg6/code/rst/rst
+NETCDF_DIR = /home/dg6/code/netcdf/netcdf_gnu_4.3.2_64
+NETCDF_MOD = ${NETCDF_DIR}/include
+F95_LAPACK_DIR = /home/dg6/code/lapack95/gnu_4.3.2_64
+LAPACK_DIR = /home/dg6/code/lapack
+BLAS_DIR = /home/dg6/code/goto_blas
+GSL_DIR = /home/dg6/code/gsl/gnu_4.3.2_64
+FGSL_DIR = /home/dg6/code/fgsl/gnu_4.3.2_64
+AACGM_DIR:=/home/dg6/code/superdarn/rst
 endif
 
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
@@ -44,7 +44,7 @@ INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
 ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
-	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -lgoto2
+	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/lapack_gnu_4.3.2_64.a ${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
 else
 	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
 endif
@@ -83,6 +83,7 @@ ${OBJ_DIR}/ampFit.o: \
 	${OBJ_DIR}/ampFit_shift.o \
 	${OBJ_DIR}/ampFit_rotate.o \
 	${OBJ_DIR}/f_aacgm.o \
+	${OBJ_DIR}/f_time.o \
 	$(OBJ_DIR)/ampFit_sort.o \
 	${OBJ_DIR}/ampFit_geivec_aacgmvec.o
 

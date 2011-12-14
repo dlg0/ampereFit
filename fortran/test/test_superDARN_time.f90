@@ -47,9 +47,6 @@ write(*,*) 'Should be: 2455908.689160'
 jdOut = f_TimeYMDHMSToJulian(yr,mo,dy,hr,mt,sc)
 write(*,'(11x,f16.7)') jdOut
 
-stat = f_TimeJulianToYMDHMS(jdOut,C_LOC(yr),C_LOC(mo),C_LOC(dy),C_LOC(hr),C_LOC(mt),C_LOC(sc))
-write(*,'(12x,i4.4,a1,i2.2,a1,i2.2,a2,i2.2,a1,i2.2,a1,f9.6,a13)') yr,'-',mo,'-',dy,'  ',hr,':',mt,':',sc, '  [_C_DOUBLE]'
-
 yr=2011_C_INT
 mo=12_C_INT
 dy=13_C_INT

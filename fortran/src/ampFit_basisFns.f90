@@ -1,9 +1,20 @@
 module basisFns
+!
+!  function numberBFns
+!  subroutine create_bFns_at_data ( dataIn, basis )
+!
+! D.L. Green and C.L. Waters
+! Centre for Space Physics
+! University of Newcastle
+! Australia
+!
+! Ver : 201202
+! 
 
 use constants
-use fgsl
-use ampFit_namelist
-use la_precision, only: WP=>DP
+use ampFit_legendre
+!use fgsl
+!use la_precision, only: WP=>DP
 
 implicit none
 
@@ -13,79 +24,46 @@ integer :: nBFns
 
 contains
 
-integer function numberBFns ()
+  integer function numberBFns (MaxK, MaxM)
+! assumes full sphere
+! Modified from IDL code by CLW
 
-    use ampFit_nameList
     implicit none
-    integer :: m, k
 
-    write(*,*) 'Calculating number of basis funcitons ...'
-    write(*,*) '    basisType: ', basisType
+    integer, intent(in) :: MaxK, MaxM
+    integer :: i, k, n_left
 
     numberBFns  = 0
 
-    do m = -maxM, maxM
-        do k = 0, maxK
-
-
-            select case ( basisType )
-            case ('FULL')
-
-                if ( k >= abs(m) ) numberBFns = numberBFns + 1
-
-            case ('CAP0')
-
-                if ( mod ( k - abs ( m ), 2 ) == 0  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
-
-            case ('CAP1')
-
-                if ( mod ( k - abs ( m ), 2 ) == 1  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
-
-            case ('BOTH')
-
-                if ( mod ( k - abs ( m ), 2 ) == 0  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
-                if ( mod ( k - abs ( m ), 2 ) == 1  .and. k >= abs ( m ) ) &
-                    numberBFns = numberBFns + 1
- 
-            end select
-
-        enddo
+    do i = 0, maxM
+      numberBFns = numberBFns + (2*i + 1)
     enddo
-
-    write(*,*) '    nBfns: ', numberBFns
-    write(*,*) 'DONE'
+    n_left = maxK - maxM
+    numberBFns = numberBFns + n_left*(2*maxM+1) - 1
 
     return
 
-end function numberBFns
+  end function numberBFns
+!
+! ---------------------------------------------------------------------------------------
+!
 
+  subroutine create_bFns_at_data ( dataIn, basis, maxK, maxM )
 
-subroutine create_bFns_at_data ( dataIn, basis )
-
-    use fgsl
-    use ampFit_nameList
     use ampFit_data
 
     implicit none
   
     type(ampData), intent(in) :: dataIn(:)
     type(ampBasis), allocatable, intent (inout) :: basis(:,:)
+    integer, intent(in) :: maxK, maxM
  
     integer :: k, l, m, n, s
-    integer :: i, cnt, span, nObs
-    real(kind=DBL) :: x, lon, coLat, r, dYdr_rDep
-    real(DBL), allocatable :: rDep(:)
-
-    ! FGSL 
-
-    integer(fgsl_int) :: fgsl_stat
-
-    !write(*,*) 'Creating basis functions at dataIn locations ...'
+    integer :: i, j, cnt, nObs
+    real(kind=DBL) :: x, lon, coLat, r, dYdr_rDep, Plm, dPlm, rDep
 
     nObs    = size ( dataIn )
+    nBFns = numberBFns (maxK, maxM)
 
     allocate ( basis(nObs,nBFns) )
     if (.not. allocated ( mArr )) then 
@@ -94,65 +72,65 @@ subroutine create_bFns_at_data ( dataIn, basis )
 
     r = 1.0
 
-    do i=1,nObs
+    do i=1,nObs       ! for every data point
 
-        cnt = 1
-        do m=-maxM,maxM
+      coLat = dataIn(i)%T
+      lon = dataIn(i)%P
 
-            ! l, m, x
-            span = fgsl_sf_legendre_array_size ( maxK, abs(m) ) 
+      cnt = 1         ! basis ftn counter
+      dYdR_rDep = 1d0
 
-            coLat = dataIn(i)%T
-            lon = dataIn(i)%P
-            x = cos(coLat)
+      do m = 0,maxM
 
-            ! The GSL routines assume you want the l=0,m=0 term, so
-            ! to get this to work I am running with this term included
-            ! in the fit. It could be removed, but right now it should 
-            ! be fine as its coefficient will be small.
+        do j = m, maxK
+          if (j .gt. 0) then
+            call dLegendre(j,abs(m),coLat,Plm,dPlm)
+            basis(i,cnt)%PLM = Plm 
+            basis(i,cnt)%dPLM = dPlm 
 
-            fgsl_stat = fgsl_sf_legendre_sphplm_deriv_array ( &
-                    maxK, abs(m), x, &
-                    basis(i,cnt:cnt+span-1)%PLM, & 
-                    basis(i,cnt:cnt+span-1)%dPLM )
+            mArr(cnt) = m
+            nArr(cnt) = j 
+            kArr(cnt) = j 
 
-            mArr(cnt:cnt+span-1) = m
-            nArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
-            kArr(cnt:cnt+span-1) = (/ (i,i=abs(m),maxK) /) 
+            rDep = r**nArr(cnt)*(1.0 + nArr(cnt)/(nArr(cnt) + 1.0 ) &
+                    *(1.0 / r )**(2.0 * nArr(cnt) + 1.0 ) )
 
-            !rDep = 1d0
-            allocate(rDep(span))
-            do s=1,span
-                rDep(s) = r**nArr(cnt+s-1) * ( 1.0 + nArr(cnt+s-1) / ( nArr(cnt+s-1) + 1.0 ) &
-                    * ( 1.0 / r )**( 2.0 * nArr(cnt+s-1) + 1.0 ) )
-            enddo
+            basis(i,cnt)%Y = rDep * Plm * cos ( m * lon )
+            basis(i,cnt)%br = dYdr_rDep * PLM * cos (m * lon )
+            basis(i,cnt)%bTh = 1d0 / r * rDep * dPlm * cos ( m * lon )
+            basis(i,cnt)%bPh = -m * rDep / ( r * sin ( coLat ) ) &
+                * Plm * sin ( m * lon )
 
-            dYdR_rDep = 1d0
+            mArr(cnt) = m
+            nArr(cnt) = j 
+            kArr(cnt) = j 
 
-            if(m>=0) then
-                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * cos (abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * cos ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
-            else
-                basis(i,cnt:cnt+span-1)%Y = rDep * basis(i,cnt:cnt+span-1)%PLM * sin ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%br = dYdr_rDep * basis(i,cnt:cnt+span-1)%PLM * sin (abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bTh = 1d0 / r * rDep * basis(i,cnt:cnt+span-1)%dPLM * sin ( abs(m) * lon )
-                basis(i,cnt:cnt+span-1)%bPh = -abs(m) * rDep / ( r * sin ( coLat ) ) &
-                    * basis(i,cnt:cnt+span-1)%PLM * cos ( abs(m) * lon )
+            cnt = cnt + 1
+
+            if ( m .gt. 0) then   ! exclude m=0
+              basis(i,cnt)%PLM = Plm 
+              basis(i,cnt)%dPLM = dPlm 
+              basis(i,cnt)%Y = rDep * Plm * sin ( m * lon )
+              basis(i,cnt)%br = dYdr_rDep * Plm * sin ( m * lon )
+              basis(i,cnt)%bTh = 1d0 / r * rDep * dPlm * sin ( m * lon )
+              basis(i,cnt)%bPh = m * rDep / ( r * sin ( coLat ) ) &
+                * Plm * cos ( m * lon )
+              mArr(cnt) = -m
+              nArr(cnt) =  j 
+              kArr(cnt) =  j 
+
+              cnt = cnt + 1
             endif
 
-            deallocate(rDep)
+          endif  ! do not count the L=0,M=0 term
 
-            cnt = cnt + span
+        enddo    ! L(j) loop for spherical harmonics
+      enddo      ! M loop
 
-        enddo
+    enddo        ! input data loop
 
-    enddo
-
-    !deallocate ( dataIn_PLMBFnArr, dataIn_dPLMBFnArr )
-
-end subroutine create_bFns_at_data
+  end subroutine create_bFns_at_data
 
 end module basisFns
+!
+! ====================================================================

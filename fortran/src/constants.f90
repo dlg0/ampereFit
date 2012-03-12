@@ -1,11 +1,18 @@
 module constants
-
+!
+! Constants for AMPERE code
+! C.L Waters and D.L. Green
+! University of Newcastle
+! Australia
+!
+! Sept 2011
+!
     implicit none
 
     integer, parameter :: SGL = selected_real_kind ( p = 6, r = 37 )
     integer, parameter :: DBL = selected_real_kind ( p = 13, r = 200 )
 
-    real(kind=DBL), parameter :: rE = 6356.75e3
+    real(kind=DBL), parameter :: rE = 6371.0e3   ! in metres
     real(kind=DBL), parameter :: rSat = 780.0e3
     real(kind=DBL), parameter :: rI = 1.02
     real(kind=DBL), parameter :: pi = 3.1415926535897932384626
@@ -19,30 +26,30 @@ module constants
     real(kind=DBL), parameter :: c = c_ / rE;
 
     type :: ampBasis
-
-        real(DBL) :: PLM, dPLM
-        real(DBL) :: Y, br, bTh, bPh
-
+      real(DBL) :: PLM, dPLM
+      real(DBL) :: Y, br, bTh, bPh
     end type ampBasis
 
     type :: ampData
-        real(kind=DBL) :: utc           ! UT time in dec hours
-        integer :: isat                 ! coded SV number (for Haje)
-        integer :: iPln                 ! orbit track number (0->5)
-        real :: qual                    ! data quality from Lars
-        integer :: splice               ! flag for spliced data - where missing data estimated
-        integer :: typ                  ! data type (for CLW) - This is NOT a helpful description !!
-        real(kind=DBL) :: x, y, z
-        real(kind=DBL) :: bX, bY, bZ
-        real(kind=DBL) :: &
-            R, & ! [km]
-            T, & ! [coLat, rad]
-            P, & ! [lon, rad]
-            bR, bT, bP
-        real(kind=DBL) :: jPar ! [uAm^{-2}]
-
+      real(kind=DBL) :: utc           ! UT time in dec hours
+      integer :: isat                 ! coded SV number (for Haje)
+      integer :: iPln                 ! orbit track number (0->5)
+      real :: qual                    ! data quality from Lars
+      integer :: splice               ! flag for spliced data - where missing data estimated
+      integer :: typ                  ! data type: 0=normal, 1=longitude strays, 2=ghosts, 3=extra ghosts (Nyquist in longitude)
+      real(kind=DBL) :: x, y, z
+      real(kind=DBL) :: bX, bY, bZ
+      real(kind=DBL) :: &
+          R, & ! [km]
+          T, & ! [coLat, rad]
+          P, & ! [lon, rad]
+          bR, bT, bP
+      real(kind=DBL) :: jPar ! [uAm^{-2}]
     end type ampData
 
+    integer :: err_stat
+    character(len=100) :: err_msg
+
 end module constants
-
-
+!
+! ================================================================================

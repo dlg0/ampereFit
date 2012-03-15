@@ -1,129 +1,96 @@
-EXEC = xAmpereFit
+EXEC := xAmpereFit
+RUN := xRunAmpereFit
 
-OBJ_DIR = obj
-MOD_DIR = mod
-SRC_DIR = src
+OBJ_DIR := obj
+MOD_DIR := mod
+SRC_DIR := src
 
-F90 = gfortran
-F77 = gfortran
+# If you are not DLG, then do not change this ;)
+PARALLEL := 0
 
-F90FLAGS= -J${MOD_DIR} #-fno-underscoring
-F77FLAGS= -J${MOD_DIR} #-fno-underscoring
+F90FLAGS:= -J${MOD_DIR} #-fno-underscoring
+F77FLAGS:= -J${MOD_DIR} #-fno-underscoring
 
-DEBUG_OPTS = -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
-INCLUDES = 
-LINK =
+DEBUG_OPTS := -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
+INCLUDES := 
+LINK :=
+CPP_DIRECTIVES :=
 
-NETCDF_DIR = /opt/local
-NETCDF_MOD = /usr/lib64/gfortran/modules/
-F95_LAPACK_DIR = /home/davidg/lapack95/LAPACK95
-LAPACK_DIR = /home/davidg/lapack/lapack-3.3.1/lib
-BLAS_DIR = /usr/lib64
-GSL_DIR = /home/davidg/gsl
-FGSL_DIR = /home/davidg/fgsl
-AACGM_DIR:=/home/davidg/rst
-
-ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
-F90 = /home/dg6/code/gcc/gcc-4.3.2/bin/gfortran
-F77 = $(F90)
-NETCDF_DIR = /home/dg6/code/netcdf/netcdf_gnu_4.3.2_64
-NETCDF_MOD = ${NETCDF_DIR}/include
-F95_LAPACK_DIR = /home/dg6/code/lapack95/gnu_4.3.2_64
-LAPACK_DIR = /home/dg6/code/lapack
-BLAS_DIR = /home/dg6/code/goto_blas
-GSL_DIR = /home/dg6/code/gsl/gnu_4.3.2_64
-FGSL_DIR = /home/dg6/code/fgsl/gnu_4.3.2_64
-AACGM_DIR:=/home/dg6/code/superdarn/rst
+ifeq (${PARALLEL},1)
+	F90 := mpif90
+	F77 := mpif90
+	CPP_DIRECTIVES += -D_parallel_
+else
+	F90 := gfortran
+	F77 := gfortran
 endif
 
+
+# Default library paths for ampre.newcastle.edu
+	NETCDF_DIR := /opt/local
+	NETCDF_MOD := /usr/lib64/gfortran/modules/
+	F95_LAPACK_DIR := /home/davidg/lapack95/LAPACK95
+	F95_LAPACK_LIB:=${F95_LAPACK_DIR}/lapack95.a
+	LAPACK_DIR := /home/davidg/lapack/lapack-3.3.1/lib
+	LAPACK_LIB:=${LAPACK_DIR}/liblapack.a
+	BLAS_DIR := /usr/lib64
+	BLAS_LIB := -L${BLAS_DIR} -l:libblas.so.3
+	GSL_DIR := /home/davidg/gsl
+	FGSL_DIR := /home/davidg/fgsl
+	AACGM_DIR:=/home/davidg/rst
+
+ifeq (${PARALLEL},1)
+	SCALAPACK_DIR:=${HOME}/code/scalapack
+	BLACS:= \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacsF77init_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a
+endif
+
+
+# Include other machines
+include Makefile.dlg-hp
+
+# Netcdf
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
 INCLUDES += -I${NETCDF_MOD}
 
+# FGSL (Fortran interface to the GSL)
 LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
 INCLUDES += -I${FGSL_DIR}/include/gfortran
 
+# F95 interface to LAPACK
+LINK += ${F95_LAPACK_LIB} ${LAPACK_LIB} ${BLAS_LIB}
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
-ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
-	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/lapack_gnu_4.3.2_64.a ${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
-else
-	LINK += ${F95_LAPACK_DIR}/lapack95.a ${LAPACK_DIR}/liblapack.a -L${BLAS_DIR} -l:libblas.so.3
-endif
+
+# AACGM 
 LINK += -L ${AACGM_DIR}/lib -l:libaacgm.1.a -l:libmlt.1.a -l:libastalg.1.a -l:librtime.1.a
+
+# ScaLAPACK
+ifeq (${PARALLEL},1)
+LINK := -L ${SCALAPACK_DIR} -l:libscalapack_gnu_4.3.2_64.a ${BLACS} ${LINK}
+endif
 
 OBJECTS := $(patsubst src/%,obj/%.o,$(basename $(wildcard src/*)))
 
+${RUN}: ${EXEC} ${OBJ_DIR}/ampFit_run.o
+	${F90} ${F90FLAGS} -o $@ ${OBJECTS} ${LINK} ${DEBUG_OPTS} ${CPP_DIRECTIVES}
+
 ${EXEC}: ${OBJECTS}
-	${F90} ${F90FLAGS} ${OBJECTS} -o $@ ${LINK} ${DEBUG_OPTS}
+	${F90} ${F90FLAGS} ${OBJECTS} -o $@ ${LINK} ${DEBUG_OPTS} ${CPP_DIRECTIVES}
 
 ${OBJ_DIR}/%.o: ${SRC_DIR}/%.f90
-	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS}
+	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS} ${CPP_DIRECTIVES}
 
 ${OBJ_DIR}/%.o: ${SRC_DIR}/%.F90
-	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS}
+	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS} ${CPP_DIRECTIVES}
 
 ${OBJ_DIR}/geopack.o: ${SRC_DIR}/geopack/geopack-2008_dp.f
-	${F77} -c ${F70FLAGS} $< -o $@ ${DEBUG_OPTS}
+	${F77} -c ${F70FLAGS} $< -o $@ ${DEBUG_OPTS} ${CPP_DIRECTIVES}
 
 clean:
 	@echo ${OBJECTS} 
-	rm obj/*.o mod/*.mod ${EXEC}
+	rm obj/*.o mod/*.mod ${EXEC} ${RUN}
 
-
-# Dependencies
-
-${OBJ_DIR}/ampFit.o: \
-	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_nameList.o \
-	${OBJ_DIR}/ampFit_data.o \
-	${OBJ_DIR}/dlg.o \
-	${OBJ_DIR}/spherHarmFns.o \
-	${OBJ_DIR}/ampFit_basisFns.o \
-	${OBJ_DIR}/ampFit_solve.o \
-	${OBJ_DIR}/ampFit_write_output.o \
-	${OBJ_DIR}/ampFit_shift.o \
-	${OBJ_DIR}/ampFit_rotate.o \
-	${OBJ_DIR}/f_aacgm.o \
-	${OBJ_DIR}/f_time.o \
-	$(OBJ_DIR)/ampFit_sort.o \
-	${OBJ_DIR}/ampFit_geivec_aacgmvec.o
-
-${OBJ_DIR}/ampFit_data.o: \
-	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_nameList.o \
-	${OBJ_DIR}/dlg.o \
-	${OBJ_DIR}/geopack.o
-
-${OBJ_DIR}/ampFit_write_output.o: \
-	${OBJ_DIR}/ampFit_data.o \
-	${OBJ_DIR}/dlg.o \
-	${OBJ_DIR}/constants.o
-
-${OBJ_DIR}/ampFit_basisFns.o: \
-	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_nameList.o \
-	${OBJ_DIR}/ampFit_data.o
-
-${OBJ_DIR}/ampFit_solve.o: \
-	${OBJ_DIR}/ampFit_basisFns.o \
-	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_rotate.o
-
-${OBJ_DIR}/ampFit_shift.o: \
-	${OBJ_DIR}/constants.o \
-	$(OBJ_DIR)/ampFit_rotate.o
-
-${OBJ_DIR}/ampFit_rotate.o: \
-	${OBJ_DIR}/constants.o \
-	${OBJ_DIR}/ampFit_data.o \
-	${OBJ_DIR}/dlg.o
-
-${OBJ_DIR}/dlg.o: \
-	${OBJ_DIR}/constants.o
-
-${OBJ_DIR}/ampFit_geivec_aacgmvec.o: \
-		${OBJ_DIR}/f_aacgm.o \
-		${OBJ_DIR}/constants.o \
-		${OBJ_DIR}/ampFit_sort.o
-
-
+include Makefile.deps
 

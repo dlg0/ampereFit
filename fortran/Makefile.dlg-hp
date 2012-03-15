@@ -1,0 +1,33 @@
+ifeq ($(findstring dlg-hp,$(HOSTNAME)),dlg-hp)
+
+ifeq (${PARALLEL},1)
+	F90 := mpif90
+	F77 := mpif90
+else
+	F90 := gfortran
+	F77 := gfortran
+endif
+
+	NETCDF_DIR:= ${HOME}/code/netcdf/gnu_4.3.2
+	NETCDF_MOD:= ${NETCDF_DIR}/include
+	F95_LAPACK_DIR:= /home/dg6/code/lapack95/gnu_4.3.2_64
+	F95_LAPACK_LIB:=${F95_LAPACK_DIR}/lapack95.a
+	LAPACK_DIR:= /home/dg6/code/lapack
+	LAPACK_LIB:=${LAPACK_DIR}/lapack_gnu_4.3.2_64.a 
+	BLAS_DIR:= /home/dg6/code/goto_blas
+	BLAS_LIB:=${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
+	GSL_DIR:= /home/dg6/code/gsl/gnu_4.3.2_64
+	FGSL_DIR:= /home/dg6/code/fgsl/gnu_4.3.2_64
+	AACGM_DIR:=/home/dg6/code/superdarn/rst
+
+ifeq (${PARALLEL},1)
+	SCALAPACK_DIR:=${HOME}/code/scalapack
+	BLACS:= \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacsF77init_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a
+endif
+
+endif
+
+

@@ -32,6 +32,9 @@ subroutine ampFit ( sYear,sMonth,sDay,sHour,sMin,sSec, &
   use ISO_C_BINDING
   use f_aacgm
   use ampFit_aacgm
+#ifdef _parallel_
+  use parallel
+#endif
 
   implicit none
 
@@ -277,6 +280,16 @@ subroutine ampFit ( sYear,sMonth,sDay,sHour,sMin,sSec, &
 !                 dataGEO_SHift_Half_ghost(i)%ipln
 !    enddo
 !stop
+
+
+! Once the data has been finalized, we now know how large the final 
+! matrix will be
+
+#ifdef _parallel_
+    nObs = size ( dataGEO_Shift_half_ghost )
+    nBFns = numberBFns (maxK, maxM)
+    call initParallelEnv ()
+#endif
 
   print*,'Calc basis function values at data locations...'
   call create_bFns_at_data ( dataGEO_Shift_half_ghost, dataBFn, maxK, maxM )

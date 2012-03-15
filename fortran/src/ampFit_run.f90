@@ -38,7 +38,7 @@ program ampereFit_run
   gridcoLat_deg = 50.0
   latStep = 1.0
   lonStep = 15.0
-  data_dir = '/data/ampere/'
+  data_dir = 'data/'
   sYear = 2010
   sMonth = 8
   sDay = 24

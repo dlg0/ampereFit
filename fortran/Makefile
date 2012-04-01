@@ -31,10 +31,20 @@ endif
 	NETCDF_MOD := /usr/lib64/gfortran/modules/
 	F95_LAPACK_DIR := /home/davidg/lapack95/LAPACK95
 	F95_LAPACK_LIB:=${F95_LAPACK_DIR}/lapack95.a
-	LAPACK_DIR := /home/davidg/lapack/lapack-3.3.1/lib
+	LAPACK_DIR := /home/davidg/lapack/lapack-3.4.0/lib
 	LAPACK_LIB:=${LAPACK_DIR}/liblapack.a
-	BLAS_DIR := /usr/lib64
-	BLAS_LIB := -L${BLAS_DIR} -l:libblas.so.3
+	#BLAS_DIR := /usr/lib64
+	#BLAS_LIB := -L${BLAS_DIR} -l:libblas.so.3 -lpthread
+	BLAS_DIR := /home/davidg/blas/GotoBLAS2
+	BLAS_LIB := -L${BLAS_DIR} -l:libgoto2.so
+
+	#BLAS_LIB:=
+	#MKLROOT:=/home/davidg/intel/composer_xe_2011_sp1.7.256/mkl
+	#F95ROOT:=${MKLROOT}
+	#INCLUDES+=${F95ROOT}/include/intel64/ilp64
+	#LAPACK_LIB:= $(F95ROOT)/lib/intel64/libmkl_lapack95_ilp64.a  -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_gf_ilp64.a $(MKLROOT)/lib/intel64/libmkl_gnu_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -fopenmp -lpthread -lm
+	#CPP_DIRECTIVES += -I$(F95ROOT)/include/intel64/ilp64  -m64 -I$(MKLROOT)/include
+
 	GSL_DIR := /home/davidg/gsl
 	FGSL_DIR := /home/davidg/fgsl
 	AACGM_DIR:=/home/davidg/rst
@@ -84,6 +94,9 @@ ${OBJ_DIR}/%.o: ${SRC_DIR}/%.f90
 
 ${OBJ_DIR}/%.o: ${SRC_DIR}/%.F90
 	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS} ${CPP_DIRECTIVES}
+
+#${OBJ_DIR}/ampFit_solve.o: ${SRC_DIR}/ampFit_solve.F90
+#	${F90} -c ${F90FLAGS} $< -o $@ ${INCLUDES} ${DEBUG_OPTS} ${CPP_DIRECTIVES} -fdefault-integer-8
 
 ${OBJ_DIR}/geopack.o: ${SRC_DIR}/geopack/geopack-2008_dp.f
 	${F77} -c ${F70FLAGS} $< -o $@ ${DEBUG_OPTS} ${CPP_DIRECTIVES}

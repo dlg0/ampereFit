@@ -6,6 +6,10 @@ h2. Downloading
 
 bc. git clone git@github.com:dlg0/ampereFit.git
 
+or you may want to use the http protocol instead if you are behind a nasty firewall like I am at ORNL, i.e.,
+
+bc. git clone https://dlg0@github.com/dlg0/ampereFit.git
+
 h2. Libraries
 
 There are several libraries that the ampFit fortran library depends on. These are:
@@ -34,14 +38,112 @@ bc. NETCDF_DIR = /opt/local
 
 h3. Library interdependancies (I'm happy to help set these up)
 
-* LAPACK depends on BLAS (While any BLAS lib will do, I usually use GotoBLAS2 as it is the fastest. However, it did have some problems on the ampre.newcastle.edu.au machine so in that case we are using the system BLAS, i.e., that installed with yum.)
+* LAPACK depends on BLAS (While any BLAS lib will do, I usually use GotoBLAS2 as it is the fastest. However, it did have some problems on the ampre.newcastle.edu.au machine so in that case we are using the system BLAS, i.e., that installed with yum. This does have the unfortunate side effect of not being a threaded blas library, i.e., slow. I am still working on why this is occuring. Hopefully it will not occur on the APL machine so we can use Goto.)
 * F95 LAPACK depends on LAPACK (It's the Fortran 95 wrapper to the LAPACK routines.)
 * FGSL depends on GSL (It's the Fortran wrapper to the GSL routines.)
 * RST depends on a whole bunch of things that you will have to deal with using your package management system.
 
+So, here is how I went about building all the libraries on the redhat ampre.newcastle.edu.au machine ...
+
+* BLAS - Downloaded GotoBLAS2 from the link above into ~/blas/ and untared.
+bc. cd ~
+bc. mkdir blas
+bc. cd blas
+bc. mv ~/Downloads/DOWNLOADED_GOTOBLAS2.tar.gz .
+bc. tar -xzvf DOWNLOADED_GOTOBLAS2.tar.gz
+bc. cd GotoBLAS2
+bc. make clean
+bc. make
+
+Now on the ampre.newcastle.edu.au machine, this spits an error ...
+
+bc. ../kernel/x86_64/gemm_ncopy_4.S: Assembler messages:
+../kernel/x86_64/gemm_ncopy_4.S:175: Error: undefined symbol `RPREFETCHSIZE' in operation
+
+which I think is related to the auto-detction of chip architecture script failing so we specify it manually
+
+bc. make cleanb
+bc. make TARGET=NEHALEM
+bc. [davidg@ampre GotoBLAS2]$ ls -alh | grep libgoto2
+lrwxrwxrwx.  1 davidg users   25 Apr  1 21:40 libgoto2.a -> libgoto2_nehalemp-r1.13.a
+-rw-r--r--.  1 davidg users  19M Apr  1 21:41 libgoto2_nehalemp-r1.13.a
+-rwxr-xr-x.  1 davidg users 9.7M Apr  1 21:41 libgoto2_nehalemp-r1.13.so
+lrwxrwxrwx.  1 davidg users   26 Apr  1 21:41 libgoto2.so -> libgoto2_nehalemp-r1.13.so
+
+so we now have libgoto2.a as our BLAS library.
+
+* LAPACK is now built using the BLAS library we just built as its dependancy.
+
+bc. cd ~
+bc. mkdir lapack
+bc. cd lapack
+bc. wget http://www.netlib.org/lapack/lapack-3.4.0.tgz
+bc. tar -xzvf lapack-3.4.0.tgz
+bc. cd lapack-3.4.0/
+bc. cp make.inc.example make.inc
+bc. vim make.inc
+
+here we need to change fortran compiler to be the one we want (here we are just using the system gfortran so will not adjust the FORTRAN setting), and the BLASLIB path to be 
+
+bc. BLASLIB=/home/davidg/blas/GotoBLAS2/libgoto2.a -lpthread
+
+Now we can build by running
+
+bc. make
+
+Now at this point the tests will fail on ampre.newcastle.edu.au with a segfault that I do not understand and turns out is caused by GotoBLAS2. Linking instead with a system blas in the above BLASLIB in make.inc will fix this. I'm still working on understanding the problem. Unfortunately, when you run the tests under gdb, everything works fine!! Grr. 
+
+bc. vim make.inc
+
+and replace the BLAS line with a system blas lib (we really can't do this, and i'm not sure this will be a problem on the APL machine since I've never seen in on any but the ampre.newcastle.edu.au machine). Also, you may need to yum or the like install a system blas package and alter the path below accordingly.
+
+bc. BLASLIB = /usr/lib64/libblas.so.3 -lpthread
+bc. make clean
+bc. make
+
+Hopefully this will run to completion, pass the tests, and produce the following library files ... nope, dammit. Another error ...
+
+bc. gfortran  -O2 -c stbt05.f -o stbt05.o
+stbt05.f: In function ‘stbt05’:
+stbt05.f:189: internal compiler error: Segmentation fault
+
+which will probably go away if I use an older compiler since this is being done on redhat with a 4.4.6 gcc. We really need the suse vm or whole system install up and running so I can write these instructions properly!! Grrr.
+
+So at this point we will assume you built LAPACK with a Blas that works for you, hopefully GotoBLAS2.
+
+* LAPACK95 are the fortran 90 wrappers for the LAPACK routines. These just make it easier to call the routines with some checking on arguments passed. To build LAPACK95 we do ...
+
+
+bc. cd ~
+bc. mkdir lapack95
+bc. cd lapack95
+bc. wget http://www.netlib.org/lapack95/lapack95.tgz
+bc. tar -xzvf lapack95.tgz
+bc. cd LAPACK95
+bc. cp make.inc_linux_rehdat make.inc
+bc. vim ../make.inc
+
+Change the FC settins to point to gfortran 
+
+bc. FC = gfortran -f-fixed-form
+bc. FC1 = gfortran 
+
+comment some of the other compiler options
+
+bc. OPTS0  = -O3 #-u -V -dcfuns -dusty -ieee=full
+
+and the LAPACK path
+
+bc. LAPACK_PATH = /home/davidg/lapack/lapack-3.4.0
+
+bc. cd SRC
+bc. make single_double_complex_dcomplex
+
+Now you should have a /home/davidg/LAPACK95/lapack95.a file which is the LAPACK95 wrapper library.
+
 h2. Compiler
 
-At present I have only compiled with gfortran. You will need to specify the location of your gfortran in @Makefile@ at the following locations (although at present F77 is not used):
+At present I have only compiled with gcc / gfortran 4.3.2. Newer or older compilers may cause issues, or not, mainly with the building of the libraries, not the actual code. One thing that is generally improtant to have is compatability between the various fortran modules that will be included in the fortran ampFit code. This in general means compiling the code to produce the modules with the same compiler you are using to build ampFit. Hence, buiild the libraries with that same compiler or you will get weird module parsing errors. You will need to specify the location of your gfortran in @Makefile@ at the following locations (although at present F77 is not used):
 
 bc. F90 = /opt/local/bin/gfortran-mp-4.4
 F77 = /opt/local/bin/gfortran-mp-4.4
@@ -51,5 +153,8 @@ If you want to change to something other than gfortran further modifications wil
 h2. Building
 
 Should be pretty straigh forward:
+
+bc. cd ampereFit
+bc. cd fortran
 
 @make@

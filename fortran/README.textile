@@ -46,14 +46,15 @@ h3. Library interdependancies (I'm happy to help set these up)
 So, here is how I went about building all the libraries on the redhat ampre.newcastle.edu.au machine ...
 
 * BLAS - Downloaded GotoBLAS2 from the link above into ~/blas/ and untared.
+
 bc. cd ~
-bc. mkdir blas
-bc. cd blas
-bc. mv ~/Downloads/DOWNLOADED_GOTOBLAS2.tar.gz .
-bc. tar -xzvf DOWNLOADED_GOTOBLAS2.tar.gz
-bc. cd GotoBLAS2
-bc. make clean
-bc. make
+mkdir blas
+cd blas
+mv ~/Downloads/DOWNLOADED_GOTOBLAS2.tar.gz .
+tar -xzvf DOWNLOADED_GOTOBLAS2.tar.gz
+cd GotoBLAS2
+make clean
+make
 
 Now on the ampre.newcastle.edu.au machine, this spits an error ...
 
@@ -63,8 +64,8 @@ bc. ../kernel/x86_64/gemm_ncopy_4.S: Assembler messages:
 which I think is related to the auto-detction of chip architecture script failing so we specify it manually
 
 bc. make cleanb
-bc. make TARGET=NEHALEM
-bc. [davidg@ampre GotoBLAS2]$ ls -alh | grep libgoto2
+make TARGET=NEHALEM
+[davidg@ampre GotoBLAS2]$ ls -alh | grep libgoto2
 lrwxrwxrwx.  1 davidg users   25 Apr  1 21:40 libgoto2.a -> libgoto2_nehalemp-r1.13.a
 -rw-r--r--.  1 davidg users  19M Apr  1 21:41 libgoto2_nehalemp-r1.13.a
 -rwxr-xr-x.  1 davidg users 9.7M Apr  1 21:41 libgoto2_nehalemp-r1.13.so
@@ -75,13 +76,13 @@ so we now have libgoto2.a as our BLAS library.
 * LAPACK is now built using the BLAS library we just built as its dependancy.
 
 bc. cd ~
-bc. mkdir lapack
-bc. cd lapack
-bc. wget http://www.netlib.org/lapack/lapack-3.4.0.tgz
-bc. tar -xzvf lapack-3.4.0.tgz
-bc. cd lapack-3.4.0/
-bc. cp make.inc.example make.inc
-bc. vim make.inc
+mkdir lapack
+cd lapack
+wget http://www.netlib.org/lapack/lapack-3.4.0.tgz
+tar -xzvf lapack-3.4.0.tgz
+cd lapack-3.4.0/
+cp make.inc.example make.inc
+vim make.inc
 
 here we need to change fortran compiler to be the one we want (here we are just using the system gfortran so will not adjust the FORTRAN setting), and the BLASLIB path to be 
 
@@ -98,8 +99,8 @@ bc. vim make.inc
 and replace the BLAS line with a system blas lib (we really can't do this, and i'm not sure this will be a problem on the APL machine since I've never seen in on any but the ampre.newcastle.edu.au machine). Also, you may need to yum or the like install a system blas package and alter the path below accordingly.
 
 bc. BLASLIB = /usr/lib64/libblas.so.3 -lpthread
-bc. make clean
-bc. make
+make clean
+make
 
 Hopefully this will run to completion, pass the tests, and produce the following library files ... nope, dammit. Another error ...
 
@@ -115,18 +116,18 @@ So at this point we will assume you built LAPACK with a Blas that works for you,
 
 
 bc. cd ~
-bc. mkdir lapack95
-bc. cd lapack95
-bc. wget http://www.netlib.org/lapack95/lapack95.tgz
-bc. tar -xzvf lapack95.tgz
-bc. cd LAPACK95
-bc. cp make.inc_linux_rehdat make.inc
-bc. vim ../make.inc
+mkdir lapack95
+cd lapack95
+wget http://www.netlib.org/lapack95/lapack95.tgz
+tar -xzvf lapack95.tgz
+cd LAPACK95
+cp make.inc_linux_rehdat make.inc
+vim ../make.inc
 
 Change the FC settins to point to gfortran 
 
 bc. FC = gfortran -f-fixed-form
-bc. FC1 = gfortran 
+FC1 = gfortran 
 
 comment some of the other compiler options
 
@@ -135,9 +136,8 @@ bc. OPTS0  = -O3 #-u -V -dcfuns -dusty -ieee=full
 and the LAPACK path
 
 bc. LAPACK_PATH = /home/davidg/lapack/lapack-3.4.0
-
-bc. cd SRC
-bc. make single_double_complex_dcomplex
+cd SRC
+make single_double_complex_dcomplex
 
 Now you should have a /home/davidg/LAPACK95/lapack95.a file which is the LAPACK95 wrapper library.
 

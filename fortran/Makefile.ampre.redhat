@@ -1,12 +1,12 @@
-ifeq ($(findstring fitacf,$(HOSTNAME)),fitacf)
+ifeq ($(findstring ampre,$(HOSTNAME)),ampre)
 
 ifeq (${PARALLEL},1)
 	F90 := mpif90
 	F77 := mpif90
 else
 ifeq (${INTEL},1)
-	F90 := ifort
-	F77 := ifort
+	F90 := ifort -mkl=parallel
+	F77 := ifort -mkl=parallel
 	CPP_DIRECTIVES += -D_intel_
 else
 	F90 := gfortran
@@ -14,31 +14,29 @@ else
 endif
 endif
 
+HOMEDLG:=/home/davidg/redhat
 ifeq (${INTEL},1)
-	INTEL_DIR:=/home/dlg/intel
-	NETCDF_DIR:= /home/dlg/code/netcdf/intel_11.0
+	INTEL_DIR := /opt/intel/Compiler/11.1/073
+	NETCDF_DIR:= /home/davidg/redhat/netcdf/intel_11.1
 	NETCDF_MOD:= ${NETCDF_DIR}/include
 	F95_LAPACK_DIR:= ${INTEL_DIR}/mkl
-	F95_LAPACK_LIB:= ${F95_LAPACK_DIR}/lib/intel64/libmkl_lapack95_ilp64.a
-	#LAPACK_DIR:= /home/dg6/code/lapack
-	#LAPACK_LIB:=${LAPACK_DIR}/lapack_gnu_4.3.2_64.a 
-	#BLAS_DIR:= /home/dg6/code/goto_blas
-	#BLAS_LIB:=${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
-	#GSL_DIR:= /home/dg6/code/gsl/gnu_4.3.2_64
-	#FGSL_DIR:= /home/dg6/code/fgsl/gnu_4.3.2_64
-	AACGM_DIR:=/home/dlg/code/ampereFit/fortran/aacgm
+	F95_LAPACK_LIB:= -L${F95_LAPACK_DIR}/lib/em64 -lmkl_intel_lp64
+	GSL_DIR:= 
+	FGSL_DIR:= 
+	AACGM_DIR:=/home/davidg/redhat/ampereFit/fortran/aacgm
 else
-	NETCDF_DIR:= ${HOME}/code/netcdf/gnu_4.3.2
+	HDF5_DIR:= ${HOMEDLG}/hdf5/gnu_4.3.2
+	NETCDF_DIR:= ${HOMEDLG}/netcdf/gnu_4.3.2
 	NETCDF_MOD:= ${NETCDF_DIR}/include
-	F95_LAPACK_DIR:= /home/dg6/code/lapack95/gnu_4.3.2_64
+	F95_LAPACK_DIR:= ${HOMEDLG}/lapack95/gnu_4.3.2/system_blas
 	F95_LAPACK_LIB:=${F95_LAPACK_DIR}/lapack95.a
-	LAPACK_DIR:= /home/dg6/code/lapack
-	LAPACK_LIB:=${LAPACK_DIR}/lapack_gnu_4.3.2_64.a 
-	BLAS_DIR:= /home/dg6/code/goto_blas
-	BLAS_LIB:=${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
-	GSL_DIR:= /home/dg6/code/gsl/gnu_4.3.2_64
-	FGSL_DIR:= /home/dg6/code/fgsl/gnu_4.3.2_64
-	AACGM_DIR:=/home/dg6/code/superdarn/rst
+	LAPACK_DIR:= ${HOMEDLG}/lapack/gnu_4.3.2/system_blas
+	LAPACK_LIB:= ${LAPACK_DIR}/liblapack.a 
+	BLAS_DIR:= /usr/lib64
+	BLAS_LIB:= -L${BLAS_DIR} -l:libblas.so.3
+	GSL_DIR:= 
+	FGSL_DIR:= 
+	AACGM_DIR:= ${HOMEDLG}/rst
 endif
 
 ifeq (${PARALLEL},1)
@@ -52,7 +50,7 @@ endif
 ifeq (${INTEL},1)
 # Taken directly from the intel link line advisor page
 LINK +=  $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a  $(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a  -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -openmp -lpthread -lm 
-INCLUDES += -I${F95_LAPACK_DIR}/include/intel64/lp64
+INCLUDES += -I${MKLROOT}/include/em64t/lp64 -I${MKLROOT}/include
 else
 LINK += ${F95_LAPACK_LIB} ${LAPACK_LIB} ${BLAS_LIB}
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules

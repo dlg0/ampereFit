@@ -77,6 +77,7 @@ endif
 # Include other machines
 include Makefile.dlg-hp
 include Makefile.fitacf
+include Makefile.ampre.redhat
 
 # Netcdf
 LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff 
@@ -87,15 +88,6 @@ INCLUDES += -I${NETCDF_MOD}
 #INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 # F95 interface to LAPACK
-
-ifeq (${INTEL},1)
-# Taken directly from the intel link line advisor page
-LINK +=  $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a  $(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a  -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -openmp -lpthread -lm 
-INCLUDES += -I${F95_LAPACK_DIR}/include/intel64/lp64
-else
-LINK += ${F95_LAPACK_LIB} ${LAPACK_LIB} ${BLAS_LIB}
-INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
-endif
 
 # AACGM 
 ifeq (${INTEL},1)

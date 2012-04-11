@@ -257,6 +257,7 @@ module ampFit_sort
 ! temp arrays for sort routine
     real(kind=DBL), dimension(:), allocatable :: T
     integer, dimension(:), allocatable :: Ti
+    integer :: nBad
 
     np = size(struc_data)
     cnt = 1
@@ -284,9 +285,18 @@ module ampFit_sort
         return
       endif
 
+      nBad = count ( idx > size(struc_data) )
+      if(nBad>0)then
+              write(*,*) 'ERROR'
+              stop
+      endif
+      write(*,*) 'max: ', maxval(idx)
+      write(*,*) 'size(struc_data): ', size(struc_data)
+      write(*,*) 'south: ', south
+    
 ! Get indexes for (i) Track (ii) < 180 in lon 
       tmplogic_arr = .false.
-      tmplogic_arr=struc_data(idx)%P*radToDeg <= 180.0
+      tmplogic_arr=struc_data(idx)%P*radToDeg <= 180.0 ! DLG: THIS LINE DOES NOT LOOK RIGHT
       call my_where(tmplogic_arr, np, tmp_idx, iiTrack_lon)
       allocate(idx_lon(iiTrack_lon))    ! get mem for these data
       idx_lon = tmp_idx(1:iiTrack_lon)  ! indexes for these vals

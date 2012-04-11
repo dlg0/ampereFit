@@ -15,7 +15,7 @@ INTEL:=1
 ifeq (${INTEL},1)
 	F90FLAGS:= -module ${MOD_DIR}
 	F77FLAGS:= -module ${MOD_DIR}
-	DEBUG_OPTS := -g -check bounds
+	DEBUG_OPTS := -debug -O0 #-check bounds
 else
 	F90FLAGS:= -J${MOD_DIR} #-fno-underscoring
 	F77FLAGS:= -J${MOD_DIR} #-fno-underscoring

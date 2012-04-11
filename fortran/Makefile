@@ -1,3 +1,5 @@
+.SUFFIXES : .o .f90 .f .F90
+
 EXEC := xAmpereFit
 RUN := xRunAmpereFit
 
@@ -8,10 +10,18 @@ SRC_DIR := src
 # If you are not DLG, then do not change this ;)
 PARALLEL := 0
 
-F90FLAGS:= -J${MOD_DIR} #-fno-underscoring
-F77FLAGS:= -J${MOD_DIR} #-fno-underscoring
+INTEL:=1
 
-DEBUG_OPTS := -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
+ifeq (${INTEL},1)
+	F90FLAGS:= -module ${MOD_DIR}
+	F77FLAGS:= -module ${MOD_DIR}
+	DEBUG_OPTS := -g -check bounds
+else
+	F90FLAGS:= -J${MOD_DIR} #-fno-underscoring
+	F77FLAGS:= -J${MOD_DIR} #-fno-underscoring
+	DEBUG_OPTS := -g -fbacktrace -fsignaling-nans -ffpe-trap=zero,invalid -fbounds-check
+endif
+
 INCLUDES := 
 LINK :=
 CPP_DIRECTIVES :=
@@ -21,8 +31,14 @@ ifeq (${PARALLEL},1)
 	F77 := mpif90
 	CPP_DIRECTIVES += -D_parallel_
 else
+ifeq (${INTEL},1)
+	F90 := ifort
+	F77 := ifort
+	CPP_DIRECTIVES += -D_intel_
+else
 	F90 := gfortran
 	F77 := gfortran
+endif
 endif
 
 
@@ -60,21 +76,33 @@ endif
 
 # Include other machines
 include Makefile.dlg-hp
+include Makefile.fitacf
 
 # Netcdf
-LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff
+LINK += -L${NETCDF_DIR}/lib -lnetcdf -lnetcdf_c++ -lnetcdff 
 INCLUDES += -I${NETCDF_MOD}
 
-# FGSL (Fortran interface to the GSL)
-LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
-INCLUDES += -I${FGSL_DIR}/include/gfortran
+## FGSL (Fortran interface to the GSL)
+#LINK += -L${FGSL_DIR}/lib -L${GSL_DIR}/lib -lfgsl_gfortran -lgsl -lgslcblas
+#INCLUDES += -I${FGSL_DIR}/include/gfortran
 
 # F95 interface to LAPACK
+
+ifeq (${INTEL},1)
+# Taken directly from the intel link line advisor page
+LINK +=  $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a  $(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a  -Wl,--start-group  $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -openmp -lpthread -lm 
+INCLUDES += -I${F95_LAPACK_DIR}/include/intel64/lp64
+else
 LINK += ${F95_LAPACK_LIB} ${LAPACK_LIB} ${BLAS_LIB}
 INCLUDES += -I${F95_LAPACK_DIR}/lapack95_modules
+endif
 
 # AACGM 
+ifeq (${INTEL},1)
+LINK += -L ${AACGM_DIR}/lib -laacgm -lmlt -lastalg -lrtime
+else
 LINK += -L ${AACGM_DIR}/lib -l:libaacgm.1.a -l:libmlt.1.a -l:libastalg.1.a -l:librtime.1.a
+endif
 
 # ScaLAPACK
 ifeq (${PARALLEL},1)

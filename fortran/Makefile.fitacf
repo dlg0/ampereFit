@@ -1,0 +1,54 @@
+ifeq ($(findstring fitacf,$(HOSTNAME)),fitacf)
+
+ifeq (${PARALLEL},1)
+	F90 := mpif90
+	F77 := mpif90
+else
+ifeq (${INTEL},1)
+	F90 := ifort
+	F77 := ifort
+	CPP_DIRECTIVES += -D_intel_
+else
+	F90 := gfortran
+	F77 := gfortran
+endif
+endif
+
+ifeq (${INTEL},1)
+	INTEL_DIR:=/home/dlg/intel
+	NETCDF_DIR:= /home/dlg/code/netcdf/intel_11.0
+	NETCDF_MOD:= ${NETCDF_DIR}/include
+	F95_LAPACK_DIR:= ${INTEL_DIR}/mkl
+	F95_LAPACK_LIB:= ${F95_LAPACK_DIR}/lib/intel64/libmkl_lapack95_ilp64.a
+	#LAPACK_DIR:= /home/dg6/code/lapack
+	#LAPACK_LIB:=${LAPACK_DIR}/lapack_gnu_4.3.2_64.a 
+	#BLAS_DIR:= /home/dg6/code/goto_blas
+	#BLAS_LIB:=${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
+	#GSL_DIR:= /home/dg6/code/gsl/gnu_4.3.2_64
+	#FGSL_DIR:= /home/dg6/code/fgsl/gnu_4.3.2_64
+	AACGM_DIR:=/home/dlg/code/ampereFit/fortran/aacgm
+else
+	NETCDF_DIR:= ${HOME}/code/netcdf/gnu_4.3.2
+	NETCDF_MOD:= ${NETCDF_DIR}/include
+	F95_LAPACK_DIR:= /home/dg6/code/lapack95/gnu_4.3.2_64
+	F95_LAPACK_LIB:=${F95_LAPACK_DIR}/lapack95.a
+	LAPACK_DIR:= /home/dg6/code/lapack
+	LAPACK_LIB:=${LAPACK_DIR}/lapack_gnu_4.3.2_64.a 
+	BLAS_DIR:= /home/dg6/code/goto_blas
+	BLAS_LIB:=${BLAS_DIR}/libgoto2_gnu_4.3.2_64.a
+	GSL_DIR:= /home/dg6/code/gsl/gnu_4.3.2_64
+	FGSL_DIR:= /home/dg6/code/fgsl/gnu_4.3.2_64
+	AACGM_DIR:=/home/dg6/code/superdarn/rst
+endif
+
+ifeq (${PARALLEL},1)
+	SCALAPACK_DIR:=${HOME}/code/scalapack
+	BLACS:= \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacsF77init_MPI-LINUX-0.a \
+		${HOME}/code/blacs/blacs_gnu64/LIB/blacs_MPI-LINUX-0.a
+endif
+
+endif
+
+

@@ -12,8 +12,14 @@ module ampFit_solve
 !
 ! ver : 201202
 !
-use la_precision, only: WP=>DP
-use f95_lapack, only: la_gelss, la_lange, la_gesdd
+#ifdef _intel_
+    use mkl95_precision, only: WP=>DP
+    use mkl95_lapack, only: la_gelss=>gelss
+#else
+    use la_precision, only: WP=>DP
+    use f95_lapack, only: la_gelss, la_lange, la_gesdd
+#endif
+
 use constants
 use basisFns, only: nBFns, nArr
 use ampFit_rotate
